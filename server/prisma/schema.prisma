@@ -1,0 +1,80 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id         String    @id @default(cuid())
+  installId  String    @unique
+  isPro      Boolean   @default(false)
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
+  lastSeenAt DateTime?
+
+  /// RevenueCat $RCAnonymousID / custom app user id (often mirrors installId in V1).
+  revenueCatAppUserId   String?   @unique
+  proExpiresAt          DateTime?
+  entitlementSource     String?
+  lastRevenueCatEventAt DateTime?
+
+  dailyUsages    DailyExplanationUsage[]
+  followUpUsages FollowUpUsage[]
+  aiRequestLogs  AiRequestLog[]
+}
+
+/// Idempotente Speicherung eingehender RevenueCat-Webhooks (Audit + Duplikat-Schutz).
+model RevenueCatWebhookEvent {
+  id                 Int      @id @default(autoincrement())
+  eventId            String   @unique
+  eventType          String
+  appUserId          String?
+  originalAppUserId  String?
+  transferredTo      String?
+  transferredFrom    String?
+  rawJson            String   @db.Text
+  createdAt          DateTime @default(now())
+}
+
+/// Tracks non-daily “extra” explanations per calendar day (UTC) for free users.
+model DailyExplanationUsage {
+  id         String @id @default(cuid())
+  userId     String
+  user       User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  usageDate  String
+  extraCount Int    @default(0)
+
+  @@unique([userId, usageDate])
+  @@index([userId])
+}
+
+/// Successful follow-up count per verse (Pro); max 3 enforced in app logic.
+model FollowUpUsage {
+  id         String   @id @default(cuid())
+  userId     String
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  surahName  String
+  ayahNumber Int
+  count      Int      @default(0)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([userId, surahName, ayahNumber])
+  @@index([userId])
+}
+
+model AiRequestLog {
+  id        String   @id @default(cuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  endpoint  String
+  status    String
+  errorCode String?
+  createdAt DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
+}

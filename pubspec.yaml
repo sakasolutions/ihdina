@@ -1,0 +1,72 @@
+name: ihdina
+description: Ihdina - Premium Islamic app
+publish_to: 'none'
+version: 1.0.0+1
+
+environment:
+  sdk: '>=3.0.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  adhan_dart: ^1.2.0
+  csv: ^6.0.0
+  cupertino_icons: ^1.0.6
+  flutter_qiblah: ^3.1.0+1
+  geocoding: ^3.0.0
+  geolocator: ^13.0.1
+  flutter_local_notifications: ^18.0.1
+  flutter_timezone: ^3.0.1
+  flutter_markdown: ^0.7.4+1
+  google_fonts: ^6.2.1
+  timezone: ^0.9.4
+  http: ^1.2.1
+  intl: ^0.19.0
+  permission_handler: ^11.3.1
+  path_provider: ^2.1.4
+  path: ^1.9.0
+  purchases_flutter: ^8.0.0
+  shared_preferences: ^2.2.2
+  sqflite: ^2.3.2
+  url_launcher: ^6.2.5
+  just_audio: ^0.9.40
+  flutter_dotenv: ^5.2.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^3.0.0
+  flutter_launcher_icons: ^0.13.1
+  flutter_native_splash: ^2.4.0
+  sqflite_common_ffi: ^2.3.3
+  change_app_package_name: ^1.5.0
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/data/
+    - assets/db/
+    - assets/db/ihdina.db
+    - assets/tanzil/
+    - assets/tanzil/de_bubenheim.csv
+    - assets/img/
+    - assets/img/start.png
+
+flutter_launcher_icons:
+  ios: true
+  android: true
+  image_path_ios: "assets/img/logo_start.png"
+  image_path_android: "assets/img/logo_start.png"
+  adaptive_icon_background: "#081A15"
+  adaptive_icon_foreground: "assets/img/logo_start.png"
+  remove_alpha_ios: true
+
+flutter_native_splash:
+  # Nur start.png (1242×2688) – keine Farbe, kein extra Logo. Ein Bild füllt den Screen.
+  background_image: "assets/img/start.png"
+  fullscreen: true
+  # Android 12+ unterstützt kein Vollbild-Hintergrundbild, nur Farbe + Icon.
+  android_12:
+    color: "#081A15"
+  ios: true
+  android: true

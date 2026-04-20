@@ -1,0 +1,30 @@
+{
+  "surahs": [
+    {
+      "number": 1,
+      "name_de": "Al-Fatiha",
+      "name_ar": "ٱلْفَاتِحَة",
+      "verses": [
+        { "ayah": 1, "ar": "بِسْمِ ٱللَّٰهِ ٱلرَّحْمَٰنِ ٱلرَّحِيمِ", "de": "Im Namen Allahs, des Allerbarmers, des Barmherzigen." },
+        { "ayah": 2, "ar": "ٱلْحَمْدُ لِلَّٰهِ رَبِّ ٱلْعَٰلَمِينَ", "de": "Lob sei Allah, dem Herrn der Welten." },
+        { "ayah": 3, "ar": "ٱلرَّحْمَٰنِ ٱلرَّحِيمِ", "de": "dem Allerbarmer, dem Barmherzigen." },
+        { "ayah": 4, "ar": "مَٰلِكِ يَوْمِ ٱلدِّينِ", "de": "dem Herrscher am Tag des Gerichts." },
+        { "ayah": 5, "ar": "إِيَّاكَ نَعْبُدُ وَإِيَّاكَ نَسْتَعِينُ", "de": "Dir allein dienen wir, und zu Dir allein flehen wir um Hilfe." },
+        { "ayah": 6, "ar": "ٱهْدِنَا ٱلصِّرَٰطَ ٱلْمُسْتَقِيمَ", "de": "Führe uns auf den geraden Weg." },
+        { "ayah": 7, "ar": "صِرَٰطَ ٱلَّذِينَ أَنْعَمْتَ عَلَيْهِمْ غَيْرِ ٱلْمَغْضُوبِ عَلَيْهِمْ وَلَا ٱلضَّآلِّينَ", "de": "Den Weg derer, die Du mit Gnade bedacht hast, nicht derer, die (Deinen) Zorn erregt haben, und nicht der Irregehenden." }
+      ]
+    },
+    {
+      "number": 94,
+      "name_de": "Al-Inshirah",
+      "name_ar": "ٱلشَّرْح",
+      "verses": [
+        { "ayah": 1, "ar": "أَلَمْ نَشْرَحْ لَكَ صَدْرَكَ", "de": "Haben Wir dir nicht die Brust geweitet?" },
+        { "ayah": 2, "ar": "وَوَضَعْنَا عَنكَ وِزْرَكَ", "de": "Und dir deine Last abgenommen?" },
+        { "ayah": 3, "ar": "ٱلَّذِى أَنقَضَ ظَهْرَكَ", "de": "Die dir deinen Rücken schwer belastet hatte?" },
+        { "ayah": 4, "ar": "وَرَفَعْنَا لَكَ ذِكْرَكَ", "de": "Und dein Ansehen für dich erhoben?" },
+        { "ayah": 5, "ar": "فَإِنَّ مَعَ ٱلْعُسْرِ يُسْرًا", "de": "Siehe, mit der Drangsal ist Erleichterung." }
+      ]
+    }
+  ]
+}
