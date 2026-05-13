@@ -1,10 +1,11 @@
+import 'dart:io' show Platform;
 import 'dart:math' show pi;
 
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_qiblah/flutter_qiblah.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'package:permission_handler/permission_handler.dart';
 
 import '../theme/app_theme.dart';
 import '../theme/hero_theme.dart';
@@ -19,41 +20,84 @@ class QiblaScreen extends StatefulWidget {
   State<QiblaScreen> createState() => _QiblaScreenState();
 }
 
-class _QiblaScreenState extends State<QiblaScreen> {
+class _QiblaScreenState extends State<QiblaScreen> with WidgetsBindingObserver {
   bool _loading = true;
+  /// Systemweite Ortungsdienste aus (nicht App-Berechtigung).
+  bool _locationServicesOff = false;
   bool _permissionGranted = false;
   bool _supported = true;
 
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addObserver(this);
     _prepareQiblah();
   }
 
+  @override
+  void dispose() {
+    WidgetsBinding.instance.removeObserver(this);
+    // Singleton-Stream von flutter_qiblah: sonst zweiter Besuch / nach Fehler oft „leer“ oder Single-Listen-Fehler.
+    FlutterQiblah().dispose();
+    super.dispose();
+  }
+
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.resumed) {
+      _prepareQiblah();
+    }
+  }
+
   Future<void> _prepareQiblah() async {
-    var status = await Permission.locationWhenInUse.status;
-    if (!status.isGranted) {
-      status = await Permission.locationWhenInUse.request();
+    if ((!_permissionGranted || _locationServicesOff) && mounted) {
+      setState(() => _loading = true);
+    }
+    final serviceEnabled = await Geolocator.isLocationServiceEnabled();
+    if (!mounted) return;
+    if (!serviceEnabled) {
+      setState(() {
+        _loading = false;
+        _locationServicesOff = true;
+      });
+      return;
+    }
+
+    var permission = await Geolocator.checkPermission();
+    if (permission == LocationPermission.denied) {
+      permission = await Geolocator.requestPermission();
     }
     if (!mounted) return;
-    if (!status.isGranted) {
+    if (permission == LocationPermission.denied ||
+        permission == LocationPermission.deniedForever) {
       setState(() {
         _permissionGranted = false;
+        _locationServicesOff = false;
         _loading = false;
       });
       return;
     }
-    final support = await FlutterQiblah.androidDeviceSensorSupport();
+
+    // Nur auf Android relevant; auf iOS liefert die Methode typischerweise nicht true.
+    final bool sensorOk = Platform.isAndroid
+        ? await FlutterQiblah.androidDeviceSensorSupport() == true
+        : true;
     if (!mounted) return;
-    if (support != true) {
+    if (!sensorOk) {
       setState(() {
+        _locationServicesOff = false;
         _permissionGranted = true;
         _supported = false;
         _loading = false;
       });
       return;
     }
+
+    // Gleiche APIs wie flutter_qiblah intern – und alten Stream verwerfen (z. B. nach erstem Fehler / Einstellungen).
+    FlutterQiblah().dispose();
+    if (!mounted) return;
     setState(() {
+      _locationServicesOff = false;
       _permissionGranted = true;
       _supported = true;
       _loading = false;
@@ -123,6 +167,40 @@ class _QiblaScreenState extends State<QiblaScreen> {
         child: CircularProgressIndicator(color: _accentChampagneGold),
       );
     }
+    if (_locationServicesOff) {
+      return Center(
+        child: Padding(
+          padding: const EdgeInsets.all(24),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Text(
+                'Bitte systemweite Ortungsdienste aktivieren.',
+                textAlign: TextAlign.center,
+                style: GoogleFonts.inter(
+                  fontSize: 16,
+                  color: Colors.white70,
+                ),
+              ),
+              const SizedBox(height: 24),
+              TextButton(
+                onPressed: () => Geolocator.openLocationSettings(),
+                style: TextButton.styleFrom(
+                  foregroundColor: _accentChampagneGold,
+                ),
+                child: Text(
+                  'Ortungsdienste öffnen',
+                  style: GoogleFonts.inter(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+    }
     if (!_permissionGranted) {
       return Center(
         child: Padding(
@@ -140,7 +218,7 @@ class _QiblaScreenState extends State<QiblaScreen> {
               ),
               const SizedBox(height: 24),
               TextButton(
-                onPressed: openAppSettings,
+                onPressed: () => Geolocator.openAppSettings(),
                 style: TextButton.styleFrom(
                   foregroundColor: _accentChampagneGold,
                 ),

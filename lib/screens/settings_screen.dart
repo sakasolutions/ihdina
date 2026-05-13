@@ -11,6 +11,7 @@ import '../data/settings/settings_repository.dart';
 import '../services/revenuecat_service.dart';
 import '../theme/app_theme.dart';
 import '../theme/hero_theme.dart';
+import '../widgets/app_feedback_sheet.dart';
 import '../widgets/glass_card.dart';
 import 'city_search_screen.dart';
 import 'paywall_screen.dart';
@@ -1123,6 +1124,58 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                   const SizedBox(height: 2),
                                   Text(
                                     'Koran, Übersetzung & KI',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 12,
+                                      color: Colors.white.withOpacity(0.58),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            Icon(
+                              Icons.chevron_right,
+                              size: 24,
+                              color: Colors.white54,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () => showAppFeedbackSheet(context),
+                    borderRadius: BorderRadius.circular(20),
+                    child: GlassCard(
+                      borderRadius: 20,
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Icons.feedback_outlined,
+                              size: 22,
+                              color: const Color(0xFFE5C07B),
+                            ),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    'Feedback senden',
+                                    style: GoogleFonts.playfairDisplay(
+                                      fontSize: 17,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    'Hilft uns, Ihdina zu verbessern',
                                     style: GoogleFonts.inter(
                                       fontSize: 12,
                                       color: Colors.white.withOpacity(0.58),

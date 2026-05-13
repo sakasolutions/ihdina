@@ -51,8 +51,10 @@
 	<string>Ihdina benötigt deinen Standort, um die exakten Gebetszeiten für deine aktuelle Stadt zu berechnen.</string>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Ihdina wandelt deine Spracheingabe lokal in Text um (Suche und eigene Fragen zur Vers-Erklärung).</string>
 	<key>NSMicrophoneUsageDescription</key>
-	<string>Diese App benötigt keinen Mikrofonzugriff.</string>
+	<string>Ihdina nutzt das Mikrofon nur für Spracheingabe; die Erkennung erfolgt auf dem Gerät, ohne unsere Server.</string>
 	<key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
 	<string>Ihdina benötigt deinen Standort, um die exakten Gebetszeiten für deine aktuelle Stadt zu berechnen.</string>
 </dict>

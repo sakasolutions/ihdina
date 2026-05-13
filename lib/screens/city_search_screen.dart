@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:speech_to_text/speech_to_text.dart';
 
 import '../config/geonames_config.dart';
 import '../data/location/city_search_result.dart';
@@ -13,6 +14,8 @@ import '../data/settings/settings_repository.dart';
 import '../theme/app_theme.dart';
 import '../theme/hero_theme.dart';
 import '../widgets/glass_card.dart';
+import '../widgets/local_dictation_icon_button.dart';
+import '../widgets/local_speech_privacy_caption.dart';
 
 /// City search for prayer location. No GPS; selects from GeoNames results.
 class CitySearchScreen extends StatefulWidget {
@@ -115,8 +118,7 @@ class _CitySearchScreenState extends State<CitySearchScreen> {
     final lng = city.lng;
     await SettingsRepository.instance.setPrayerLocation(label, lat, lng);
     if (kDebugMode) {
-      // ignore: avoid_print
-      print('[CITY] saved: $label lat=$lat lng=$lng');
+      debugPrint('[CITY] saved: $label lat=$lat lng=$lng');
     }
     if (mounted) Navigator.of(context).pop(true);
   }
@@ -230,29 +232,41 @@ class _CitySearchScreenState extends State<CitySearchScreen> {
             ),
           ],
         ),
-        child: TextField(
-          controller: _queryController,
-          decoration: InputDecoration(
-            hintText: 'Stadt suchen',
-            hintStyle: GoogleFonts.inter(
-              fontSize: 15,
-              color: Colors.white.withOpacity(0.4),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            TextField(
+              controller: _queryController,
+              decoration: InputDecoration(
+                hintText: 'Stadt suchen',
+                hintStyle: GoogleFonts.inter(
+                  fontSize: 15,
+                  color: Colors.white.withOpacity(0.4),
+                ),
+                prefixIcon: const Icon(
+                  Icons.search_rounded,
+                  size: 22,
+                  color: _champagneGold,
+                ),
+                suffixIcon: LocalDictationIconButton(
+                  controller: _queryController,
+                  listenMode: ListenMode.search,
+                  iconColor: _champagneGold,
+                  padding: const EdgeInsetsDirectional.only(end: 4),
+                ),
+                filled: true,
+                fillColor: Colors.white.withOpacity(0.08),
+                border: border,
+                enabledBorder: border,
+                focusedBorder: border,
+                disabledBorder: border,
+                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              ),
+              style: GoogleFonts.inter(fontSize: 15, color: Colors.white),
+              autofocus: true,
             ),
-            prefixIcon: const Icon(
-              Icons.search_rounded,
-              size: 22,
-              color: _champagneGold,
-            ),
-            filled: true,
-            fillColor: Colors.white.withOpacity(0.08),
-            border: border,
-            enabledBorder: border,
-            focusedBorder: border,
-            disabledBorder: border,
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-          ),
-          style: GoogleFonts.inter(fontSize: 15, color: Colors.white),
-          autofocus: true,
+            const LocalSpeechPrivacyCaption(),
+          ],
         ),
       ),
     );

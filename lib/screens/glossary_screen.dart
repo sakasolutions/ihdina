@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:speech_to_text/speech_to_text.dart';
 
 import '../data/glossary/glossary_entry.dart';
 import '../data/glossary/glossary_repository.dart';
 import '../theme/app_theme.dart';
 import '../theme/hero_theme.dart';
 import '../widgets/glass_card.dart';
+import '../widgets/local_dictation_icon_button.dart';
+import '../widgets/local_speech_privacy_caption.dart';
 
 const Color _accentChampagneGold = Color(0xFFE5C07B);
 
@@ -167,36 +170,48 @@ class _GlossaryScreenState extends State<GlossaryScreen> {
                             children: [
                               Padding(
                                 padding: const EdgeInsets.fromLTRB(24, 8, 24, 12),
-                                child: TextField(
-                                  controller: _search,
-                                  style: GoogleFonts.inter(fontSize: 15, color: Colors.white),
-                                  cursorColor: _accentChampagneGold,
-                                  decoration: InputDecoration(
-                                    hintText: 'Begriff suchen …',
-                                    hintStyle: GoogleFonts.inter(
-                                      color: Colors.white.withOpacity(0.45),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                                  children: [
+                                    TextField(
+                                      controller: _search,
+                                      style: GoogleFonts.inter(fontSize: 15, color: Colors.white),
+                                      cursorColor: _accentChampagneGold,
+                                      decoration: InputDecoration(
+                                        hintText: 'Begriff suchen …',
+                                        hintStyle: GoogleFonts.inter(
+                                          color: Colors.white.withOpacity(0.45),
+                                        ),
+                                        prefixIcon: Icon(
+                                          Icons.search_rounded,
+                                          color: Colors.white.withOpacity(0.55),
+                                          size: 22,
+                                        ),
+                                        suffixIcon: LocalDictationIconButton(
+                                          controller: _search,
+                                          listenMode: ListenMode.search,
+                                          iconColor: _accentChampagneGold,
+                                          padding: const EdgeInsetsDirectional.only(end: 4),
+                                        ),
+                                        filled: true,
+                                        fillColor: Colors.black.withOpacity(0.22),
+                                        border: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(14),
+                                          borderSide: BorderSide(color: Colors.white.withOpacity(0.14)),
+                                        ),
+                                        enabledBorder: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(14),
+                                          borderSide: BorderSide(color: Colors.white.withOpacity(0.14)),
+                                        ),
+                                        focusedBorder: OutlineInputBorder(
+                                          borderRadius: BorderRadius.circular(14),
+                                          borderSide: BorderSide(color: _accentChampagneGold.withOpacity(0.45)),
+                                        ),
+                                        contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+                                      ),
                                     ),
-                                    prefixIcon: Icon(
-                                      Icons.search_rounded,
-                                      color: Colors.white.withOpacity(0.55),
-                                      size: 22,
-                                    ),
-                                    filled: true,
-                                    fillColor: Colors.black.withOpacity(0.22),
-                                    border: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(14),
-                                      borderSide: BorderSide(color: Colors.white.withOpacity(0.14)),
-                                    ),
-                                    enabledBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(14),
-                                      borderSide: BorderSide(color: Colors.white.withOpacity(0.14)),
-                                    ),
-                                    focusedBorder: OutlineInputBorder(
-                                      borderRadius: BorderRadius.circular(14),
-                                      borderSide: BorderSide(color: _accentChampagneGold.withOpacity(0.45)),
-                                    ),
-                                    contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
-                                  ),
+                                    const LocalSpeechPrivacyCaption(),
+                                  ],
                                 ),
                               ),
                               Expanded(

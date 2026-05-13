@@ -4,6 +4,7 @@ import 'dart:ui' show ImageFilter, PlatformDispatcher;
 
 import 'package:flutter/material.dart';
 import 'package:flutter_markdown/flutter_markdown.dart';
+import 'package:speech_to_text/speech_to_text.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
@@ -12,8 +13,11 @@ import '../data/ai/related_ayah_ref.dart';
 import '../data/api/ihdina_api_client.dart';
 import '../data/quran/quran_repository.dart';
 import '../models/surah.dart';
+import '../services/app_feedback_service.dart';
 import '../services/install_id_service.dart';
 import '../services/revenuecat_service.dart';
+import '../widgets/local_dictation_icon_button.dart';
+import '../widgets/local_speech_privacy_caption.dart';
 import 'paywall_screen.dart';
 import 'quran_reader_screen.dart';
 
@@ -255,6 +259,7 @@ class _ExplanationBottomSheetContentState
   /// Verbleibende Follow-ups laut letzter Server-Antwort; `null` = noch keine Follow-up-Antwort in dieser Session.
   int? _remainingFollowUps;
   String? _installId;
+  bool _verseExplanationFeedbackSent = false;
 
   bool get isProUser => RevenueCatService.isPro;
 
@@ -1212,72 +1217,89 @@ class _ExplanationBottomSheetContentState
     }
     return Material(
       color: Colors.transparent,
-      child: Container(
-        decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.07),
-          borderRadius: BorderRadius.circular(26),
-        ),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Expanded(
-              child: TextField(
-                controller: _inputController,
-                enabled: !_isLoadingFollowUp,
-                textAlign: _inputController.text.isEmpty
-                    ? TextAlign.center
-                    : TextAlign.start,
-                textAlignVertical: TextAlignVertical.center,
-                style: TextStyle(
-                  fontSize: 15,
-                  height: 1.35,
-                  color: Colors.white.withOpacity(0.95),
-                ),
-                cursorColor: _accentChampagneGold,
-                decoration: InputDecoration(
-                  hintText: 'Eigene Frage stellen…',
-                  hintStyle: TextStyle(
-                    fontSize: 15,
-                    color: Colors.white.withOpacity(0.45),
-                    fontWeight: FontWeight.w400,
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white.withOpacity(0.07),
+              borderRadius: BorderRadius.circular(26),
+            ),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _inputController,
+                    enabled: !_isLoadingFollowUp,
+                    textAlign: _inputController.text.isEmpty
+                        ? TextAlign.center
+                        : TextAlign.start,
+                    textAlignVertical: TextAlignVertical.center,
+                    style: TextStyle(
+                      fontSize: 15,
+                      height: 1.35,
+                      color: Colors.white.withOpacity(0.95),
+                    ),
+                    cursorColor: _accentChampagneGold,
+                    decoration: InputDecoration(
+                      hintText: 'Eigene Frage stellen…',
+                      hintStyle: TextStyle(
+                        fontSize: 15,
+                        color: Colors.white.withOpacity(0.45),
+                        fontWeight: FontWeight.w400,
+                      ),
+                      border: InputBorder.none,
+                      isDense: true,
+                      contentPadding: const EdgeInsets.fromLTRB(16, 14, 10, 14),
+                    ),
+                    maxLines: 4,
+                    minLines: 1,
+                    textInputAction: TextInputAction.newline,
+                    onChanged: (_) => setState(() {}),
+                    onSubmitted: (_) => _sendFollowUp(_inputController.text),
                   ),
-                  border: InputBorder.none,
-                  isDense: true,
-                  contentPadding: const EdgeInsets.fromLTRB(16, 14, 10, 14),
                 ),
-                maxLines: 4,
-                minLines: 1,
-                textInputAction: TextInputAction.newline,
-                onChanged: (_) => setState(() {}),
-                onSubmitted: (_) => _sendFollowUp(_inputController.text),
-              ),
-            ),
-            Padding(
-              padding: const EdgeInsets.fromLTRB(0, 0, 6, 0),
-              child: IconButton(
-                style: IconButton.styleFrom(
-                  backgroundColor: Colors.white.withOpacity(0.14),
-                  foregroundColor: Colors.white,
-                  disabledBackgroundColor: Colors.white.withOpacity(0.06),
-                  disabledForegroundColor: Colors.white38,
-                  padding: const EdgeInsets.all(10),
-                  minimumSize: const Size(44, 44),
-                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                  shape: const CircleBorder(),
+                LocalDictationIconButton(
+                  controller: _inputController,
+                  listenMode: ListenMode.dictation,
+                  enabled: !_isLoadingFollowUp,
+                  iconColor: Colors.white.withOpacity(0.85),
+                  iconSize: 22,
+                  padding: const EdgeInsets.all(6),
                 ),
-                onPressed: _isLoadingFollowUp
-                    ? null
-                    : () {
-                        final t = _inputController.text;
-                        _inputController.clear();
-                        setState(() {});
-                        _sendFollowUp(t);
-                      },
-                icon: const Icon(Icons.arrow_upward_rounded, size: 22),
-              ),
+                Padding(
+                  padding: const EdgeInsets.fromLTRB(0, 0, 6, 0),
+                  child: IconButton(
+                    style: IconButton.styleFrom(
+                      backgroundColor: Colors.white.withOpacity(0.14),
+                      foregroundColor: Colors.white,
+                      disabledBackgroundColor: Colors.white.withOpacity(0.06),
+                      disabledForegroundColor: Colors.white38,
+                      padding: const EdgeInsets.all(10),
+                      minimumSize: const Size(44, 44),
+                      tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                      shape: const CircleBorder(),
+                    ),
+                    onPressed: _isLoadingFollowUp
+                        ? null
+                        : () {
+                            final t = _inputController.text;
+                            _inputController.clear();
+                            setState(() {});
+                            _sendFollowUp(t);
+                          },
+                    icon: const Icon(Icons.arrow_upward_rounded, size: 22),
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+          const LocalSpeechPrivacyCaption(
+            padding: EdgeInsets.fromLTRB(8, 6, 8, 0),
+          ),
+        ],
       ),
     );
   }
@@ -1352,6 +1374,31 @@ class _ExplanationBottomSheetContentState
     );
   }
 
+  Future<void> _submitVerseExplanationFeedback(int rating) async {
+    if (_verseExplanationFeedbackSent) return;
+    final sn = widget.params.surahName;
+    final an = widget.params.ayahNumber;
+    final ctx = (sn != null && an != null) ? 'Sure $sn, Vers $an' : null;
+    final ok = await AppFeedbackService.send(
+      rating: rating,
+      screen: 'ai_verse_explanation',
+      context: ctx,
+    );
+    if (!mounted) return;
+    if (ok) {
+      setState(() => _verseExplanationFeedbackSent = true);
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+        const SnackBar(content: Text('Danke für dein Feedback!')),
+      );
+    } else {
+      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
+        const SnackBar(
+          content: Text('Konnte nicht senden. Bitte später erneut versuchen.'),
+        ),
+      );
+    }
+  }
+
   Widget _buildBottomComposer(MediaQueryData media) {
     final showComposer = (_cards != null || _messages.isNotEmpty) && _errorMessage == null;
     if (!showComposer) {
@@ -1363,6 +1410,8 @@ class _ExplanationBottomSheetContentState
         (_remainingFollowUps == null || _remainingFollowUps! > 0) &&
         !keyboardOpen &&
         quickQs.isNotEmpty;
+    final showInlineAiFeedback =
+        _cards != null && !_verseExplanationFeedbackSent && !keyboardOpen;
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(10, 6, 10, 8),
@@ -1371,6 +1420,43 @@ class _ExplanationBottomSheetContentState
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
           Divider(height: 1, thickness: 1, color: Colors.white.withOpacity(0.08)),
+          if (showInlineAiFeedback) ...[
+            Padding(
+              padding: const EdgeInsets.fromLTRB(8, 10, 8, 0),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      'War die Erklärung hilfreich?',
+                      style: GoogleFonts.inter(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.white.withOpacity(0.72),
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: 'Ja',
+                    onPressed: () => _submitVerseExplanationFeedback(1),
+                    icon: Icon(
+                      Icons.thumb_up_outlined,
+                      color: _accentChampagneGold,
+                      size: 22,
+                    ),
+                  ),
+                  IconButton(
+                    tooltip: 'Nein',
+                    onPressed: () => _submitVerseExplanationFeedback(-1),
+                    icon: Icon(
+                      Icons.thumb_down_outlined,
+                      color: Colors.white54,
+                      size: 22,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           SizedBox(height: showQuickChips ? 10 : 8),
           if (showQuickChips) ...[
             _buildQuickChips(),

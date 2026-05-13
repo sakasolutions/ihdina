@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:speech_to_text/speech_to_text.dart';
 import '../data/quran/quran_repository.dart';
 import '../data/quran/translation_service.dart';
 import '../data/quran/models/surah_model.dart';
@@ -15,6 +16,8 @@ import '../theme/app_theme.dart';
 import '../theme/hero_theme.dart';
 import '../utils/search_normalize.dart';
 import '../widgets/glass_card.dart';
+import '../widgets/local_dictation_icon_button.dart';
+import '../widgets/local_speech_privacy_caption.dart';
 import '../models/surah.dart';
 import 'quran_reader_screen.dart';
 
@@ -29,6 +32,7 @@ List<Surah> filterSurahs(List<Surah> surahs, String query) {
   return surahs.where((s) {
     if (digitOnly.isNotEmpty && '${s.number}'.contains(digitOnly)) return true;
     if (SearchNormalize.westContains(s.nameDe, raw)) return true;
+    if (SearchNormalize.westLooseContains(s.nameDe, raw, minQueryLen: 3)) return true;
     if (SearchNormalize.arabicContains(s.nameAr, raw)) return true;
     if (s.nameAr.contains(raw)) return true;
     return false;
@@ -162,9 +166,15 @@ class _SearchScreenState extends State<SearchScreen> {
         if (results.length >= limit) break;
         final textAr = ayah.textAr;
         final textDe = TranslationService.instance.getTranslation(sm.id, ayah.ayahNumber);
+        final translit = ayah.textTranslit ?? '';
         final matchAr = SearchNormalize.arabicContains(textAr, raw);
         final matchDe = textDe.isNotEmpty && SearchNormalize.westContains(textDe, raw);
-        if (matchAr || matchDe) {
+        final matchDeLoose = textDe.isNotEmpty &&
+            SearchNormalize.westLooseContains(textDe, raw, minQueryLen: 4);
+        final matchTr = translit.isNotEmpty && SearchNormalize.westContains(translit, raw);
+        final matchTrLoose = translit.isNotEmpty &&
+            SearchNormalize.westLooseContains(translit, raw, minQueryLen: 4);
+        if (matchAr || matchDe || matchDeLoose || matchTr || matchTrLoose) {
           results.add(SearchResult(
             surahId: sm.id,
             ayahNumber: ayah.ayahNumber,
@@ -260,26 +270,40 @@ class _SearchScreenState extends State<SearchScreen> {
                 ),
                 Padding(
                   padding: const EdgeInsets.fromLTRB(_outerPadding, 16, _outerPadding, 0),
-                  child: TextField(
-                    controller: _controller,
-                    onChanged: _onQueryChanged,
-                    decoration: InputDecoration(
-                      hintText: _segmentIndex == 0 ? 'Sure suchen' : 'Vers oder Stichwort suchen...',
-                      hintStyle: GoogleFonts.inter(fontSize: 15, color: Colors.white70),
-                      prefixIcon: const Icon(Icons.search_rounded, size: 22, color: Colors.white70),
-                      filled: true,
-                      fillColor: Colors.white.withOpacity(0.15),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
-                        borderSide: BorderSide(color: Colors.white.withOpacity(0.3)),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      TextField(
+                        controller: _controller,
+                        onChanged: _onQueryChanged,
+                        decoration: InputDecoration(
+                          hintText: _segmentIndex == 0 ? 'Sure suchen' : 'Vers oder Stichwort suchen...',
+                          hintStyle: GoogleFonts.inter(fontSize: 15, color: Colors.white70),
+                          prefixIcon: const Icon(Icons.search_rounded, size: 22, color: Colors.white70),
+                          filled: true,
+                          fillColor: Colors.white.withOpacity(0.15),
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: BorderSide(color: Colors.white.withOpacity(0.3)),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(14),
+                            borderSide: BorderSide(color: Colors.white.withOpacity(0.3)),
+                          ),
+                          suffixIcon: LocalDictationIconButton(
+                            controller: _controller,
+                            listenMode: _segmentIndex == 0
+                                ? ListenMode.search
+                                : ListenMode.dictation,
+                            iconColor: Colors.white70,
+                            padding: const EdgeInsetsDirectional.only(end: 4),
+                          ),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        ),
+                        style: GoogleFonts.inter(fontSize: 15, color: Colors.white),
                       ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(14),
-                        borderSide: BorderSide(color: Colors.white.withOpacity(0.3)),
-                      ),
-                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                    ),
-                    style: GoogleFonts.inter(fontSize: 15, color: Colors.white),
+                      const LocalSpeechPrivacyCaption(),
+                    ],
                   ),
                 ),
                 const SizedBox(height: _sectionGap),

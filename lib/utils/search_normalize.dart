@@ -41,6 +41,29 @@ abstract final class SearchNormalize {
     return foldWest(haystack).contains(q);
   }
 
+  /// Nur a–z und 0–9 (nach [foldWest]): ignoriert Leerzeichen, Bindestriche, Apostrophe usw.
+  /// Damit findet z. B. „al fatiha“ / „Al Fatihah“ die DB-Form „Al-Fatihah“.
+  static String foldWestAlphanumeric(String input) {
+    final folded = foldWest(input);
+    final buf = StringBuffer();
+    for (final r in folded.runes) {
+      if ((r >= 0x61 && r <= 0x7A) || (r >= 0x30 && r <= 0x39)) {
+        buf.writeCharCode(r);
+      }
+    }
+    return buf.toString();
+  }
+
+  /// Substring-Match auf „Buchstaben/Ziffern nur“-Form. Kürzere Queries erhöhen Trefferlärm
+  /// in langen Texten — deshalb [minQueryLen] (Suren niedriger, Fließtext höher).
+  static bool westLooseContains(String haystack, String query, {int minQueryLen = 3}) {
+    final q = foldWestAlphanumeric(query);
+    if (q.length < minQueryLen) return false;
+    final h = foldWestAlphanumeric(haystack);
+    if (h.isEmpty) return false;
+    return h.contains(q);
+  }
+
   /// Erster Treffer (Start, Länge) in [full] für [needle], nur Groß-/Kleinschreibung ignoriert.
   static (int start, int len)? firstCaseInsensitiveMatch(String full, String needle) {
     final n = needle.trim();

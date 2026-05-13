@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 
+import '../../utils/search_normalize.dart';
 import 'glossary_entry.dart';
 
 /// Offline-Glossar für Begriffe rund um Koran und Lesen (Erweiterung über JSON möglich).
@@ -45,12 +46,17 @@ class GlossaryRepository {
     }
   }
 
-  /// Filtert nach Stichwort in Titel oder Fließtext (ohne Diakritika-Speziallogik).
+  /// Filtert nach Stichwort in Titel oder Fließtext (Umlaute, lockerer Latin-Match).
   static List<GlossaryEntry> filter(List<GlossaryEntry> all, String query) {
-    final q = query.trim().toLowerCase();
-    if (q.isEmpty) return all;
+    final raw = query.trim();
+    if (raw.isEmpty) return all;
     return all.where((e) {
-      return e.term.toLowerCase().contains(q) || e.body.toLowerCase().contains(q);
+      if (SearchNormalize.westContains(e.term, raw) ||
+          SearchNormalize.westContains(e.body, raw)) {
+        return true;
+      }
+      return SearchNormalize.westLooseContains(e.term, raw, minQueryLen: 3) ||
+          SearchNormalize.westLooseContains(e.body, raw, minQueryLen: 4);
     }).toList();
   }
 }
