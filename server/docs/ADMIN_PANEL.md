@@ -2,6 +2,8 @@
 
 Internes Dashboard unter **`/admin/`** (nur wenn `ADMIN_API_KEY` gesetzt). Zeigt KI-Usage und Feedbacks; erweiterbar über neue Routen unter `/api/v1/admin/…`.
 
+**Feedbacks:** `GET /api/v1/admin/feedback?take=100` optional `&screen=…` — `screen=all` weglassen; `screen=_untagged` nur Einträge ohne Screen-Tag; sonst exakter Match (z. B. `settings`, `ai_verse_explanation`).
+
 ## Voraussetzungen
 
 - Node-API (`ihdina-api`) läuft (z. B. PM2), lauscht intern z. B. auf `127.0.0.1:3001`.

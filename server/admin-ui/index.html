@@ -79,7 +79,7 @@
     }
     section.card h2 { margin: 0 0 12px; font-size: 1rem; font-weight: 700; color: var(--text); }
     label { display: block; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); margin-bottom: 6px; }
-    input[type="url"], input[type="password"], input[type="number"] {
+    input[type="url"], input[type="password"], input[type="number"], select {
       width: 100%;
       max-width: 100%;
       padding: 10px 12px;
@@ -158,13 +158,13 @@
 <body>
   <div class="wrap">
     <header>
-      <h1>Ihdina Admin</h1>
-      <span class="ver">API · Logs · Feedback</span>
+      <h1>Ihdina — internes Dashboard</h1>
+      <span class="ver">Zugang · KI-Usage · Feedbacks</span>
     </header>
 
     <nav id="nav" aria-label="Hauptnavigation">
       <button type="button" class="active" data-tab="access">Zugang</button>
-      <button type="button" data-tab="usage">Usage</button>
+      <button type="button" data-tab="usage">KI-Usage</button>
       <button type="button" data-tab="feedback">Feedbacks</button>
     </nav>
 
@@ -211,6 +211,16 @@
     <div id="panel-feedback" class="panel">
       <section class="card">
         <h2>Letzte Feedbacks</h2>
+        <p class="hint">Filter <code>screen</code> wie in der App gesendet (z. B. <code>settings</code>, <code>ai_verse_explanation</code>). „Ohne Tag“ = ältere Einträge ohne Screen-Feld.</p>
+        <label for="fbTake">Anzahl</label>
+        <input id="fbTake" type="number" min="1" max="500" value="100" style="max-width:140px" />
+        <label for="fbScreen">Screen-Tag</label>
+        <select id="fbScreen">
+          <option value="all">Alle</option>
+          <option value="_untagged">Ohne Tag (nur leeres Feld)</option>
+          <option value="settings">settings (Einstellungen)</option>
+          <option value="ai_verse_explanation">ai_verse_explanation (KI-Verserklärung)</option>
+        </select>
         <div class="row">
           <button type="button" class="action" id="btnFeedback">Liste laden</button>
         </div>
@@ -220,7 +230,8 @@
     </div>
 
     <footer>
-      Internes Werkzeug — nicht indexieren, Zugang nur mit Schlüssel. Erweiterungen: Backend-Routen unter <code>/api/v1/admin/</code>, UI in dieser Datei.
+      <p><strong>Hinweis:</strong> Das ist ein bewusst schlankes internes Dashboard (eine HTML-Datei + eure API) — typisch für MVP/Admin ohne zweites Frontend-Projekt. Ein „richtiges“ Produkt-Dashboard (Metabase, Retool, Grafana oder eigenes Next.js-Admin) lohnt, wenn ihr viele Metriken, Rollen und Drilldowns braucht.</p>
+      <p style="margin-top:8px">Erweiterungen: Backend unter <code>/api/v1/admin/</code>, UI in <code>server/admin-ui/index.html</code>.</p>
     </footer>
   </div>
 
@@ -356,9 +367,17 @@
       const btn = document.getElementById("btnFeedback");
       localStorage.setItem(LS_API, document.getElementById("apiBase").value.trim());
       localStorage.setItem(LS_KEY, document.getElementById("adminKey").value.trim());
+      const takeRaw = parseInt(document.getElementById("fbTake").value, 10);
+      const take = Math.min(500, Math.max(1, Number.isFinite(takeRaw) ? takeRaw : 100));
+      document.getElementById("fbTake").value = String(take);
+      const screenSel = document.getElementById("fbScreen").value;
+      let path = "/api/v1/admin/feedback?take=" + encodeURIComponent(take);
+      if (screenSel && screenSel !== "all") {
+        path += "&screen=" + encodeURIComponent(screenSel);
+      }
       setBusy(btn, true);
       try {
-        const data = await fetchJson("/api/v1/admin/feedback?take=100");
+        const data = await fetchJson(path);
         const items = data.items || [];
         const box = document.getElementById("feedbackList");
         box.innerHTML = items.length ? items.map(renderFb).join("") : "<p class='empty'>Keine Einträge.</p>";
@@ -375,7 +394,8 @@
     }
 
     function renderFb(f) {
-      const meta = escapeHtml(f.createdAt) + " · installId: " + escapeHtml(f.installId) + (f.screen ? " · " + escapeHtml(f.screen) : "");
+      const screenLabel = f.screen != null && f.screen !== "" ? escapeHtml(f.screen) : "<em>—</em>";
+      const meta = escapeHtml(f.createdAt) + " · installId: " + escapeHtml(f.installId) + " · screen: " + screenLabel;
       const rating = f.rating != null ? "Rating: " + f.rating : "Rating: –";
       const c = f.comment ? "<div style='margin-top:6px'>" + escapeHtml(f.comment) + "</div>" : "";
       const ctx = f.context ? "<details style='margin-top:6px'><summary>Kontext</summary><pre style='white-space:pre-wrap;overflow:auto;max-height:220px'>" + escapeHtml(f.context) + "</pre></details>" : "";

@@ -15,7 +15,7 @@ export declare function createAppFeedback(input: CreateFeedbackInput): Promise<{
     context: string | null;
     screen: string | null;
 }>;
-export declare function listRecentFeedbacks(take: number): Promise<{
+export declare function listRecentFeedbacks(take: number, screenFilter?: string | null): Promise<{
     id: string;
     installId: string;
     createdAt: Date;

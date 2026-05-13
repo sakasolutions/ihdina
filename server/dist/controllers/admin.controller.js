@@ -36,6 +36,7 @@ export async function adminUsageDailyHandler(req, reply) {
 export async function adminFeedbackListHandler(req, reply) {
     const raw = req.query.take ?? "100";
     const take = Number.parseInt(raw, 10);
-    const items = await listRecentFeedbacks(Number.isFinite(take) ? take : 100);
+    const screen = req.query.screen?.trim();
+    const items = await listRecentFeedbacks(Number.isFinite(take) ? take : 100, screen && screen.length > 0 ? screen : undefined);
     return reply.send({ success: true, data: { items } });
 }

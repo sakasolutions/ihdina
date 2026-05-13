@@ -48,9 +48,20 @@ export async function createAppFeedback(input: CreateFeedbackInput) {
   });
 }
 
-export async function listRecentFeedbacks(take: number) {
+export async function listRecentFeedbacks(
+  take: number,
+  screenFilter?: string | null
+) {
   const n = Math.min(Math.max(take, 1), 500);
+  const raw = screenFilter?.trim();
+  const where =
+    !raw || raw === "all"
+      ? undefined
+      : raw === "_untagged"
+        ? { screen: null }
+        : { screen: raw.slice(0, 120) };
   return prisma.appFeedback.findMany({
+    ...(where ? { where } : {}),
     orderBy: { createdAt: "desc" },
     take: n,
     select: {

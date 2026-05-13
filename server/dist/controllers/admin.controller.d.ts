@@ -25,5 +25,6 @@ export declare function adminUsageDailyHandler(req: FastifyRequest<{
 export declare function adminFeedbackListHandler(req: FastifyRequest<{
     Querystring: {
         take?: string;
+        screen?: string;
     };
 }>, reply: FastifyReply): Promise<never>;
