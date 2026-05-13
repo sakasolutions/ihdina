@@ -4,6 +4,8 @@ import {
   searchUsersByInstallId,
   setUserProByInstallId,
 } from "../services/admin.service.js";
+import { getUsageDailyAggregates } from "../services/adminUsage.service.js";
+import { listRecentFeedbacks } from "../services/feedback.service.js";
 import { AppError, ErrorCodes } from "../utils/errors.js";
 
 export async function adminSearchUsersHandler(
@@ -44,4 +46,24 @@ export async function adminSetProHandler(
   }
   const user = await setUserProByInstallId(installId, body.isPro);
   return reply.send({ success: true, data: { user } });
+}
+
+export async function adminUsageDailyHandler(
+  req: FastifyRequest<{ Querystring: { days?: string } }>,
+  reply: FastifyReply
+) {
+  const raw = req.query.days ?? "14";
+  const days = Number.parseInt(raw, 10);
+  const rows = await getUsageDailyAggregates(Number.isFinite(days) ? days : 14);
+  return reply.send({ success: true, data: { rows } });
+}
+
+export async function adminFeedbackListHandler(
+  req: FastifyRequest<{ Querystring: { take?: string } }>,
+  reply: FastifyReply
+) {
+  const raw = req.query.take ?? "100";
+  const take = Number.parseInt(raw, 10);
+  const items = await listRecentFeedbacks(Number.isFinite(take) ? take : 100);
+  return reply.send({ success: true, data: { items } });
 }

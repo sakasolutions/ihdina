@@ -70,7 +70,10 @@ class RevenueCatService {
   static Future<Offerings?> getOfferings() async {
     try {
       return await Purchases.getOfferings();
-    } catch (e) {
+    } catch (e, st) {
+      if (kDebugMode) {
+        debugPrint('[RevenueCat] getOfferings failed: $e\n$st');
+      }
       return null;
     }
   }
@@ -81,7 +84,10 @@ class RevenueCatService {
       await Purchases.purchasePackage(package);
       await updateCustomerStatus();
       return true;
-    } catch (e) {
+    } catch (e, st) {
+      if (kDebugMode) {
+        debugPrint('[RevenueCat] purchasePackage failed: $e\n$st');
+      }
       return false; // User cancelled or error
     }
   }

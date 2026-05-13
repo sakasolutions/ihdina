@@ -11,6 +11,7 @@ export async function entitlementHandler(req, reply) {
         data: {
             isPro: data.isPro,
             freeExtraRemainingToday: data.freeExtraRemainingToday,
+            maxFreeExtraPerDay: data.maxFreeExtraPerDay,
         },
     });
 }

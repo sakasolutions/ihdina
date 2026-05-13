@@ -45,6 +45,7 @@ flutter:
   uses-material-design: true
   assets:
     - assets/data/
+    - assets/data/glossary.json
     - assets/db/
     - assets/db/ihdina.db
     - assets/tanzil/

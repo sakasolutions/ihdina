@@ -1,0 +1,79 @@
+{
+  "entries": [
+    {
+      "id": "koran",
+      "term": "Koran (Quran)",
+      "body": "Der Koran ist im muslimischen Verständnis die wörtliche Offenbarung Gottes an den Propheten Muhammad – in arabischer Sprache, überliefert als Text und gelesen als Gotteswort.\n\nIn Ihdina findest du den arabischen Text mit deutscher Bedeutungsnäherung; das ersetzt weder Unterricht noch gelehrte Auslegung."
+    },
+    {
+      "id": "sure",
+      "term": "Sure",
+      "body": "Eine Sure ist ein Kapitel des Korans. Die Suren sind festgelegt und nummeriert (1 bis 114); die Reihenfolge der Verse innerhalb einer Sure ist ebenfalls fest.\n\nNamen wie „Al-Baqarah“ bezeichnen oft ein Leitwort oder Thema der Sure, nicht immer den gesamten Inhalt."
+    },
+    {
+      "id": "ayah",
+      "term": "Ayah (Vers)",
+      "body": "Ein Ayah ist ein einzelner Vers des Korans. Technisch ist er die kleinste Einheit, nach der gezählt, zitiert und gebetet wird.\n\nIn der App liest du Ayahs nacheinander; viele Zusammenhänge ergeben sich erst über mehrere Verse oder ganze Abschnitte."
+    },
+    {
+      "id": "basmala",
+      "term": "Basmala",
+      "body": "Die Basmala ist die Formel „Bismillahi r-rahmani r-rahim“ (sinngemäß: Im Namen Gottes, des Allerbarmers, des Barmherzigen). Sie steht am Anfang fast jeder Sure – ausgenommen Sure 9.\n\nSure 1 (Al-Fatihah) beginnt direkt mit ihr; sie rahmt für viele Lesende den Einstieg ins Lesen ein."
+    },
+    {
+      "id": "mushaf",
+      "term": "Mushaf",
+      "body": "Ein Mushaf ist die gesammelte schriftliche Fassung des Korans in fester Suren- und Versfolge – das, was man umgangssprachlich oft als „den Koran“ als Buch meint.\n\nDigitale Mushafs (wie in Apps) übernehmen dieselbe Struktur; Druckausgaben können sich leicht unterscheiden, nicht im Text, wohl in Layout und Hilfslinien."
+    },
+    {
+      "id": "mekka_medina",
+      "term": "Mekkanische und medinische Suren",
+      "body": "Traditionell werden Suren grob danach eingeteilt, ob ihr Schwerpunkt in der frühen mekkanischen oder in der späteren medinischen Zeit der Offenbarung liegt – also vor oder nach der Auswanderung (Hidschra).\n\nDas ist eine Les- und Einordnungshilfe, kein starres Korsett: manche Suren mischen Motive; wichtig ist vor allem, längere Passagen im Zusammenhang zu lesen."
+    },
+    {
+      "id": "uebersetzung",
+      "term": "Übersetzung",
+      "body": "Eine Übersetzung gibt die Bedeutung des Arabischen in einer anderen Sprache wieder – sie nähert sich an, ersetzt aber nicht den arabischen Wortlaut. Nuancen, Klang und Mehrdeutigkeit gehen dabei immer teilweise verloren.\n\nIn Ihdina dient die deutsche Fassung dem Verständnis; für Ritual und Auswendiglernen bleibt das Arabisch maßgeblich."
+    },
+    {
+      "id": "transliteration",
+      "term": "Transliteration",
+      "body": "Transliteration schreibt arabische Wörter mit lateinischen Buchstaben nach, damit Lesende ohne Arabisch-Kenntnis einen ungefähren Lautstand hören können.\n\nSie ist keine zweite Übersetzung und kein Ersatz für arabische Schrift; Aussprachehilfe für den Einstieg – die korrekte Lesart lernt man am zuverlässigsten mit qualifiziertem Unterricht."
+    },
+    {
+      "id": "tafsir",
+      "term": "Tafsir",
+      "body": "Tafsir bezeichnet die Auslegung und Erläuterung des Korantextes – durch Kommentare, Kontexte, Sprache und Überlieferung. Es gibt viele Tafsir-Werke und Schulen; sie stimmen nicht in jedem Punkt überein.\n\nIhdina bietet bewusst keine vollwertige Tafsir-Ersatzlektüre; Kurztexte und KI-Hinweise sind eingegrenzt und dienen der Orientierung, nicht der Rechtsfindung."
+    },
+    {
+      "id": "hadith",
+      "term": "Hadith",
+      "body": "Hadithe sind überlieferte Aussagen, Taten und Billigungen des Propheten Muhammad, die neben dem Koran eine zentrale Quelle für viele muslimische Lehren und Praxisformen sind.\n\nHadith-Überlieferung ist eigenes Fach (Kritik der Kette, der Texte). Der Koran bleibt in der Regel der erste Anker; Hadithe dürfen ihn nicht widersprechen."
+    },
+    {
+      "id": "sunnah",
+      "term": "Sunnah",
+      "body": "Sunnah meint wörtlich „Brauch“ oder „Vorbild“ – zunächst das Handeln und die Lehre des Propheten, dann auch die gesammelte Überlieferung davon und schließlich empfohlene religiöse Praxis.\n\nIm Alltag wird „Sunnah“ oft für freiwillige Gebete oder Gewohnheiten gebraucht; genauer wird es je nach Kontext."
+    },
+    {
+      "id": "salah",
+      "term": "Gebet (Salah)",
+      "body": "Salah bezeichnet das rituelle Gebet zu festen Zeiten mit bestimmten Haltungen und Formeln – ein tragendes Element muslimischer Praxis.\n\nIn Ihdina findest du Gebetszeiten und Erinnerungen; die korrekte Ausführung des Gebets lernt man am besten vor Ort mit Anleitung."
+    },
+    {
+      "id": "dua",
+      "term": "Bittgebet (Du'a)",
+      "body": "Du'a ist Anrufung und Bitte an Gott – formell oder in eigenen Worten, zu jeder Zeit. Es unterscheidet sich vom ritualisierten Salah, ohne weniger ernst gemeint zu sein.\n\nViele Suren enthalten Bitt- und Lobformeln; sie als „Gespräch mit Gott“ zu lesen, hilft oft dem Verständnis."
+    },
+    {
+      "id": "sawm",
+      "term": "Fasten (Sawm)",
+      "body": "Sawm meint Fasten – im Quran-Kontext vor allem das Pflichtfasten im Monat Ramadan von der Morgendämmerung bis zum Sonnenuntergang, verbunden mit Enthaltsamkeit und innerer Zuwendung.\n\nEinzelverse zum Fasten sind in größere Gemeinde- und Ethikpassagen eingebettet; Gesundheit und Ausnahmen regelt die gelehrte Praxis (Fiqh)."
+    },
+    {
+      "id": "fiqh",
+      "term": "Fiqh",
+      "body": "Fiqh ist die disziplinierte Ableitung konkreter religiöser Regeln aus Quran, Sunnah und methodischen Prinzipien – vergleichbar mit Jurisprudenz. Es gibt verschiedene Rechtsschulen und Meinungen.\n\nIhdina ersetzt keine Fiqh-Beratung; bei persönlichen Entscheidungen (Gebet, Fasten, Familie) solltest du zuverlässige Gelehrte oder anerkannte Institutionen fragen."
+    }
+  ]
+}

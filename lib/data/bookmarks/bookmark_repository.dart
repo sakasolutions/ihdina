@@ -3,6 +3,7 @@ import 'package:sqflite/sqflite.dart';
 import '../db/database_provider.dart';
 import 'bookmark_item.dart';
 import 'bookmark_model.dart';
+import 'bookmark_note_repository.dart';
 
 /// Bookmarks stored in SQLite (same DB as Quran). Offline-first.
 class BookmarkRepository {
@@ -27,6 +28,7 @@ class BookmarkRepository {
   }
 
   Future<void> removeBookmark(int surahId, int ayahNumber) async {
+    await BookmarkNoteRepository.instance.delete(surahId, ayahNumber);
     final db = await _db;
     await db.delete(
       'bookmarks',
@@ -73,10 +75,12 @@ class BookmarkRepository {
     final rows = await db.rawQuery('''
       SELECT b.surah_id, b.ayah_number, b.created_at,
              s.name_en as surah_name_en, s.name_ar as surah_name_ar,
-             a.text_ar as ayah_text_ar
+             a.text_ar as ayah_text_ar,
+             n.body as note_body
       FROM bookmarks b
       JOIN surahs s ON s.id = b.surah_id
       JOIN ayahs a ON a.surah_id = b.surah_id AND a.ayah_number = b.ayah_number
+      LEFT JOIN bookmark_notes n ON n.surah_id = b.surah_id AND n.ayah_number = b.ayah_number
       ORDER BY b.created_at DESC
     ''');
     return rows.map((r) => BookmarkItem.fromMap(r)).toList();

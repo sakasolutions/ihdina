@@ -11,4 +11,5 @@ export declare function explainVerse(input: ExplainInput): Promise<{
     text: string;
     isPro: boolean;
     remainingFreeExtraToday: number | null;
+    relatedAyahs: import("../utils/relatedAyahsFromText.js").RelatedAyahRef[];
 }>;

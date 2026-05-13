@@ -24,6 +24,7 @@ model User {
   dailyUsages    DailyExplanationUsage[]
   followUpUsages FollowUpUsage[]
   aiRequestLogs  AiRequestLog[]
+  appFeedbacks   AppFeedback[]
 }
 
 /// Idempotente Speicherung eingehender RevenueCat-Webhooks (Audit + Duplikat-Schutz).
@@ -67,14 +68,35 @@ model FollowUpUsage {
 }
 
 model AiRequestLog {
-  id        String   @id @default(cuid())
-  userId    String?
-  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
-  endpoint  String
-  status    String
-  errorCode String?
-  createdAt DateTime @default(now())
+  id               String   @id @default(cuid())
+  userId           String?
+  user             User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  endpoint         String
+  status           String
+  errorCode        String?
+  model            String?
+  promptTokens     Int?
+  completionTokens Int?
+  totalTokens      Int?
+  latencyMs        Int?
+  createdAt        DateTime @default(now())
 
   @@index([userId])
+  @@index([createdAt])
+}
+
+/// In-App-Feedback (Rating + optionaler Text), verknüpft mit installId / optional User.
+model AppFeedback {
+  id        String   @id @default(cuid())
+  installId String
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  rating    Int?
+  comment   String?  @db.Text
+  context   String?  @db.Text
+  screen    String?
+  createdAt DateTime @default(now())
+
+  @@index([installId])
   @@index([createdAt])
 }

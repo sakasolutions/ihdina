@@ -16,6 +16,7 @@ export async function entitlementHandler(
     data: {
       isPro: data.isPro,
       freeExtraRemainingToday: data.freeExtraRemainingToday,
+      maxFreeExtraPerDay: data.maxFreeExtraPerDay,
     },
   });
 }

@@ -41,6 +41,7 @@ class DatabaseProvider {
       debugPrint('[DB] opened');
     }
     await _ensureBookmarksTable(db);
+    await _ensureBookmarkNotesTable(db);
     await _ensureReadingProgressTable(db);
     await _ensureSettingsTable(db);
     await _ensureAyahsTransliterationColumn(db);
@@ -69,6 +70,17 @@ class DatabaseProvider {
       'ayah_number INTEGER NOT NULL, '
       'created_at INTEGER NOT NULL, '
       'UNIQUE(surah_id, ayah_number))',
+    );
+  }
+
+  static Future<void> _ensureBookmarkNotesTable(Database db) async {
+    await db.execute(
+      'CREATE TABLE IF NOT EXISTS bookmark_notes('
+      'surah_id INTEGER NOT NULL, '
+      'ayah_number INTEGER NOT NULL, '
+      'body TEXT NOT NULL, '
+      'updated_at INTEGER NOT NULL, '
+      'PRIMARY KEY (surah_id, ayah_number))',
     );
   }
 

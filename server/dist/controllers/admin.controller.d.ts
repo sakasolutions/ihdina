@@ -17,3 +17,13 @@ export declare function adminSetProHandler(req: FastifyRequest<{
         isPro?: boolean;
     };
 }>, reply: FastifyReply): Promise<never>;
+export declare function adminUsageDailyHandler(req: FastifyRequest<{
+    Querystring: {
+        days?: string;
+    };
+}>, reply: FastifyReply): Promise<never>;
+export declare function adminFeedbackListHandler(req: FastifyRequest<{
+    Querystring: {
+        take?: string;
+    };
+}>, reply: FastifyReply): Promise<never>;

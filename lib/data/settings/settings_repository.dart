@@ -16,6 +16,8 @@ const String _keyPrayerMethod = 'prayer_method';
 const String _keyPrayerMadhab = 'prayer_madhab';
 const String _keyNotificationsEnabled = 'notifications_enabled';
 const String _keyDailyAyahReminderEnabled = 'daily_ayah_reminder_enabled';
+const String _keySurahIntroAutoShow = 'surah_intro_auto_show';
+const String _keySurahIntroAutoShownSurahIds = 'surah_intro_auto_shown_surah_ids';
 const double _defaultLat = 48.68;
 const double _defaultLng = 10.15;
 const String _defaultLocationLabel = 'Default';
@@ -116,6 +118,35 @@ class SettingsRepository {
 
   Future<void> setDailyAyahReminderEnabled(bool enabled) async {
     await _set(_keyDailyAyahReminderEnabled, enabled ? 'true' : 'false');
+  }
+
+  /// Sure-Kurzintro beim ersten Öffnen einer Sure im Reader (Standard: an).
+  Future<bool> getSurahIntroAutoShow() async {
+    final v = await _get(_keySurahIntroAutoShow);
+    if (v == null) return true;
+    return v == 'true' || v == '1';
+  }
+
+  Future<void> setSurahIntroAutoShow(bool enabled) async {
+    await _set(_keySurahIntroAutoShow, enabled ? 'true' : 'false');
+  }
+
+  /// Sure-IDs, für die das Intro bereits automatisch gezeigt wurde (kommagetrennt).
+  Future<Set<int>> getSurahIntroAutoShownSurahIds() async {
+    final v = await _get(_keySurahIntroAutoShownSurahIds);
+    if (v == null || v.trim().isEmpty) return {};
+    return v
+        .split(',')
+        .map((s) => int.tryParse(s.trim()))
+        .whereType<int>()
+        .toSet();
+  }
+
+  Future<void> addSurahIntroAutoShownSurahId(int surahId) async {
+    final set = await getSurahIntroAutoShownSurahIds();
+    set.add(surahId);
+    final sorted = set.toList()..sort();
+    await _set(_keySurahIntroAutoShownSurahIds, sorted.join(','));
   }
 
   /// Saves selected city/location for prayer times (label + lat/lng). Keeps method/madhab unchanged.

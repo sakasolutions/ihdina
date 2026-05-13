@@ -1,11 +1,14 @@
-import { prisma } from "../db/client.js";
+import { MAX_FREE_EXTRA_EXPLANATIONS_PER_DAY } from "../config/limits.js";
 import { utcDateString } from "../utils/date.js";
 import { AppError, ErrorCodes } from "../utils/errors.js";
+import { extractRelatedAyahsFromText } from "../utils/relatedAyahsFromText.js";
+import {
+  bumpDailyExplanationExtraCount,
+  getDailyExplanationExtraCount,
+} from "./dailyExplanationUsageQueries.js";
 import { completeExplanation } from "./openai.service.js";
 import { getOrCreateUser } from "./user.service.js";
 import { logAiRequest } from "./usageLog.service.js";
-
-const MAX_FREE_EXTRA_PER_DAY = 1;
 
 export type ExplainInput = {
   installId: string;
@@ -23,13 +26,8 @@ export async function explainVerse(input: ExplainInput) {
 
   if (!user.isPro) {
     if (!input.isDailyVerse) {
-      const row = await prisma.dailyExplanationUsage.findUnique({
-        where: {
-          userId_usageDate: { userId: user.id, usageDate },
-        },
-      });
-      const used = row?.extraCount ?? 0;
-      if (used >= MAX_FREE_EXTRA_PER_DAY) {
+      const used = await getDailyExplanationExtraCount(user.id, usageDate);
+      if (used >= MAX_FREE_EXTRA_EXPLANATIONS_PER_DAY) {
         await logAiRequest({
           userId: user.id,
           endpoint: "POST /api/v1/explain",
@@ -45,9 +43,9 @@ export async function explainVerse(input: ExplainInput) {
     }
   }
 
-  let text: string;
+  let completion;
   try {
-    text = await completeExplanation({
+    completion = await completeExplanation({
       surahName: input.surahName,
       ayahNumber: input.ayahNumber,
       textAr: input.textAr,
@@ -62,44 +60,35 @@ export async function explainVerse(input: ExplainInput) {
     });
     throw e;
   }
+  const text = completion.text;
 
   if (!user.isPro && !input.isDailyVerse) {
-    await prisma.dailyExplanationUsage.upsert({
-      where: {
-        userId_usageDate: { userId: user.id, usageDate },
-      },
-      create: {
-        userId: user.id,
-        usageDate,
-        extraCount: 1,
-      },
-      update: {
-        extraCount: { increment: 1 },
-      },
-    });
+    await bumpDailyExplanationExtraCount(user.id, usageDate);
   }
 
   await logAiRequest({
     userId: user.id,
     endpoint: "POST /api/v1/explain",
     status: "ok",
+    model: completion.model,
+    promptTokens: completion.promptTokens,
+    completionTokens: completion.completionTokens,
+    totalTokens: completion.totalTokens,
+    latencyMs: completion.latencyMs,
   });
 
-  const usedAfter = await getExtraUsedToday(user.id, usageDate);
+  const usedAfter = await getDailyExplanationExtraCount(user.id, usageDate);
   const remainingFreeExtraToday = user.isPro
     ? null
-    : Math.max(0, MAX_FREE_EXTRA_PER_DAY - usedAfter);
+    : Math.max(0, MAX_FREE_EXTRA_EXPLANATIONS_PER_DAY - usedAfter);
+
+  const relatedAyahs = extractRelatedAyahsFromText(text);
 
   return {
     text,
     isPro: user.isPro,
     remainingFreeExtraToday,
+    relatedAyahs,
   };
 }
 
-async function getExtraUsedToday(userId: string, usageDate: string): Promise<number> {
-  const row = await prisma.dailyExplanationUsage.findUnique({
-    where: { userId_usageDate: { userId, usageDate } },
-  });
-  return row?.extraCount ?? 0;
-}

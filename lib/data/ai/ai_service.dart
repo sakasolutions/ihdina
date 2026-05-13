@@ -1,11 +1,12 @@
 import 'dart:convert';
 
-import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart' show debugPrint, kDebugMode;
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../api/ihdina_api_client.dart';
+import 'related_ayah_ref.dart';
 
 /// In release builds we must not ship or read any secret API keys from the client.
 /// Nur für [chatCompletionOneShot] (Tages-Impuls) in Debug.
@@ -48,11 +49,24 @@ REGELN: 1. Erkläre den Kontext und die Bedeutung für das heutige Leben. 2. Du 
 
 const String _cacheKeyPrefix = 'ai_exp_';
 
+/// Ergebnis von [AIService.getExplanation] (Roh-`text` + optionale Verse aus Server-Parsing).
+class AiExplanationResult {
+  const AiExplanationResult(this.text, {this.relatedAyahs = const []});
+
+  final String text;
+  final List<RelatedAyahRef> relatedAyahs;
+}
+
 class AiFollowUpResult {
-  AiFollowUpResult({required this.text, required this.remainingFollowUpsForVerse});
+  AiFollowUpResult({
+    required this.text,
+    required this.remainingFollowUpsForVerse,
+    this.relatedAyahs = const [],
+  });
 
   final String text;
   final int remainingFollowUpsForVerse;
+  final List<RelatedAyahRef> relatedAyahs;
 }
 
 /// Vers-Erklärung und Follow-up über Ihdina-Backend; Tages-Impuls weiterhin optional per OpenAI (nur Debug).
@@ -142,7 +156,8 @@ class AIService {
   }
 
   /// Lädt die Verserklärung vom Backend. Bei Cache-Treffer: sofortige Rückgabe — kein Backend-Call.
-  Future<String> getExplanation(
+  /// `relatedAyahs` nur bei frischer Server-Antwort; im Cache nicht gespeichert.
+  Future<AiExplanationResult> getExplanation(
     String surahName,
     int ayahNumber,
     String textAr,
@@ -155,7 +170,7 @@ class AIService {
     final key = cacheKey(surahName, ayahNumber);
     final cached = prefs.getString(key);
     if (cached != null && cached.trim().isNotEmpty) {
-      return cached.trim();
+      return AiExplanationResult(cached.trim());
     }
 
     final client = IhdinaApiClient.instance;
@@ -180,11 +195,19 @@ class AIService {
       if (trimmed.isEmpty) {
         throw AIServiceException('Leere Antwort vom Server.');
       }
+      final related = relatedAyahsFromApiJson(data['relatedAyahs']);
       await prefs.setString(key, trimmed);
-      return trimmed;
-    } on IhdinaApiException {
+      return AiExplanationResult(trimmed, relatedAyahs: related);
+    } on IhdinaApiException catch (e) {
+      if (kDebugMode) {
+        debugPrint('[AIService] getExplanation API ${e.code}: ${e.message}');
+      }
       rethrow;
-    } catch (e) {
+    } catch (e, st) {
+      if (kDebugMode) {
+        debugPrint('[AIService] getExplanation $e');
+        debugPrint('$st');
+      }
       if (e is AIServiceException) rethrow;
       throw AIServiceException(
         'Netzwerk- oder Serverfehler. Bitte später erneut versuchen.',
@@ -226,9 +249,11 @@ class AIService {
       final remaining = remRaw is int
           ? remRaw
           : (remRaw is num ? remRaw.toInt() : 0);
+      final related = relatedAyahsFromApiJson(data['relatedAyahs']);
       return AiFollowUpResult(
         text: trimmed,
         remainingFollowUpsForVerse: remaining,
+        relatedAyahs: related,
       );
     } on IhdinaApiException catch (_) {
       rethrow;

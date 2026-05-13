@@ -36,6 +36,7 @@ export async function explainHandler(req, reply) {
             text: data.text,
             isPro: data.isPro,
             remainingFreeExtraToday: data.remainingFreeExtraToday,
+            relatedAyahs: data.relatedAyahs,
         },
     });
 }

@@ -1,2 +1,6 @@
 #include? "Pods/Target Support Files/Pods-Runner/Pods-Runner.release.xcconfig"
 #include "Generated.xcconfig"
+
+// TestFlight / interne Tester: Folgefragen-UI ohne Pro (muss zum Server ALLOW_FREE_FOLLOWUPS passen).
+// WICHTIG: Vor öffentlichem App-Store-Release ALLOW_FREE_FOLLOWUPS in Release wieder entfernen (Zeile unten).
+DART_DEFINES=$(DART_DEFINES),QUxMT1dfRlJFRV9GT0xMT1dVUFM9dHJ1ZQ%3D%3D

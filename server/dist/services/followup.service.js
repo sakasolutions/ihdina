@@ -1,10 +1,28 @@
 import { prisma } from "../db/client.js";
 import { AppError, ErrorCodes } from "../utils/errors.js";
 import { completeFollowUp } from "./openai.service.js";
+import { extractRelatedAyahsFromText } from "../utils/relatedAyahsFromText.js";
 import { getOrCreateUser } from "./user.service.js";
 import { logAiRequest } from "./usageLog.service.js";
 const MAX_FOLLOWUPS_PER_VERSE = 3;
 const allowedRoles = new Set(["system", "user", "assistant"]);
+/**
+ * Vor öffentlichem Store-Launch: `true` — Folgefragen für Nicht-Pro immer erlaubt,
+ * auch wenn auf dem Server `ALLOW_FREE_FOLLOWUPS=false` steht.
+ * Vor Release auf `false` setzen; dann steuert nur noch die Env-Variable.
+ */
+const FOLLOWUPS_FREE_BETA = true;
+/**
+ * Wenn {@link FOLLOWUPS_FREE_BETA} false ist: Folgefragen ohne Pro erlauben,
+ * solange `ALLOW_FREE_FOLLOWUPS` nicht explizit aus ist.
+ * Production: `ALLOW_FREE_FOLLOWUPS=false` (oder `0` / `no`) setzen.
+ */
+function allowFreeFollowupsFromEnv() {
+    const v = process.env.ALLOW_FREE_FOLLOWUPS?.trim().toLowerCase();
+    if (v === "false" || v === "0" || v === "no")
+        return false;
+    return true;
+}
 function validateFollowUpInput(input) {
     if (!Array.isArray(input.history) || input.history.length === 0) {
         throw new AppError(ErrorCodes.INVALID_INPUT, "history must be a non-empty array.", 400);
@@ -34,7 +52,8 @@ function questionWithLanguageHint(language, question) {
 export async function followUpVerse(input) {
     validateFollowUpInput(input);
     const user = await getOrCreateUser(input.installId);
-    if (!user.isPro) {
+    const freeFollowupsForNonPro = FOLLOWUPS_FREE_BETA || allowFreeFollowupsFromEnv();
+    if (!user.isPro && !freeFollowupsForNonPro) {
         await logAiRequest({
             userId: user.id,
             endpoint: "POST /api/v1/follow-up",
@@ -72,9 +91,9 @@ export async function followUpVerse(input) {
             content: questionWithLanguageHint(input.language, input.question),
         },
     ];
-    let text;
+    let completion;
     try {
-        text = await completeFollowUp(messages);
+        completion = await completeFollowUp(messages);
     }
     catch (e) {
         await logAiRequest({
@@ -85,6 +104,7 @@ export async function followUpVerse(input) {
         });
         throw e;
     }
+    const text = completion.text;
     await prisma.followUpUsage.upsert({
         where: {
             userId_surahName_ayahNumber: {
@@ -105,6 +125,11 @@ export async function followUpVerse(input) {
         userId: user.id,
         endpoint: "POST /api/v1/follow-up",
         status: "ok",
+        model: completion.model,
+        promptTokens: completion.promptTokens,
+        completionTokens: completion.completionTokens,
+        totalTokens: completion.totalTokens,
+        latencyMs: completion.latencyMs,
     });
     const after = await prisma.followUpUsage.findUnique({
         where: {
@@ -117,9 +142,11 @@ export async function followUpVerse(input) {
     });
     const used = after?.count ?? 0;
     const remainingFollowUpsForVerse = Math.max(0, MAX_FOLLOWUPS_PER_VERSE - used);
+    const relatedAyahs = extractRelatedAyahsFromText(text);
     return {
         text,
-        isPro: true,
+        isPro: user.isPro,
         remainingFollowUpsForVerse,
+        relatedAyahs,
     };
 }

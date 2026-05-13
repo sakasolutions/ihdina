@@ -44,6 +44,10 @@ class HomeDailyVerseHero extends StatelessWidget {
   /// Akzent-Gold (Rand/Glow), keine Vollfläche.
   static const Color _accentGold = Color(0xFFD4AF37);
 
+  /// Obere Grenze für den Inhalt unter dem Gold-Ring (Padding der Glas-Karte).
+  /// Entspricht etwa dem aktuellen „perfekten“ Layout — bei extrem langen Texten wächst die Karte nicht mit.
+  static const double _maxInnerContentHeight = 452;
+
   @override
   Widget build(BuildContext context) {
     final takeawayLine =
@@ -83,10 +87,13 @@ class HomeDailyVerseHero extends StatelessWidget {
               borderRadius: _radius,
               child: Padding(
                 padding: const EdgeInsets.fromLTRB(20, 22, 20, 20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
+                child: ConstrainedBox(
+                  constraints: const BoxConstraints(maxHeight: _maxInnerContentHeight),
+                  child: ClipRect(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
                     Row(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -106,6 +113,8 @@ class HomeDailyVerseHero extends StatelessWidget {
                               const SizedBox(height: 8),
                               Text(
                                 '$surahNameEn · Vers $ayahNumber',
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
                                 style: GoogleFonts.playfairDisplay(
                                   fontSize: 21,
                                   fontWeight: FontWeight.w600,
@@ -149,6 +158,7 @@ class HomeDailyVerseHero extends StatelessWidget {
                             german,
                             textAlign: TextAlign.center,
                             maxLines: 3,
+                            overflow: TextOverflow.ellipsis,
                             style: GoogleFonts.inter(
                               fontSize: 16,
                               fontWeight: FontWeight.w500,
@@ -221,6 +231,8 @@ class HomeDailyVerseHero extends StatelessWidget {
                               child: Text(
                                 takeawayLine,
                                 textAlign: TextAlign.center,
+                                maxLines: 3,
+                                overflow: TextOverflow.ellipsis,
                                 style: GoogleFonts.inter(
                                   fontSize: soft ? 14.5 : 15,
                                   height: 1.42,
@@ -243,7 +255,9 @@ class HomeDailyVerseHero extends StatelessWidget {
                       onWeiterlesen: onWeiterlesen,
                       onSpeichern: onSpeichern,
                     ),
-                  ],
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ),

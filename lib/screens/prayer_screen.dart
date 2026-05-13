@@ -524,27 +524,41 @@ class _PrayerScreenState extends State<PrayerScreen> {
     return GlassCard(
       borderRadius: 20,
       child: Padding(
-        padding: const EdgeInsets.fromLTRB(18, 16, 18, 14),
+        padding: const EdgeInsets.fromLTRB(18, 16, 18, 16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Row(
               children: [
-                Icon(
-                  Icons.info_outline_rounded,
-                  size: 18,
-                  color: _accentChampagneGold,
-                ),
-                const SizedBox(width: 8),
-                Text(
-                  'Karahat-Zeiten heute',
-                  style: GoogleFonts.playfairDisplay(
-                    fontSize: 17,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
+                Tooltip(
+                  message: 'Informationen zu Karahat-Zeiten',
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () => _showKarahatInfoSheet(context),
+                      borderRadius: BorderRadius.circular(20),
+                      child: Padding(
+                        padding: const EdgeInsets.all(4),
+                        child: Icon(
+                          Icons.info_outline_rounded,
+                          size: 20,
+                          color: _accentChampagneGold,
+                        ),
+                      ),
+                    ),
                   ),
                 ),
-                const Spacer(),
+                const SizedBox(width: 4),
+                Expanded(
+                  child: Text(
+                    'Karahat-Zeiten heute',
+                    style: GoogleFonts.playfairDisplay(
+                      fontSize: 17,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
                 if (isNowKarahat)
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
@@ -580,18 +594,163 @@ class _PrayerScreenState extends State<PrayerScreen> {
                   color: Colors.white.withOpacity(0.12),
                 ),
             ],
-            const SizedBox(height: 8),
-            Text(
-              'Hinweis: Zeiten dienen der Orientierung und können je nach Schule/Quelle leicht variieren.',
-              style: GoogleFonts.inter(
-                fontSize: 11.5,
-                height: 1.35,
-                color: Colors.white.withOpacity(0.62),
-              ),
-            ),
           ],
         ),
       ),
+    );
+  }
+
+  Future<void> _showKarahatInfoSheet(BuildContext context) async {
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        final bottomInset = MediaQuery.paddingOf(ctx).bottom;
+        return Padding(
+          padding: EdgeInsets.only(
+            left: _outerPadding,
+            right: _outerPadding,
+            bottom: 16 + bottomInset,
+          ),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: AppColors.cardBg,
+              borderRadius: BorderRadius.circular(22),
+              border: Border.all(
+                color: Colors.white.withOpacity(0.14),
+                width: 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.35),
+                  blurRadius: 24,
+                  offset: const Offset(0, -4),
+                ),
+              ],
+            ),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 20),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.22),
+                        borderRadius: BorderRadius.circular(999),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Icon(
+                        Icons.info_outline_rounded,
+                        size: 22,
+                        color: _accentChampagneGold,
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          'Karahat-Zeiten',
+                          style: GoogleFonts.playfairDisplay(
+                            fontSize: 20,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.white,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 14),
+                  ConstrainedBox(
+                    constraints: BoxConstraints(
+                      maxHeight: MediaQuery.sizeOf(ctx).height * 0.52,
+                    ),
+                    child: SingleChildScrollView(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Unter „Karahat“ versteht man Zeiten, in denen freiwilliges Gebet (Nafl) in vielen Rechtsschulen als unerwünscht (makruh) gilt. So kannst du den Tag ruhiger einteilen, ohne wichtige Momente zu übersehen.',
+                            style: GoogleFonts.inter(
+                              fontSize: 14,
+                              height: 1.45,
+                              color: Colors.white.withOpacity(0.88),
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+                          Text(
+                            'Was Ihdina hier zeigt',
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.6,
+                              color: _accentChampagneGold,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            '• Sonnenaufgang: etwa ab Sonnenaufgang bis 20 Minuten danach\n'
+                            '• Zenit: kurz vor und nach dem höchsten Sonnenstand (bezogen auf dein Dhuhr)\n'
+                            '• Sonnenuntergang: etwa 20 Minuten vor Maghrib bis zum Gebetsbeginn',
+                            style: GoogleFonts.inter(
+                              fontSize: 14,
+                              height: 1.5,
+                              color: Colors.white.withOpacity(0.82),
+                            ),
+                          ),
+                          const SizedBox(height: 14),
+                          Text(
+                            'Hinweis',
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.6,
+                              color: _accentChampagneGold,
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            'Die genauen Regeln (z. B. für Pflichtgebete, Ausnahmen oder andere Methoden) können je nach Schule und Berechnung leicht abweichen. Die App gibt dir eine praktische Orientierung – bei Zweifeln frag eine vertrauenswürdige Quelle vor Ort.',
+                            style: GoogleFonts.inter(
+                              fontSize: 13,
+                              height: 1.45,
+                              color: Colors.white.withOpacity(0.68),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 18),
+                  SizedBox(
+                    width: double.infinity,
+                    child: TextButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      style: TextButton.styleFrom(
+                        foregroundColor: _accentChampagneGold,
+                        padding: const EdgeInsets.symmetric(vertical: 12),
+                      ),
+                      child: Text(
+                        'Verstanden',
+                        style: GoogleFonts.inter(
+                          fontSize: 15,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
     );
   }
 

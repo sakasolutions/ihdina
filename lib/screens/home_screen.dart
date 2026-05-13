@@ -27,6 +27,22 @@ const double _heroCardRadius = 26;
 const double _greetingToHeroGap = 48;
 const double _heroToPrayerGap = 40;
 const double _bottomScrollInset = 120;
+const Duration _karahatSunriseDuration = Duration(minutes: 20);
+const Duration _karahatZenithBefore = Duration(minutes: 5);
+const Duration _karahatZenithAfter = Duration(minutes: 5);
+const Duration _karahatSunsetDuration = Duration(minutes: 20);
+
+class _KarahatInlineInfo {
+  const _KarahatInlineInfo({
+    required this.label,
+    required this.timeRange,
+    required this.isActive,
+  });
+
+  final String label;
+  final String timeRange;
+  final bool isActive;
+}
 
 /// Premium champagne-gold accent (e.g. next prayer, AI CTA).
 const Color _accentChampagneGold = Color(0xFFE5C07B);
@@ -341,6 +357,7 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
     final countdownStr = _prayerResult != null
         ? PrayerTimesRepository.formatCountdown(_prayerResult!.timeUntilNextPrayer)
         : '—:——';
+    final karahat = _buildKarahatInlineInfo(_prayerResult);
 
     return Padding(
       padding: const EdgeInsets.fromLTRB(_outerPadding, 0, _outerPadding, 14),
@@ -393,6 +410,44 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
                           color: Colors.white.withOpacity(0.82),
                         ),
                       ),
+                      if (karahat != null) ...[
+                        const SizedBox(height: 8),
+                        Row(
+                          children: [
+                            Icon(
+                              Icons.info_outline_rounded,
+                              size: 14,
+                              color: karahat.isActive
+                                  ? _accentChampagneGold
+                                  : Colors.white.withOpacity(0.74),
+                            ),
+                            const SizedBox(width: 6),
+                            Expanded(
+                              child: Text(
+                                karahat.label,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.inter(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white.withOpacity(0.86),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              karahat.timeRange,
+                              style: GoogleFonts.inter(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w700,
+                                color: karahat.isActive
+                                    ? _accentChampagneGold
+                                    : Colors.white.withOpacity(0.88),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -401,6 +456,60 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
           ),
         ),
       ),
+    );
+  }
+
+  _KarahatInlineInfo? _buildKarahatInlineInfo(PrayerTimesResult? r) {
+    if (r == null) return null;
+
+    final sunrise = r.times[PrayerType.sunrise];
+    final dhuhr = r.times[PrayerType.dhuhr];
+    final maghrib = r.times[PrayerType.maghrib];
+    if (sunrise == null || dhuhr == null || maghrib == null) return null;
+
+    final windows = <({
+      String label,
+      DateTime start,
+      DateTime end,
+    })>[
+      (
+        label: 'Sonnenaufgang',
+        start: sunrise,
+        end: sunrise.add(_karahatSunriseDuration),
+      ),
+      (
+        label: 'Zenit',
+        start: dhuhr.subtract(_karahatZenithBefore),
+        end: dhuhr.add(_karahatZenithAfter),
+      ),
+      (
+        label: 'Sonnenuntergang',
+        start: maghrib.subtract(_karahatSunsetDuration),
+        end: maghrib,
+      ),
+    ];
+
+    final now = DateTime.now();
+    final active = windows.where((w) => !now.isBefore(w.start) && now.isBefore(w.end)).toList();
+    final upcoming = windows.where((w) => now.isBefore(w.start)).toList()
+      ..sort((a, b) => a.start.compareTo(b.start));
+
+    final activeWindow = active.isNotEmpty ? active.first : null;
+    final nextWindow = upcoming.isNotEmpty ? upcoming.first : null;
+
+    final isActive = activeWindow != null;
+    final label = isActive
+        ? 'Karahat jetzt (${activeWindow.label})'
+        : (nextWindow != null ? 'Nächste Karahat (${nextWindow.label})' : 'Karahat heute');
+    final DateTime? start = isActive ? activeWindow.start : nextWindow?.start;
+    final DateTime? end = isActive ? activeWindow.end : nextWindow?.end;
+    final timeRange = (start != null && end != null)
+        ? '${PrayerTimesRepository.instance.formatTime(start)}–${PrayerTimesRepository.instance.formatTime(end)}'
+        : 'Heute beendet';
+    return _KarahatInlineInfo(
+      label: label,
+      timeRange: timeRange,
+      isActive: isActive,
     );
   }
 

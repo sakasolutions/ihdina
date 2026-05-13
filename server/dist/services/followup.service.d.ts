@@ -11,6 +11,7 @@ export type FollowUpInput = {
 };
 export declare function followUpVerse(input: FollowUpInput): Promise<{
     text: string;
-    isPro: true;
+    isPro: boolean;
     remainingFollowUpsForVerse: number;
+    relatedAyahs: import("../utils/relatedAyahsFromText.js").RelatedAyahRef[];
 }>;

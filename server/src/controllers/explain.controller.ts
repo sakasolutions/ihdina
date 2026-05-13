@@ -39,6 +39,7 @@ export async function explainHandler(req: FastifyRequest, reply: FastifyReply) {
       text: data.text,
       isPro: data.isPro,
       remainingFreeExtraToday: data.remainingFreeExtraToday,
+      relatedAyahs: data.relatedAyahs,
     },
   });
 }

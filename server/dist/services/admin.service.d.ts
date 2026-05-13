@@ -27,12 +27,17 @@ export declare function getUserDetailByInstallId(installId: string): Promise<{
         count: number;
     }[];
     aiRequestLogs: {
+        model: string | null;
         id: string;
         createdAt: Date;
         userId: string | null;
         endpoint: string;
         status: string;
         errorCode: string | null;
+        promptTokens: number | null;
+        completionTokens: number | null;
+        totalTokens: number | null;
+        latencyMs: number | null;
     }[];
 } & {
     id: string;

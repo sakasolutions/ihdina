@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<!--
+  Ihdina Admin — statische Shell. Erweiterung:
+  - Neue Endpunkte: server/src/routes/admin.routes.ts + Controller/Service
+  - UI: weiteres <section id="tab-..."> + Nav-Button + fetchJson('/api/v1/admin/...')
+-->
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Ihdina Admin</title>
+  <style>
+    :root {
+      color-scheme: dark;
+      --bg: #0c0f0d;
+      --card: #161c19;
+      --border: #2a3530;
+      --accent: #c4a574;
+      --accent-dim: #9a7b4a;
+      --text: #e8ebe9;
+      --muted: #8a9691;
+      --danger: #e8a598;
+      --ok: #8fbc8f;
+      --maxw: 960px;
+    }
+    * { box-sizing: border-box; }
+    body {
+      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      background: var(--bg);
+      color: var(--text);
+      margin: 0;
+      min-height: 100vh;
+      line-height: 1.5;
+    }
+    .wrap { max-width: var(--maxw); margin: 0 auto; padding: 20px 16px 48px; }
+    header {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 20px;
+      padding-bottom: 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    header h1 { font-size: 1.35rem; margin: 0; color: var(--accent); font-weight: 700; letter-spacing: -0.02em; }
+    header .ver { font-size: 0.75rem; color: var(--muted); }
+    nav {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+      margin-bottom: 20px;
+    }
+    nav button {
+      background: transparent;
+      color: var(--muted);
+      border: 1px solid var(--border);
+      padding: 8px 14px;
+      border-radius: 999px;
+      font-weight: 600;
+      font-size: 0.85rem;
+      cursor: pointer;
+    }
+    nav button:hover { color: var(--text); border-color: var(--muted); }
+    nav button.active {
+      background: var(--accent);
+      color: #0c0f0d;
+      border-color: var(--accent);
+    }
+    .panel { display: none; }
+    .panel.active { display: block; }
+    section.card {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px 18px 16px;
+      margin-bottom: 16px;
+    }
+    section.card h2 { margin: 0 0 12px; font-size: 1rem; font-weight: 700; color: var(--text); }
+    label { display: block; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); margin-bottom: 6px; }
+    input[type="url"], input[type="password"], input[type="number"] {
+      width: 100%;
+      max-width: 100%;
+      padding: 10px 12px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+      background: #0f1412;
+      color: var(--text);
+      font-size: 0.95rem;
+      margin-bottom: 14px;
+    }
+    input::placeholder { color: #5c6560; }
+    .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+    button.action {
+      background: var(--accent);
+      color: #0c0f0d;
+      border: none;
+      padding: 10px 18px;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 0.88rem;
+      cursor: pointer;
+    }
+    button.action:disabled { opacity: 0.45; cursor: not-allowed; }
+    button.ghost {
+      background: #24302a;
+      color: var(--text);
+      border: 1px solid var(--border);
+      padding: 10px 16px;
+      border-radius: 10px;
+      font-weight: 600;
+      font-size: 0.88rem;
+      cursor: pointer;
+    }
+    button.ghost:disabled { opacity: 0.45; cursor: not-allowed; }
+    .hint { font-size: 0.8rem; color: var(--muted); margin-top: -8px; margin-bottom: 14px; line-height: 1.4; }
+    .status-pill {
+      display: inline-block;
+      font-size: 0.75rem;
+      padding: 4px 10px;
+      border-radius: 999px;
+      font-weight: 600;
+    }
+    .status-pill.idle { background: #24302a; color: var(--muted); }
+    .status-pill.ok { background: rgba(143, 188, 143, 0.2); color: var(--ok); }
+    .status-pill.err { background: rgba(232, 165, 152, 0.15); color: var(--danger); }
+    .err-box {
+      color: var(--danger);
+      font-size: 0.88rem;
+      margin-top: 12px;
+      padding: 12px;
+      border-radius: 10px;
+      background: rgba(232, 165, 152, 0.08);
+      border: 1px solid rgba(232, 165, 152, 0.25);
+      white-space: pre-wrap;
+      display: none;
+    }
+    .err-box.show { display: block; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.82rem; margin-top: 8px; overflow: auto; display: block; }
+    thead, tbody { display: table; width: 100%; table-layout: fixed; }
+    th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); word-break: break-word; }
+    th { color: var(--muted); font-weight: 600; }
+    .fb-item { border-bottom: 1px solid var(--border); padding: 14px 0; font-size: 0.88rem; }
+    .fb-meta { color: var(--muted); font-size: 0.78rem; margin-bottom: 6px; }
+    footer {
+      margin-top: 32px;
+      padding-top: 16px;
+      border-top: 1px solid var(--border);
+      font-size: 0.75rem;
+      color: var(--muted);
+      line-height: 1.5;
+    }
+    footer code { font-size: 0.7rem; background: #0f1412; padding: 2px 6px; border-radius: 4px; }
+    .empty { color: var(--muted); font-size: 0.9rem; padding: 12px 0; }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <header>
+      <h1>Ihdina Admin</h1>
+      <span class="ver">API · Logs · Feedback</span>
+    </header>
+
+    <nav id="nav" aria-label="Hauptnavigation">
+      <button type="button" class="active" data-tab="access">Zugang</button>
+      <button type="button" data-tab="usage">Usage</button>
+      <button type="button" data-tab="feedback">Feedbacks</button>
+    </nav>
+
+    <div id="errGlobal" class="err-box" role="alert"></div>
+
+    <!-- Zugang -->
+    <div id="panel-access" class="panel active">
+      <section class="card">
+        <h2>Verbindung</h2>
+        <p class="hint">API-Basis ohne Slash am Ende. Leer = diese Seite (<span id="originHint"></span>). Schlüssel = <code>ADMIN_API_KEY</code> auf dem Server.</p>
+        <label for="apiBase">API-Basis-URL</label>
+        <input id="apiBase" type="url" autocomplete="url" placeholder="https://api.ihdina.app" />
+        <label for="adminKey">Admin-Schlüssel</label>
+        <input id="adminKey" type="password" autocomplete="current-password" placeholder="X-Admin-Key" />
+        <div class="row">
+          <button type="button" class="action" id="btnSave">Speichern (lokal)</button>
+          <button type="button" class="ghost" id="btnHealth">Health prüfen</button>
+        </div>
+        <div class="row" style="margin-top:12px">
+          <span class="status-pill idle" id="healthPill">Health: —</span>
+        </div>
+      </section>
+      <section class="card">
+        <h2>Deployment</h2>
+        <p class="hint">Produktion: HTTPS über Nginx, kein offener Port 3001. Siehe <code>server/docs/ADMIN_PANEL.md</code> und <code>server/nginx/ihdina-api.example.conf</code> im Repo.</p>
+      </section>
+    </div>
+
+    <!-- Usage -->
+    <div id="panel-usage" class="panel">
+      <section class="card">
+        <h2>KI-Usage (aggregiert, UTC-Tag)</h2>
+        <label for="days">Zeitraum (Tage)</label>
+        <input id="days" type="number" min="1" max="366" value="14" style="max-width:140px" />
+        <div class="row">
+          <button type="button" class="action" id="btnUsage">Daten laden</button>
+        </div>
+        <div id="usageErr" class="err-box"></div>
+        <div id="usageTable"></div>
+      </section>
+    </div>
+
+    <!-- Feedback -->
+    <div id="panel-feedback" class="panel">
+      <section class="card">
+        <h2>Letzte Feedbacks</h2>
+        <div class="row">
+          <button type="button" class="action" id="btnFeedback">Liste laden</button>
+        </div>
+        <div id="fbErr" class="err-box"></div>
+        <div id="feedbackList"></div>
+      </section>
+    </div>
+
+    <footer>
+      Internes Werkzeug — nicht indexieren, Zugang nur mit Schlüssel. Erweiterungen: Backend-Routen unter <code>/api/v1/admin/</code>, UI in dieser Datei.
+    </footer>
+  </div>
+
+  <script>
+    const LS_API = "ihdina_admin_api_base";
+    const LS_KEY = "ihdina_admin_key";
+
+    document.getElementById("originHint").textContent = window.location.origin;
+
+    function apiBase() {
+      const v = document.getElementById("apiBase").value.trim();
+      if (v) return v.replace(/\/$/, "");
+      return window.location.origin;
+    }
+
+    function adminHeaders() {
+      const k = document.getElementById("adminKey").value.trim();
+      return { "X-Admin-Key": k, "Accept": "application/json" };
+    }
+
+    function showGlobalErr(msg) {
+      const el = document.getElementById("errGlobal");
+      el.textContent = msg || "";
+      el.classList.toggle("show", !!msg);
+    }
+
+    function showPanelErr(id, msg) {
+      const el = document.getElementById(id);
+      el.textContent = msg || "";
+      el.classList.toggle("show", !!msg);
+    }
+
+    async function fetchJson(path) {
+      const base = apiBase();
+      const url = base + path;
+      const res = await fetch(url, { headers: adminHeaders() });
+      const text = await res.text();
+      let json;
+      try { json = JSON.parse(text); } catch (_) { json = null; }
+      if (!res.ok) {
+        const m = json?.error?.message || json?.message || text || res.statusText;
+        throw new Error(m || "HTTP " + res.status);
+      }
+      if (!json || json.success !== true) throw new Error("Ungültige Antwort");
+      return json.data;
+    }
+
+    function setBusy(btn, on) {
+      btn.disabled = !!on;
+    }
+
+    /* Tabs */
+    document.querySelectorAll("#nav button").forEach((btn) => {
+      btn.addEventListener("click", () => {
+        const tab = btn.getAttribute("data-tab");
+        document.querySelectorAll("#nav button").forEach((b) => b.classList.toggle("active", b === btn));
+        document.querySelectorAll(".panel").forEach((p) => p.classList.remove("active"));
+        document.getElementById("panel-" + tab).classList.add("active");
+        showGlobalErr("");
+      });
+    });
+
+    document.getElementById("apiBase").value = localStorage.getItem(LS_API) || "";
+    document.getElementById("adminKey").value = localStorage.getItem(LS_KEY) || "";
+
+    document.getElementById("btnSave").onclick = () => {
+      localStorage.setItem(LS_API, document.getElementById("apiBase").value.trim());
+      localStorage.setItem(LS_KEY, document.getElementById("adminKey").value.trim());
+      showGlobalErr("");
+      const pill = document.getElementById("healthPill");
+      pill.textContent = "Gespeichert (Browser)";
+      pill.className = "status-pill ok";
+      setTimeout(() => { pill.textContent = "Health: —"; pill.className = "status-pill idle"; }, 2000);
+    };
+
+    document.getElementById("btnHealth").onclick = async () => {
+      const pill = document.getElementById("healthPill");
+      const btn = document.getElementById("btnHealth");
+      showGlobalErr("");
+      pill.textContent = "Health: …";
+      pill.className = "status-pill idle";
+      setBusy(btn, true);
+      try {
+        const base = apiBase();
+        const res = await fetch(base + "/api/v1/health", { headers: { Accept: "application/json" } });
+        const text = await res.text();
+        if (!res.ok) throw new Error(text || res.statusText);
+        pill.textContent = "Health: OK";
+        pill.className = "status-pill ok";
+      } catch (e) {
+        pill.textContent = "Health: Fehler";
+        pill.className = "status-pill err";
+        showGlobalErr(String(e.message || e));
+      } finally {
+        setBusy(btn, false);
+      }
+    };
+
+    document.getElementById("btnUsage").onclick = async () => {
+      showPanelErr("usageErr", "");
+      const btn = document.getElementById("btnUsage");
+      const days = Math.min(366, Math.max(1, parseInt(document.getElementById("days").value, 10) || 14));
+      document.getElementById("days").value = String(days);
+      localStorage.setItem(LS_API, document.getElementById("apiBase").value.trim());
+      localStorage.setItem(LS_KEY, document.getElementById("adminKey").value.trim());
+      setBusy(btn, true);
+      try {
+        const data = await fetchJson("/api/v1/admin/usage/daily?days=" + encodeURIComponent(days));
+        const rows = data.rows || [];
+        let html = "<table><thead><tr><th>Tag (UTC)</th><th>Endpoint</th><th>Status</th><th>Modell</th><th>Anzahl</th><th>Prompt Σ</th><th>Completion Σ</th><th>Total Σ</th><th>Ø Latenz ms</th><th>Kosten (USD) ~</th></tr></thead><tbody>";
+        let sumUsd = 0;
+        for (const r of rows) {
+          const usd = typeof r.costUsd === "number" ? r.costUsd : 0;
+          sumUsd += usd;
+          html += "<tr><td>" + escapeHtml(r.day) + "</td><td>" + escapeHtml(r.endpoint) + "</td><td>" + escapeHtml(r.status) + "</td><td>" + escapeHtml(r.model || "—") + "</td><td>" + r.count + "</td><td>" + r.promptSum + "</td><td>" + r.completionSum + "</td><td>" + r.totalSum + "</td><td>" + (r.avgLatencyMs ?? "–") + "</td><td>" + usd.toFixed(4) + "</td></tr>";
+        }
+        html += "</tbody></table>";
+        if (rows.length) {
+          html += "<p style='margin-top:10px;font-size:12px;opacity:0.75'>Summe geschätzt (USD): <strong>" + sumUsd.toFixed(4) + "</strong> — netto nach Token-Sätzen (siehe OpenAI-Preisliste); ohne Steuern/Währung. Optional: <code>OPENAI_PRICE_INPUT_PER_1M_USD</code> + <code>OPENAI_PRICE_OUTPUT_PER_1M_USD</code> in der API-<code>.env</code> für feste Sätze.</p>";
+        }
+        if (!rows.length) html = "<p class='empty'>Keine Daten im Zeitraum.</p>";
+        document.getElementById("usageTable").innerHTML = html;
+      } catch (e) {
+        showPanelErr("usageErr", String(e.message || e));
+        document.getElementById("usageTable").innerHTML = "";
+      } finally {
+        setBusy(btn, false);
+      }
+    };
+
+    document.getElementById("btnFeedback").onclick = async () => {
+      showPanelErr("fbErr", "");
+      const btn = document.getElementById("btnFeedback");
+      localStorage.setItem(LS_API, document.getElementById("apiBase").value.trim());
+      localStorage.setItem(LS_KEY, document.getElementById("adminKey").value.trim());
+      setBusy(btn, true);
+      try {
+        const data = await fetchJson("/api/v1/admin/feedback?take=100");
+        const items = data.items || [];
+        const box = document.getElementById("feedbackList");
+        box.innerHTML = items.length ? items.map(renderFb).join("") : "<p class='empty'>Keine Einträge.</p>";
+      } catch (e) {
+        showPanelErr("fbErr", String(e.message || e));
+        document.getElementById("feedbackList").innerHTML = "";
+      } finally {
+        setBusy(btn, false);
+      }
+    };
+
+    function escapeHtml(s) {
+      return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+    }
+
+    function renderFb(f) {
+      const meta = escapeHtml(f.createdAt) + " · installId: " + escapeHtml(f.installId) + (f.screen ? " · " + escapeHtml(f.screen) : "");
+      const rating = f.rating != null ? "Rating: " + f.rating : "Rating: –";
+      const c = f.comment ? "<div style='margin-top:6px'>" + escapeHtml(f.comment) + "</div>" : "";
+      const ctx = f.context ? "<details style='margin-top:6px'><summary>Kontext</summary><pre style='white-space:pre-wrap;overflow:auto;max-height:220px'>" + escapeHtml(f.context) + "</pre></details>" : "";
+      return "<div class='fb-item'><div class='fb-meta'>" + meta + "</div><div>" + rating + "</div>" + c + ctx + "</div>";
+    }
+  </script>
+</body>
+</html>

@@ -28,14 +28,25 @@ function assertFollowUpBody(body: unknown): asserts body is FollowUpInput {
 }
 
 export async function followUpHandler(req: FastifyRequest, reply: FastifyReply) {
-  assertFollowUpBody(req.body);
-  const data = await followUpVerse(req.body);
-  return reply.send({
-    success: true,
-    data: {
-      text: data.text,
-      isPro: data.isPro,
-      remainingFollowUpsForVerse: data.remainingFollowUpsForVerse,
-    },
-  });
+  try {
+    assertFollowUpBody(req.body);
+    const data = await followUpVerse(req.body);
+    return reply.send({
+      success: true,
+      data: {
+        text: data.text,
+        isPro: data.isPro,
+        remainingFollowUpsForVerse: data.remainingFollowUpsForVerse,
+        relatedAyahs: data.relatedAyahs,
+      },
+    });
+  } catch (e) {
+    if (e instanceof AppError) throw e;
+    req.log.error({ err: e }, "followUpHandler: uncaught (non-AppError)");
+    throw new AppError(
+      ErrorCodes.AI_TEMPORARILY_UNAVAILABLE,
+      "Folgefrage konnte nicht bearbeitet werden. Bitte später erneut versuchen.",
+      503
+    );
+  }
 }

@@ -13,6 +13,7 @@ import '../data/prayer/prayer_models.dart';
 import '../data/prayer/prayer_times_repository.dart';
 import '../theme/app_theme.dart';
 import '../theme/hero_theme.dart';
+import '../utils/search_normalize.dart';
 import '../widgets/glass_card.dart';
 import '../models/surah.dart';
 import 'quran_reader_screen.dart';
@@ -21,13 +22,15 @@ const Color _accentChampagneGold = Color(0xFFE5C07B);
 
 /// Filters surahs by query: number, name_en (case-insensitive), name_ar (contains).
 List<Surah> filterSurahs(List<Surah> surahs, String query) {
-  final q = query.trim().toLowerCase();
-  if (q.isEmpty) return surahs;
-  final digitOnly = q.replaceAll(RegExp(r'[^0-9]'), '');
+  final raw = query.trim();
+  if (raw.isEmpty) return surahs;
+  final qLower = raw.toLowerCase();
+  final digitOnly = qLower.replaceAll(RegExp(r'[^0-9]'), '');
   return surahs.where((s) {
     if (digitOnly.isNotEmpty && '${s.number}'.contains(digitOnly)) return true;
-    if (s.nameDe.toLowerCase().contains(q)) return true;
-    if (s.nameAr.contains(query.trim())) return true;
+    if (SearchNormalize.westContains(s.nameDe, raw)) return true;
+    if (SearchNormalize.arabicContains(s.nameAr, raw)) return true;
+    if (s.nameAr.contains(raw)) return true;
     return false;
   }).toList();
 }
@@ -147,8 +150,8 @@ class _SearchScreenState extends State<SearchScreen> {
 
   /// Offline verse search: Arabic + German. Iterates surahs/ayahs and uses TranslationService.
   Future<List<SearchResult>> _searchVersesOffline(String query, {int limit = 50}) async {
-    final q = query.trim().toLowerCase();
-    if (q.isEmpty) return [];
+    final raw = query.trim();
+    if (raw.isEmpty) return [];
     await TranslationService.instance.ensureLoaded();
     final surahs = await QuranRepository.instance.getAllSurahs();
     final results = <SearchResult>[];
@@ -159,8 +162,8 @@ class _SearchScreenState extends State<SearchScreen> {
         if (results.length >= limit) break;
         final textAr = ayah.textAr;
         final textDe = TranslationService.instance.getTranslation(sm.id, ayah.ayahNumber);
-        final matchAr = textAr.toLowerCase().contains(q);
-        final matchDe = textDe.isNotEmpty && textDe.toLowerCase().contains(q);
+        final matchAr = SearchNormalize.arabicContains(textAr, raw);
+        final matchDe = textDe.isNotEmpty && SearchNormalize.westContains(textDe, raw);
         if (matchAr || matchDe) {
           results.add(SearchResult(
             surahId: sm.id,
@@ -433,6 +436,7 @@ class _SearchScreenState extends State<SearchScreen> {
         final r = _verseResults[index];
         return _VerseResultTile(
           result: r,
+          searchQuery: q,
           arabicFontSize: _arabicFontSize,
           arabicLineHeight: _arabicLineHeight,
           onTap: () {
@@ -500,18 +504,63 @@ class _SegmentButton extends StatelessWidget {
 class _VerseResultTile extends StatelessWidget {
   const _VerseResultTile({
     required this.result,
+    required this.searchQuery,
     required this.arabicFontSize,
     required this.arabicLineHeight,
     required this.onTap,
   });
 
   final SearchResult result;
+  final String searchQuery;
   final double arabicFontSize;
   final double arabicLineHeight;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
+    final deBase = GoogleFonts.inter(
+      fontSize: 14,
+      height: 1.45,
+      color: Colors.white70,
+    );
+    final deHi = deBase.copyWith(
+      color: _accentChampagneGold,
+      fontWeight: FontWeight.w600,
+      backgroundColor: Colors.black.withOpacity(0.35),
+    );
+    final arBase = GoogleFonts.amiri(
+      fontSize: arabicFontSize,
+      height: arabicLineHeight,
+      color: Colors.white,
+    );
+
+    Widget deWidget() {
+      final t = result.textDe;
+      if (t == null || t.isEmpty) return const SizedBox.shrink();
+      final m = SearchNormalize.firstCaseInsensitiveMatch(t, searchQuery);
+      if (m == null) {
+        return Text(
+          t,
+          maxLines: 4,
+          overflow: TextOverflow.ellipsis,
+          style: deBase,
+        );
+      }
+      final (s, len) = m;
+      return Text.rich(
+        TextSpan(
+          style: deBase,
+          children: [
+            if (s > 0) TextSpan(text: t.substring(0, s)),
+            TextSpan(text: t.substring(s, s + len), style: deHi),
+            if (s + len < t.length) TextSpan(text: t.substring(s + len)),
+          ],
+        ),
+        maxLines: 4,
+        overflow: TextOverflow.ellipsis,
+      );
+    }
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Material(
@@ -544,16 +593,7 @@ class _VerseResultTile extends StatelessWidget {
                 if (result.textDe != null && result.textDe!.isNotEmpty)
                   Padding(
                     padding: const EdgeInsets.only(bottom: 8),
-                    child: Text(
-                      result.textDe!,
-                      maxLines: 4,
-                      overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.inter(
-                        fontSize: 14,
-                        height: 1.45,
-                        color: Colors.white70,
-                      ),
-                    ),
+                    child: deWidget(),
                   ),
                 Directionality(
                   textDirection: TextDirection.rtl,
@@ -561,11 +601,7 @@ class _VerseResultTile extends StatelessWidget {
                     result.textAr,
                     maxLines: 3,
                     overflow: TextOverflow.ellipsis,
-                    style: GoogleFonts.amiri(
-                      fontSize: arabicFontSize,
-                      height: arabicLineHeight,
-                      color: Colors.white,
-                    ),
+                    style: arBase,
                   ),
                 ),
                 const SizedBox(height: 4),

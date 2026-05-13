@@ -7,6 +7,11 @@ export async function logAiRequest(params) {
                 endpoint: params.endpoint,
                 status: params.status,
                 errorCode: params.errorCode ?? null,
+                model: params.model ?? null,
+                promptTokens: params.promptTokens ?? null,
+                completionTokens: params.completionTokens ?? null,
+                totalTokens: params.totalTokens ?? null,
+                latencyMs: params.latencyMs ?? null,
             },
         });
     }
