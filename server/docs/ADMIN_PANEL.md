@@ -1,6 +1,10 @@
 # Admin-Panel (Ihdina API)
 
-Internes Dashboard unter **`/admin/`** (nur wenn `ADMIN_API_KEY` gesetzt). Zeigt KI-Usage und Feedbacks; erweiterbar über neue Routen unter `/api/v1/admin/…`.
+Internes Dashboard unter **`/admin/`** (nur wenn `ADMIN_API_KEY` gesetzt). Zeigt **KPI-Übersicht** (Diagramme, Zusammenhänge), KI-Usage (Tagesaggregate + Einzelereignisse), Feedbacks, Nutzersuche und Stellschrauben; erweiterbar über `/api/v1/admin/…`.
+
+**KPI-Übersicht (Dashboard):** `GET /api/v1/admin/metrics/overview` — aggregierte Nutzer-, KI- und Feedback-Kennzahlen inkl. Zeitreihen für Diagramme.
+
+**KI-Einzelereignisse:** `GET /api/v1/admin/usage/events?page=0&pageSize=50&hours=168` — optional `endpoint`, `status`, `installId` (exakt).
 
 **Feedbacks:** `GET /api/v1/admin/feedback?take=100` optional `&screen=…` — `screen=all` weglassen; `screen=_untagged` nur Einträge ohne Screen-Tag; sonst exakter Match (z. B. `settings`, `ai_verse_explanation`).
 

@@ -47,6 +47,7 @@ flutter:
   assets:
     - assets/data/
     - assets/data/glossary.json
+    - assets/data/daily_hadith_library.json
     - assets/db/
     - assets/db/ihdina.db
     - assets/tanzil/

@@ -1,8 +1,9 @@
 <!DOCTYPE html>
 <!--
-  Ihdina Admin — statische Shell. Erweiterung:
-  - Neue Endpunkte: server/src/routes/admin.routes.ts + Controller/Service
-  - UI: weiteres <section id="tab-..."> + Nav-Button + fetchJson('/api/v1/admin/...')
+  Ihdina Admin — statische Shell.
+  Backend: server/src/routes/admin.routes.ts
+  Einzel-Logs: GET /api/v1/admin/usage/events
+  KPI-Übersicht: GET /api/v1/admin/metrics/overview
 -->
 <html lang="de">
 <head>
@@ -13,59 +14,62 @@
   <style>
     :root {
       color-scheme: dark;
-      --bg: #0c0f0d;
-      --card: #161c19;
-      --border: #2a3530;
-      --accent: #c4a574;
-      --accent-dim: #9a7b4a;
-      --text: #e8ebe9;
-      --muted: #8a9691;
-      --danger: #e8a598;
-      --ok: #8fbc8f;
-      --maxw: 960px;
+      --bg: #0a0d0b;
+      --card: #131916;
+      --border: #26332c;
+      --accent: #c9a86c;
+      --accent-hover: #dcc18a;
+      --text: #e6eae7;
+      --muted: #8b9890;
+      --danger: #f0a090;
+      --ok: #7dbe7d;
+      --info: #7eb8d4;
+      --maxw: 1080px;
     }
     * { box-sizing: border-box; }
     body {
-      font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      font-family: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
       background: var(--bg);
       color: var(--text);
       margin: 0;
       min-height: 100vh;
-      line-height: 1.5;
+      line-height: 1.55;
+      font-size: 15px;
     }
-    .wrap { max-width: var(--maxw); margin: 0 auto; padding: 20px 16px 48px; }
+    .wrap { max-width: var(--maxw); margin: 0 auto; padding: 20px 16px 56px; }
     header {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: baseline;
-      justify-content: space-between;
-      gap: 8px;
       margin-bottom: 20px;
-      padding-bottom: 16px;
+      padding-bottom: 18px;
       border-bottom: 1px solid var(--border);
     }
-    header h1 { font-size: 1.35rem; margin: 0; color: var(--accent); font-weight: 700; letter-spacing: -0.02em; }
-    header .ver { font-size: 0.75rem; color: var(--muted); }
+    header h1 {
+      font-size: 1.4rem;
+      margin: 0 0 6px;
+      color: var(--accent);
+      font-weight: 700;
+      letter-spacing: -0.02em;
+    }
+    header .sub { font-size: 0.85rem; color: var(--muted); max-width: 62ch; }
     nav {
       display: flex;
       flex-wrap: wrap;
-      gap: 6px;
-      margin-bottom: 20px;
+      gap: 8px;
+      margin-bottom: 22px;
     }
     nav button {
-      background: transparent;
+      background: var(--card);
       color: var(--muted);
       border: 1px solid var(--border);
-      padding: 8px 14px;
-      border-radius: 999px;
+      padding: 9px 16px;
+      border-radius: 10px;
       font-weight: 600;
-      font-size: 0.85rem;
+      font-size: 0.82rem;
       cursor: pointer;
     }
     nav button:hover { color: var(--text); border-color: var(--muted); }
     nav button.active {
       background: var(--accent);
-      color: #0c0f0d;
+      color: #0a0d0b;
       border-color: var(--accent);
     }
     .panel { display: none; }
@@ -74,131 +78,263 @@
       background: var(--card);
       border: 1px solid var(--border);
       border-radius: 14px;
-      padding: 18px 18px 16px;
-      margin-bottom: 16px;
+      padding: 20px 20px 18px;
+      margin-bottom: 18px;
     }
-    section.card h2 { margin: 0 0 12px; font-size: 1rem; font-weight: 700; color: var(--text); }
-    label { display: block; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--muted); margin-bottom: 6px; }
-    input[type="url"], input[type="password"], input[type="number"], select {
+    section.card h2 {
+      margin: 0 0 10px;
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+    section.card h3 {
+      margin: 18px 0 8px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--accent);
+    }
+    label {
+      display: block;
+      font-size: 0.68rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      margin-bottom: 6px;
+    }
+    input[type="url"], input[type="password"], input[type="number"], input[type="text"], select, textarea {
       width: 100%;
       max-width: 100%;
       padding: 10px 12px;
       border-radius: 10px;
       border: 1px solid var(--border);
-      background: #0f1412;
+      background: #0d1210;
       color: var(--text);
-      font-size: 0.95rem;
-      margin-bottom: 14px;
+      font-size: 0.92rem;
+      margin-bottom: 12px;
     }
-    input::placeholder { color: #5c6560; }
-    .row { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 8px; }
+    textarea { min-height: 100px; font-family: ui-monospace, monospace; font-size: 0.8rem; }
+    input::placeholder { color: #5a635d; }
+    .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 10px; }
     button.action {
       background: var(--accent);
-      color: #0c0f0d;
+      color: #0a0d0b;
       border: none;
       padding: 10px 18px;
       border-radius: 10px;
       font-weight: 700;
-      font-size: 0.88rem;
+      font-size: 0.86rem;
       cursor: pointer;
     }
-    button.action:disabled { opacity: 0.45; cursor: not-allowed; }
+    button.action:hover { background: var(--accent-hover); }
+    button.action:disabled, button.ghost:disabled { opacity: 0.45; cursor: not-allowed; }
     button.ghost {
-      background: #24302a;
+      background: #1a2420;
       color: var(--text);
       border: 1px solid var(--border);
       padding: 10px 16px;
       border-radius: 10px;
       font-weight: 600;
-      font-size: 0.88rem;
+      font-size: 0.86rem;
       cursor: pointer;
     }
-    button.ghost:disabled { opacity: 0.45; cursor: not-allowed; }
-    .hint { font-size: 0.8rem; color: var(--muted); margin-top: -8px; margin-bottom: 14px; line-height: 1.4; }
+    .hint { font-size: 0.82rem; color: var(--muted); margin: 0 0 14px; line-height: 1.5; max-width: 72ch; }
+    .callout {
+      border-left: 4px solid var(--info);
+      background: rgba(126, 184, 212, 0.08);
+      padding: 14px 16px;
+      border-radius: 0 12px 12px 0;
+      margin-bottom: 18px;
+      font-size: 0.86rem;
+      color: var(--text);
+    }
+    .callout strong { color: var(--accent); }
+    .callout code { font-size: 0.78rem; background: #0d1210; padding: 2px 6px; border-radius: 4px; }
     .status-pill {
       display: inline-block;
-      font-size: 0.75rem;
-      padding: 4px 10px;
+      font-size: 0.74rem;
+      padding: 5px 11px;
       border-radius: 999px;
       font-weight: 600;
     }
-    .status-pill.idle { background: #24302a; color: var(--muted); }
-    .status-pill.ok { background: rgba(143, 188, 143, 0.2); color: var(--ok); }
-    .status-pill.err { background: rgba(232, 165, 152, 0.15); color: var(--danger); }
+    .status-pill.idle { background: #1a2420; color: var(--muted); }
+    .status-pill.ok { background: rgba(125, 190, 125, 0.18); color: var(--ok); }
+    .status-pill.err { background: rgba(240, 160, 144, 0.12); color: var(--danger); }
     .err-box {
       color: var(--danger);
-      font-size: 0.88rem;
-      margin-top: 12px;
-      padding: 12px;
+      font-size: 0.86rem;
+      margin: 12px 0;
+      padding: 12px 14px;
       border-radius: 10px;
-      background: rgba(232, 165, 152, 0.08);
-      border: 1px solid rgba(232, 165, 152, 0.25);
+      background: rgba(240, 160, 144, 0.06);
+      border: 1px solid rgba(240, 160, 144, 0.22);
       white-space: pre-wrap;
       display: none;
     }
     .err-box.show { display: block; }
-    table { width: 100%; border-collapse: collapse; font-size: 0.82rem; margin-top: 8px; overflow: auto; display: block; }
-    thead, tbody { display: table; width: 100%; table-layout: fixed; }
-    th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); word-break: break-word; }
-    th { color: var(--muted); font-weight: 600; }
+    .table-wrap {
+      overflow-x: auto;
+      margin-top: 10px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      max-width: 100%;
+    }
+    table.data { width: 100%; border-collapse: collapse; font-size: 0.78rem; min-width: 720px; }
+    table.data th, table.data td {
+      text-align: left;
+      padding: 8px 10px;
+      border-bottom: 1px solid var(--border);
+      vertical-align: top;
+      word-break: break-word;
+    }
+    table.data th { color: var(--muted); font-weight: 600; white-space: nowrap; }
+    table.data tr:last-child td { border-bottom: none; }
+    .mono { font-family: ui-monospace, monospace; font-size: 0.76rem; }
     .fb-item { border-bottom: 1px solid var(--border); padding: 14px 0; font-size: 0.88rem; }
     .fb-meta { color: var(--muted); font-size: 0.78rem; margin-bottom: 6px; }
     footer {
-      margin-top: 32px;
-      padding-top: 16px;
+      margin-top: 36px;
+      padding-top: 18px;
       border-top: 1px solid var(--border);
-      font-size: 0.75rem;
+      font-size: 0.74rem;
       color: var(--muted);
-      line-height: 1.5;
+      line-height: 1.55;
     }
-    footer code { font-size: 0.7rem; background: #0f1412; padding: 2px 6px; border-radius: 4px; }
-    .empty { color: var(--muted); font-size: 0.9rem; padding: 12px 0; }
+    footer code { font-size: 0.68rem; background: #0d1210; padding: 2px 6px; border-radius: 4px; }
+    .empty { color: var(--muted); font-size: 0.9rem; padding: 14px 0; }
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 640px) { .grid2 { grid-template-columns: 1fr; } }
+    .pill-ok { color: var(--ok); font-weight: 600; }
+    .pill-err { color: var(--danger); font-weight: 600; }
+    .kpi-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(158px, 1fr)); gap: 12px; margin-bottom: 8px; }
+    .kpi {
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      padding: 14px 14px 12px;
+    }
+    .kpi .val { font-size: 1.42rem; font-weight: 800; color: var(--accent); letter-spacing: -0.02em; }
+    .kpi .lbl { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--muted); margin-top: 4px; line-height: 1.35; }
+    .kpi .sub { font-size: 0.72rem; color: var(--muted); margin-top: 6px; line-height: 1.35; }
+    .chart-wrap { position: relative; height: 240px; margin-top: 10px; }
+    .chart-wrap.short { height: 200px; }
   </style>
 </head>
 <body>
   <div class="wrap">
     <header>
       <h1>Ihdina — internes Dashboard</h1>
-      <span class="ver">Zugang · KI-Usage · Feedbacks</span>
+      <p class="sub">KPIs, Diagramme, Zusammenhänge, KI-Logs, Feedback und Stellschrauben — aus derselben API- und Nutzerdatenbank. Admin-Zugang per <code>ADMIN_API_KEY</code> (kein klassisches Nutzer-Login).</p>
     </header>
 
     <nav id="nav" aria-label="Hauptnavigation">
-      <button type="button" class="active" data-tab="access">Zugang</button>
-      <button type="button" data-tab="usage">KI-Usage</button>
+      <button type="button" class="active" data-tab="overview">Übersicht</button>
+      <button type="button" data-tab="access">Zugang</button>
+      <button type="button" data-tab="usage">KI-Übersicht</button>
+      <button type="button" data-tab="events">KI-Einzelereignisse</button>
       <button type="button" data-tab="feedback">Feedbacks</button>
+      <button type="button" data-tab="users">Nutzer</button>
     </nav>
 
     <div id="errGlobal" class="err-box" role="alert"></div>
 
-    <!-- Zugang -->
-    <div id="panel-access" class="panel active">
+    <!-- Übersicht KPI -->
+    <div id="panel-overview" class="panel active">
       <section class="card">
-        <h2>Verbindung</h2>
-        <p class="hint">API-Basis ohne Slash am Ende. Leer = diese Seite (<span id="originHint"></span>). Schlüssel = <code>ADMIN_API_KEY</code> auf dem Server.</p>
-        <label for="apiBase">API-Basis-URL</label>
-        <input id="apiBase" type="url" autocomplete="url" placeholder="https://api.ihdina.app" />
-        <label for="adminKey">Admin-Schlüssel</label>
-        <input id="adminKey" type="password" autocomplete="current-password" placeholder="X-Admin-Key" />
-        <div class="row">
-          <button type="button" class="action" id="btnSave">Speichern (lokal)</button>
-          <button type="button" class="ghost" id="btnHealth">Health prüfen</button>
+        <h2>Produkt- &amp; Betriebslage</h2>
+        <p class="hint">Zahlen stammen aus <code>User</code>, <code>AiRequestLog</code> und <code>AppFeedback</code>. „Aktiv“ = Nutzer mit API-Kontakt in den letzten 7 Tagen (<code>lastSeenAt</code>). Für echte In-App-Funnels später ergänzend Client-Analytics (z. B. PostHog) sinnvoll.</p>
+        <div class="row" style="margin-bottom:4px">
+          <button type="button" class="action" id="btnOverview">KPIs &amp; Diagramme laden</button>
+          <span class="status-pill idle" id="overviewPill">Daten: —</span>
         </div>
-        <div class="row" style="margin-top:12px">
-          <span class="status-pill idle" id="healthPill">Health: —</span>
-        </div>
+        <div id="overviewErr" class="err-box"></div>
+        <p class="hint" id="overviewGen" style="margin-top:4px"></p>
+        <div class="kpi-grid" id="kpiGrid"></div>
       </section>
       <section class="card">
-        <h2>Deployment</h2>
-        <p class="hint">Produktion: HTTPS über Nginx, kein offener Port 3001. Siehe <code>server/docs/ADMIN_PANEL.md</code> und <code>server/nginx/ihdina-api.example.conf</code> im Repo.</p>
+        <h2>Lesbare Lage — Zusammenhänge</h2>
+        <p class="hint">Heuristische Kurzfazits aus denselben Kennzahlen (keine KI-Prognose).</p>
+        <ul id="insightsList" style="margin:0;padding-left:1.25rem;line-height:1.65;color:var(--text)"></ul>
+      </section>
+      <section class="card">
+        <h2>KI — Volumen &amp; Fehler (14 Tage, UTC)</h2>
+        <p class="hint">Gold = alle Requests; Koralle = fehlerhafte Antworten (Status <code>error</code> in der DB).</p>
+        <div class="chart-wrap"><canvas id="chLineAi"></canvas></div>
+      </section>
+      <div class="grid2">
+        <section class="card">
+          <h2>KI — Top-Endpunkte (7 Tage)</h2>
+          <div class="chart-wrap short"><canvas id="chBarEp"></canvas></div>
+        </section>
+        <section class="card">
+          <h2>Feedback — Screens (7 Tage, Ø Rating)</h2>
+          <div class="chart-wrap short"><canvas id="chBarFb"></canvas></div>
+        </section>
+      </div>
+      <section class="card">
+        <h2>Fehlercodes (KI, 7 Tage)</h2>
+        <div id="tblErrCodes"></div>
+      </section>
+      <section class="card">
+        <h2>Feedback — Detail nach Screen (7 Tage)</h2>
+        <div id="tblFbScreen"></div>
+      </section>
+      <section class="card">
+        <h2>Stellschrauben</h2>
+        <p class="hint">Direkt auf der Produktions-API — nur mit Absicht bedienen.</p>
+        <ul class="hint" style="list-style:disc;padding-left:1.25rem;margin-top:0">
+          <li><code>ADMIN_API_KEY</code> in der Server-<code>.env</code> schützt alle <code>/api/v1/admin/*</code>-Routen.</li>
+          <li>Pro-Flag hier ist eine manuelle Override-Hilfe; Live-Entitlements können zusätzlich über RevenueCat laufen.</li>
+          <li>Kosten-Schätzung im KI-Tab: optional <code>OPENAI_PRICE_INPUT_PER_1M_USD</code> / <code>OPENAI_PRICE_OUTPUT_PER_1M_USD</code>.</li>
+        </ul>
+        <label for="knobInstallId">installId (exakt)</label>
+        <input id="knobInstallId" type="text" placeholder="Aus Logs, Nutzer-Suche oder Support" autocomplete="off" />
+        <div class="row">
+          <button type="button" class="action" id="btnKnobProOn">Pro setzen</button>
+          <button type="button" class="ghost" id="btnKnobProOff">Pro entfernen</button>
+        </div>
+        <div id="knobErr" class="err-box"></div>
+        <p class="hint" id="knobOk" style="color:var(--ok);display:none;margin-top:8px"></p>
       </section>
     </div>
 
-    <!-- Usage -->
+    <!-- Zugang -->
+    <div id="panel-access" class="panel">
+      <div class="callout">
+        <strong>Kein klassisches „Login“.</strong>
+        Die Admin-Routen unter <code>/api/v1/admin/</code> sind mit einem <strong>gemeinsamen Geheimnis</strong> geschützt, das in der Server-<code>.env</code> als <code>ADMIN_API_KEY</code> steht.
+        Der Browser sendet bei jedem Klick auf „Laden“ den Schlüssel als Header <code>X-Admin-Key</code> (alternativ <code>Authorization: Bearer …</code> — siehe Middleware im Repo).
+        <strong>Speichern (lokal)</strong> legt URL und Schlüssel nur in <code>localStorage</code> auf <em>deinem</em> Rechner ab — damit du sie nicht jedes Mal neu eingeben musst. Das ist dasselbe Prinzip wie ein API-Token in Postman, nur ohne OAuth/Benutzerkonten-App für dieses interne MVP.
+      </div>
+      <section class="card">
+        <h2>Verbindung</h2>
+        <p class="hint">API-Basis-URL <strong>ohne</strong> Slash am Ende. Leer = dieselbe Domain wie diese Seite (<span id="originHint"></span>).</p>
+        <label for="apiBase">API-Basis-URL</label>
+        <input id="apiBase" type="url" autocomplete="url" placeholder="https://api.ihdina.app" />
+        <label for="adminKey">Admin-Schlüssel (<code>ADMIN_API_KEY</code>)</label>
+        <input id="adminKey" type="password" autocomplete="current-password" placeholder="Geheimer Schlüssel aus der Server-.env" />
+        <div class="row">
+          <button type="button" class="action" id="btnSave">Speichern (nur dieser Browser)</button>
+          <button type="button" class="ghost" id="btnHealth">Öffentlichen Health prüfen</button>
+          <button type="button" class="ghost" id="btnKeyTest">Admin-Schlüssel testen</button>
+        </div>
+        <div class="row">
+          <span class="status-pill idle" id="healthPill">Status: —</span>
+        </div>
+      </section>
+      <section class="card">
+        <h2>Deployment &amp; Sicherheit</h2>
+        <p class="hint">Produktion: TLS über Nginx, Admin nicht verlinken, Schlüssel rotieren bei Verdacht. Details: <code>server/docs/ADMIN_PANEL.md</code> und <code>server/nginx/ihdina-api.example.conf</code>.</p>
+        <p class="hint">In der Datenbank werden <strong>keine</strong> KI-Prompt-/Antworttexte pro Request gespeichert — nur Metadaten (Zeit, Endpoint, Tokens, Latenz, ggf. <code>installId</code> über den Nutzer).</p>
+      </section>
+    </div>
+
+    <!-- KI-Übersicht -->
     <div id="panel-usage" class="panel">
       <section class="card">
-        <h2>KI-Usage (aggregiert, UTC-Tag)</h2>
+        <h2>KI-Usage — Tagesaggregate (UTC)</h2>
+        <p class="hint">Schneller Kosten- und Volumenüberblick. Für <strong>einen Eintrag pro API-Aufruf</strong> den Tab „KI-Einzelereignisse“ nutzen.</p>
         <label for="days">Zeitraum (Tage)</label>
-        <input id="days" type="number" min="1" max="366" value="14" style="max-width:140px" />
+        <input id="days" type="number" min="1" max="366" value="14" style="max-width:160px" />
         <div class="row">
           <button type="button" class="action" id="btnUsage">Daten laden</button>
         </div>
@@ -207,19 +343,52 @@
       </section>
     </div>
 
-    <!-- Feedback -->
+    <!-- KI-Einzelereignisse -->
+    <div id="panel-events" class="panel">
+      <section class="card">
+        <h2>KI-Einzelereignisse (<code>AiRequestLog</code>)</h2>
+        <p class="hint">Jede Zeile = ein gespeicherter Request an die KI-API (Explain / Follow-up usw.). Filter optional; Pagination ab Seite 0.</p>
+        <div class="grid2">
+          <div>
+            <label for="evHours">Zeitraum zurück (Stunden, max. 2160)</label>
+            <input id="evHours" type="number" min="1" max="2160" value="168" />
+          </div>
+          <div>
+            <label for="evPageSize">Zeilen pro Seite (max. 100)</label>
+            <input id="evPageSize" type="number" min="1" max="100" value="50" />
+          </div>
+        </div>
+        <label for="evEndpoint">Endpoint enthält (optional)</label>
+        <input id="evEndpoint" type="text" placeholder="z. B. explain" />
+        <label for="evStatus">Status exakt (optional)</label>
+        <input id="evStatus" type="text" placeholder="ok oder error" />
+        <label for="evInstall">installId exakt (optional)</label>
+        <input id="evInstall" type="text" placeholder="Geräte-/Installations-ID" />
+        <input type="hidden" id="evPage" value="0" />
+        <div class="row">
+          <button type="button" class="action" id="btnEvents">Liste laden</button>
+          <button type="button" class="ghost" id="btnEventsPrev">Vorherige Seite</button>
+          <button type="button" class="ghost" id="btnEventsNext">Nächste Seite</button>
+        </div>
+        <div id="eventsErr" class="err-box"></div>
+        <p id="eventsMeta" class="hint" style="margin-top:4px"></p>
+        <div class="table-wrap" id="eventsTableWrap"></div>
+      </section>
+    </div>
+
+    <!-- Feedbacks -->
     <div id="panel-feedback" class="panel">
       <section class="card">
         <h2>Letzte Feedbacks</h2>
-        <p class="hint">Filter <code>screen</code> wie in der App gesendet (z. B. <code>settings</code>, <code>ai_verse_explanation</code>). „Ohne Tag“ = ältere Einträge ohne Screen-Feld.</p>
+        <p class="hint">Filter <code>screen</code> wie von der App gesendet. „Ohne Tag“ = ältere Einträge ohne Screen-Feld.</p>
         <label for="fbTake">Anzahl</label>
-        <input id="fbTake" type="number" min="1" max="500" value="100" style="max-width:140px" />
+        <input id="fbTake" type="number" min="1" max="500" value="100" style="max-width:160px" />
         <label for="fbScreen">Screen-Tag</label>
         <select id="fbScreen">
           <option value="all">Alle</option>
-          <option value="_untagged">Ohne Tag (nur leeres Feld)</option>
-          <option value="settings">settings (Einstellungen)</option>
-          <option value="ai_verse_explanation">ai_verse_explanation (KI-Verserklärung)</option>
+          <option value="_untagged">Ohne Tag (leeres Feld)</option>
+          <option value="settings">settings</option>
+          <option value="ai_verse_explanation">ai_verse_explanation</option>
         </select>
         <div class="row">
           <button type="button" class="action" id="btnFeedback">Liste laden</button>
@@ -229,178 +398,617 @@
       </section>
     </div>
 
+    <!-- Nutzer -->
+    <div id="panel-users" class="panel">
+      <section class="card">
+        <h2>Nutzer suchen</h2>
+        <p class="hint">Teilstring in <code>installId</code> (Groß-/Kleinschreibung egal). Wähle einen Treffer für Details und Pro-Status.</p>
+        <label for="userQ">Suchbegriff</label>
+        <input id="userQ" type="text" placeholder="mindestens ein Zeichen" />
+        <div class="row">
+          <button type="button" class="action" id="btnUserSearch">Suchen</button>
+        </div>
+        <div id="userSearchErr" class="err-box"></div>
+        <div id="userSearchResults"></div>
+      </section>
+      <section class="card" id="userDetailCard" style="display:none">
+        <h2>Nutzerdetails</h2>
+        <div id="userDetailBody"></div>
+        <h3>Pro-Status ändern</h3>
+        <p class="hint">Nur für Support / Tests. Änderung wirkt sofort in der API.</p>
+        <div class="row">
+          <button type="button" class="action" id="btnUserProOn">Pro aktivieren</button>
+          <button type="button" class="ghost" id="btnUserProOff">Pro deaktivieren</button>
+        </div>
+        <div id="userDetailErr" class="err-box"></div>
+      </section>
+    </div>
+
     <footer>
-      <p><strong>Hinweis:</strong> Das ist ein bewusst schlankes internes Dashboard (eine HTML-Datei + eure API) — typisch für MVP/Admin ohne zweites Frontend-Projekt. Ein „richtiges“ Produkt-Dashboard (Metabase, Retool, Grafana oder eigenes Next.js-Admin) lohnt, wenn ihr viele Metriken, Rollen und Drilldowns braucht.</p>
-      <p style="margin-top:8px">Erweiterungen: Backend unter <code>/api/v1/admin/</code>, UI in <code>server/admin-ui/index.html</code>.</p>
+      <p>Backend: <code>/api/v1/admin/</code> · KPI: <code>GET /api/v1/admin/metrics/overview</code> · Einzel-Logs: <code>GET /api/v1/admin/usage/events</code></p>
     </footer>
   </div>
 
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
   <script>
-    const LS_API = "ihdina_admin_api_base";
-    const LS_KEY = "ihdina_admin_key";
+    (function () {
+      const LS_API = "ihdina_admin_api_base";
+      const LS_KEY = "ihdina_admin_key";
 
-    document.getElementById("originHint").textContent = window.location.origin;
+      const $ = (id) => document.getElementById(id);
 
-    function apiBase() {
-      const v = document.getElementById("apiBase").value.trim();
-      if (v) return v.replace(/\/$/, "");
-      return window.location.origin;
-    }
+      $("originHint").textContent = window.location.origin;
 
-    function adminHeaders() {
-      const k = document.getElementById("adminKey").value.trim();
-      return { "X-Admin-Key": k, "Accept": "application/json" };
-    }
-
-    function showGlobalErr(msg) {
-      const el = document.getElementById("errGlobal");
-      el.textContent = msg || "";
-      el.classList.toggle("show", !!msg);
-    }
-
-    function showPanelErr(id, msg) {
-      const el = document.getElementById(id);
-      el.textContent = msg || "";
-      el.classList.toggle("show", !!msg);
-    }
-
-    async function fetchJson(path) {
-      const base = apiBase();
-      const url = base + path;
-      const res = await fetch(url, { headers: adminHeaders() });
-      const text = await res.text();
-      let json;
-      try { json = JSON.parse(text); } catch (_) { json = null; }
-      if (!res.ok) {
-        const m = json?.error?.message || json?.message || text || res.statusText;
-        throw new Error(m || "HTTP " + res.status);
+      function apiBase() {
+        const v = $("apiBase").value.trim();
+        if (v) return v.replace(/\/$/, "");
+        return window.location.origin;
       }
-      if (!json || json.success !== true) throw new Error("Ungültige Antwort");
-      return json.data;
-    }
 
-    function setBusy(btn, on) {
-      btn.disabled = !!on;
-    }
+      function persistFromForm() {
+        localStorage.setItem(LS_API, $("apiBase").value.trim());
+        localStorage.setItem(LS_KEY, $("adminKey").value.trim());
+      }
 
-    /* Tabs */
-    document.querySelectorAll("#nav button").forEach((btn) => {
-      btn.addEventListener("click", () => {
-        const tab = btn.getAttribute("data-tab");
-        document.querySelectorAll("#nav button").forEach((b) => b.classList.toggle("active", b === btn));
-        document.querySelectorAll(".panel").forEach((p) => p.classList.remove("active"));
-        document.getElementById("panel-" + tab).classList.add("active");
-        showGlobalErr("");
-      });
-    });
+      function adminHeaders(jsonBody) {
+        const k = $("adminKey").value.trim();
+        const h = { Accept: "application/json", "X-Admin-Key": k };
+        if (jsonBody) h["Content-Type"] = "application/json";
+        return h;
+      }
 
-    document.getElementById("apiBase").value = localStorage.getItem(LS_API) || "";
-    document.getElementById("adminKey").value = localStorage.getItem(LS_KEY) || "";
+      function showGlobalErr(msg) {
+        const el = $("errGlobal");
+        el.textContent = msg || "";
+        el.classList.toggle("show", !!msg);
+      }
 
-    document.getElementById("btnSave").onclick = () => {
-      localStorage.setItem(LS_API, document.getElementById("apiBase").value.trim());
-      localStorage.setItem(LS_KEY, document.getElementById("adminKey").value.trim());
-      showGlobalErr("");
-      const pill = document.getElementById("healthPill");
-      pill.textContent = "Gespeichert (Browser)";
-      pill.className = "status-pill ok";
-      setTimeout(() => { pill.textContent = "Health: —"; pill.className = "status-pill idle"; }, 2000);
-    };
+      function showPanelErr(id, msg) {
+        const el = $(id);
+        el.textContent = msg || "";
+        el.classList.toggle("show", !!msg);
+      }
 
-    document.getElementById("btnHealth").onclick = async () => {
-      const pill = document.getElementById("healthPill");
-      const btn = document.getElementById("btnHealth");
-      showGlobalErr("");
-      pill.textContent = "Health: …";
-      pill.className = "status-pill idle";
-      setBusy(btn, true);
-      try {
+      async function fetchJson(path, opts) {
+        opts = opts || {};
         const base = apiBase();
-        const res = await fetch(base + "/api/v1/health", { headers: { Accept: "application/json" } });
+        const url = base + path;
+        const res = await fetch(url, {
+          method: opts.method || "GET",
+          headers: adminHeaders(!!opts.body),
+          body: opts.body != null ? opts.body : undefined,
+        });
         const text = await res.text();
-        if (!res.ok) throw new Error(text || res.statusText);
-        pill.textContent = "Health: OK";
+        let json;
+        try { json = JSON.parse(text); } catch (_) { json = null; }
+        if (!res.ok) {
+          const m = json?.error?.message || json?.message || text || res.statusText;
+          throw new Error(m || "HTTP " + res.status);
+        }
+        if (!json || json.success !== true) throw new Error("Ungültige Antwort");
+        return json.data;
+      }
+
+      function escapeHtml(s) {
+        return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+      }
+
+      function setBusy(btn, on) {
+        btn.disabled = !!on;
+      }
+
+      let chLineAi, chBarEp, chBarFb;
+      let overviewLoadedOnce = false;
+
+      function destroyCharts() {
+        [chLineAi, chBarEp, chBarFb].forEach((c) => {
+          try {
+            c && c.destroy();
+          } catch (_) {}
+        });
+        chLineAi = chBarEp = chBarFb = undefined;
+      }
+
+      function chartCommonOpts() {
+        const tick = "#8b9890";
+        const grid = "#26332c";
+        return {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: { legend: { labels: { color: tick, font: { size: 11 } } } },
+          scales: {
+            x: { ticks: { color: tick, maxRotation: 45 }, grid: { color: grid } },
+            y: { ticks: { color: tick }, grid: { color: grid }, beginAtZero: true },
+          },
+        };
+      }
+
+      async function loadOverview() {
+        if (typeof Chart === "undefined") {
+          showPanelErr("overviewErr", "Chart.js konnte nicht geladen werden (CDN prüfen / Adblocker).");
+          return;
+        }
+        showPanelErr("overviewErr", "");
+        persistFromForm();
+        const pill = $("overviewPill");
+        const btn = $("btnOverview");
+        pill.textContent = "Lade …";
+        pill.className = "status-pill idle";
+        setBusy(btn, true);
+        destroyCharts();
+        try {
+          const pack = await fetchJson("/api/v1/admin/metrics/overview");
+          const o = pack.overview;
+          $("overviewGen").textContent =
+            "Stand: " +
+            new Date(o.generatedAt).toLocaleString("de-DE", { dateStyle: "short", timeStyle: "medium" }) +
+            " — Quelle: PostgreSQL (User, AiRequestLog, AppFeedback).";
+          pill.textContent = "Daten geladen";
+          pill.className = "status-pill ok";
+
+          const fmt = (n) => Number(n).toLocaleString("de-DE");
+          const pct = (x) => (Number(x) * 100).toFixed(1) + " %";
+          const kpis = [
+            { val: fmt(o.users.total), lbl: "Nutzer gesamt", sub: fmt(o.users.pro) + " Pro · " + pct(o.users.proShare) + " Anteil" },
+            { val: fmt(o.users.activeLast7d), lbl: "Aktiv (7 T.)", sub: "Nutzer mit lastSeenAt in 7 Tagen" },
+            { val: fmt(o.users.newLast7d), lbl: "Neu (7 T.)", sub: "Neue User-Zeilen" },
+            { val: fmt(o.ai.requestsLast24h), lbl: "KI-Calls 24 h", sub: "7 T.: " + fmt(o.ai.requestsLast7d) },
+            { val: pct(o.ai.errorRateLast7d), lbl: "KI-Fehlerquote 7 T.", sub: fmt(o.ai.errorsLast7d) + " Fehler / " + fmt(o.ai.okLast7d) + " ok" },
+            { val: fmt(o.ai.distinctUsersWithAiLast7d), lbl: "Nutzer mit KI 7 T.", sub: "Distinct userId in Logs" },
+            {
+              val: o.feedback.avgRatingLast7d != null ? Number(o.feedback.avgRatingLast7d).toFixed(2) : "—",
+              lbl: "Ø Rating 7 T.",
+              sub: fmt(o.feedback.withRatingLast7d) + " mit Rating · 30 T. Ø " + (o.feedback.avgRatingLast30d != null ? Number(o.feedback.avgRatingLast30d).toFixed(2) : "—"),
+            },
+            { val: fmt(o.feedback.countLast7d), lbl: "Feedbacks 7 T.", sub: "30 T.: " + fmt(o.feedback.countLast30d) },
+          ];
+          $("kpiGrid").innerHTML = kpis
+            .map(
+              (x) =>
+                "<div class='kpi'><div class='val'>" +
+                escapeHtml(String(x.val)) +
+                "</div><div class='lbl'>" +
+                escapeHtml(x.lbl) +
+                "</div>" +
+                (x.sub ? "<div class='sub'>" + escapeHtml(x.sub) + "</div>" : "") +
+                "</div>"
+            )
+            .join("");
+
+          const ins = o.insights || [];
+          $("insightsList").innerHTML = ins.length ? ins.map((t) => "<li>" + escapeHtml(t) + "</li>").join("") : "<li>Keine automatischen Hinweise.</li>";
+
+          const errs = o.ai.topErrorCodes7d || [];
+          $("tblErrCodes").innerHTML = errs.length
+            ? "<div class='table-wrap'><table class='data'><thead><tr><th>Fehlercode</th><th>Anzahl (7 T.)</th></tr></thead><tbody>" +
+              errs.map((r) => "<tr><td class='mono'>" + escapeHtml(r.errorCode) + "</td><td>" + r.count + "</td></tr>").join("") +
+              "</tbody></table></div>"
+            : "<p class='empty'>Keine Fehlercodes im Zeitraum.</p>";
+
+          const scr = o.feedback.byScreen7d || [];
+          $("tblFbScreen").innerHTML = scr.length
+            ? "<div class='table-wrap'><table class='data'><thead><tr><th>Screen</th><th>Anzahl</th><th>Ø Rating</th></tr></thead><tbody>" +
+              scr
+                .map(
+                  (r) =>
+                    "<tr><td class='mono'>" +
+                    escapeHtml(r.screen) +
+                    "</td><td>" +
+                    r.count +
+                    "</td><td>" +
+                    (r.avgRating != null ? Number(r.avgRating).toFixed(2) : "—") +
+                    "</td></tr>"
+                )
+                .join("") +
+              "</tbody></table></div>"
+            : "<p class='empty'>Keine bewerteten Feedbacks (7 T.).</p>";
+
+          const tick = "#8b9890";
+          const grid = "#26332c";
+          const byDay = o.ai.byDay || [];
+          const labels = byDay.length ? byDay.map((d) => d.day) : ["(keine Daten)"];
+          const totals = byDay.length ? byDay.map((d) => d.total) : [0];
+          const errSer = byDay.length ? byDay.map((d) => d.errors) : [0];
+          chLineAi = new Chart($("chLineAi").getContext("2d"), {
+            type: "line",
+            data: {
+              labels,
+              datasets: [
+                {
+                  label: "Requests gesamt",
+                  data: totals,
+                  borderColor: "#c9a86c",
+                  backgroundColor: "rgba(201,168,108,0.12)",
+                  fill: true,
+                  tension: 0.25,
+                  pointRadius: 2,
+                },
+                {
+                  label: "Fehler",
+                  data: errSer,
+                  borderColor: "#f0a090",
+                  backgroundColor: "rgba(240,160,144,0.08)",
+                  fill: true,
+                  tension: 0.25,
+                  pointRadius: 2,
+                },
+              ],
+            },
+            options: {
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: { legend: { labels: { color: tick } } },
+              scales: {
+                x: { ticks: { color: tick, maxRotation: 0 }, grid: { color: grid } },
+                y: { ticks: { color: tick }, grid: { color: grid }, beginAtZero: true },
+              },
+            },
+          });
+
+          const ep = o.ai.byEndpoint7d || [];
+          const epL = ep.length ? ep.map((e) => e.endpoint) : ["(keine)"];
+          const epD = ep.length ? ep.map((e) => e.count) : [0];
+          chBarEp = new Chart($("chBarEp").getContext("2d"), {
+            type: "bar",
+            data: {
+              labels: epL,
+              datasets: [{ label: "Anzahl", data: epD, backgroundColor: "rgba(201,168,108,0.65)" }],
+            },
+            options: {
+              indexAxis: "y",
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: { legend: { display: false } },
+              scales: {
+                x: { ticks: { color: tick }, grid: { color: grid }, beginAtZero: true },
+                y: { ticks: { color: tick, font: { size: 10 } }, grid: { color: grid } },
+              },
+            },
+          });
+
+          const fb = o.feedback.byScreen7d || [];
+          const fbL = fb.length ? fb.map((r) => r.screen) : ["(keine)"];
+          const fbD = fb.length ? fb.map((r) => (r.avgRating != null ? Number(r.avgRating) : 0)) : [0];
+          chBarFb = new Chart($("chBarFb").getContext("2d"), {
+            type: "bar",
+            data: {
+              labels: fbL,
+              datasets: [
+                {
+                  label: "Ø Rating",
+                  data: fbD,
+                  backgroundColor: "rgba(126,184,212,0.55)",
+                },
+              ],
+            },
+            options: {
+              indexAxis: "y",
+              responsive: true,
+              maintainAspectRatio: false,
+              plugins: { legend: { display: false } },
+              scales: {
+                x: { max: 5.5, ticks: { color: tick }, grid: { color: grid }, beginAtZero: true },
+                y: { ticks: { color: tick, font: { size: 10 } }, grid: { color: grid } },
+              },
+            },
+          });
+        } catch (e) {
+          pill.textContent = "Fehler";
+          pill.className = "status-pill err";
+          showPanelErr("overviewErr", String(e.message || e));
+        } finally {
+          setBusy(btn, false);
+        }
+      }
+
+      $("btnOverview").onclick = () => loadOverview();
+
+      async function knobPatch(isPro) {
+        const id = $("knobInstallId").value.trim();
+        showPanelErr("knobErr", "");
+        $("knobOk").style.display = "none";
+        if (!id) {
+          showPanelErr("knobErr", "Bitte installId eintragen.");
+          return;
+        }
+        persistFromForm();
+        try {
+          await fetchJson("/api/v1/admin/users/" + encodeURIComponent(id), {
+            method: "PATCH",
+            body: JSON.stringify({ isPro }),
+          });
+          $("knobOk").style.display = "block";
+          $("knobOk").textContent = "Gespeichert: Pro ist jetzt " + (isPro ? "aktiv" : "inaktiv") + ".";
+        } catch (e) {
+          showPanelErr("knobErr", String(e.message || e));
+        }
+      }
+      $("btnKnobProOn").onclick = () => knobPatch(true);
+      $("btnKnobProOff").onclick = () => knobPatch(false);
+
+      /* Tabs */
+      document.querySelectorAll("#nav button").forEach((btn) => {
+        btn.addEventListener("click", () => {
+          const tab = btn.getAttribute("data-tab");
+          document.querySelectorAll("#nav button").forEach((b) => b.classList.toggle("active", b === btn));
+          document.querySelectorAll(".panel").forEach((p) => p.classList.remove("active"));
+          $("panel-" + tab).classList.add("active");
+          showGlobalErr("");
+          if (tab === "overview" && !overviewLoadedOnce) {
+            overviewLoadedOnce = true;
+            loadOverview();
+          }
+        });
+      });
+
+      $("apiBase").value = localStorage.getItem(LS_API) || "";
+      $("adminKey").value = localStorage.getItem(LS_KEY) || "";
+
+      $("btnSave").onclick = () => {
+        persistFromForm();
+        showGlobalErr("");
+        const pill = $("healthPill");
+        pill.textContent = "Gespeichert (nur dieser Browser)";
         pill.className = "status-pill ok";
-      } catch (e) {
-        pill.textContent = "Health: Fehler";
-        pill.className = "status-pill err";
-        showGlobalErr(String(e.message || e));
-      } finally {
-        setBusy(btn, false);
-      }
-    };
+        setTimeout(() => { pill.textContent = "Status: —"; pill.className = "status-pill idle"; }, 2200);
+      };
 
-    document.getElementById("btnUsage").onclick = async () => {
-      showPanelErr("usageErr", "");
-      const btn = document.getElementById("btnUsage");
-      const days = Math.min(366, Math.max(1, parseInt(document.getElementById("days").value, 10) || 14));
-      document.getElementById("days").value = String(days);
-      localStorage.setItem(LS_API, document.getElementById("apiBase").value.trim());
-      localStorage.setItem(LS_KEY, document.getElementById("adminKey").value.trim());
-      setBusy(btn, true);
-      try {
-        const data = await fetchJson("/api/v1/admin/usage/daily?days=" + encodeURIComponent(days));
-        const rows = data.rows || [];
-        let html = "<table><thead><tr><th>Tag (UTC)</th><th>Endpoint</th><th>Status</th><th>Modell</th><th>Anzahl</th><th>Prompt Σ</th><th>Completion Σ</th><th>Total Σ</th><th>Ø Latenz ms</th><th>Kosten (USD) ~</th></tr></thead><tbody>";
-        let sumUsd = 0;
-        for (const r of rows) {
-          const usd = typeof r.costUsd === "number" ? r.costUsd : 0;
-          sumUsd += usd;
-          html += "<tr><td>" + escapeHtml(r.day) + "</td><td>" + escapeHtml(r.endpoint) + "</td><td>" + escapeHtml(r.status) + "</td><td>" + escapeHtml(r.model || "—") + "</td><td>" + r.count + "</td><td>" + r.promptSum + "</td><td>" + r.completionSum + "</td><td>" + r.totalSum + "</td><td>" + (r.avgLatencyMs ?? "–") + "</td><td>" + usd.toFixed(4) + "</td></tr>";
+      $("btnHealth").onclick = async () => {
+        const pill = $("healthPill");
+        const btn = $("btnHealth");
+        showGlobalErr("");
+        pill.textContent = "Öffentlicher Health …";
+        pill.className = "status-pill idle";
+        setBusy(btn, true);
+        try {
+          const base = apiBase();
+          const res = await fetch(base + "/api/v1/health", { headers: { Accept: "application/json" } });
+          const text = await res.text();
+          if (!res.ok) throw new Error(text || res.statusText);
+          pill.textContent = "Health: OK (ohne Admin-Schlüssel)";
+          pill.className = "status-pill ok";
+        } catch (e) {
+          pill.textContent = "Health: Fehler";
+          pill.className = "status-pill err";
+          showGlobalErr(String(e.message || e));
+        } finally {
+          setBusy(btn, false);
         }
-        html += "</tbody></table>";
-        if (rows.length) {
-          html += "<p style='margin-top:10px;font-size:12px;opacity:0.75'>Summe geschätzt (USD): <strong>" + sumUsd.toFixed(4) + "</strong> — netto nach Token-Sätzen (siehe OpenAI-Preisliste); ohne Steuern/Währung. Optional: <code>OPENAI_PRICE_INPUT_PER_1M_USD</code> + <code>OPENAI_PRICE_OUTPUT_PER_1M_USD</code> in der API-<code>.env</code> für feste Sätze.</p>";
+      };
+
+      $("btnKeyTest").onclick = async () => {
+        const pill = $("healthPill");
+        const btn = $("btnKeyTest");
+        persistFromForm();
+        showGlobalErr("");
+        pill.textContent = "Admin-Schlüssel …";
+        pill.className = "status-pill idle";
+        setBusy(btn, true);
+        try {
+          await fetchJson("/api/v1/admin/usage/daily?days=1");
+          pill.textContent = "Admin: Schlüssel gültig";
+          pill.className = "status-pill ok";
+        } catch (e) {
+          pill.textContent = "Admin: abgelehnt oder Fehler";
+          pill.className = "status-pill err";
+          showGlobalErr(String(e.message || e));
+        } finally {
+          setBusy(btn, false);
         }
-        if (!rows.length) html = "<p class='empty'>Keine Daten im Zeitraum.</p>";
-        document.getElementById("usageTable").innerHTML = html;
-      } catch (e) {
-        showPanelErr("usageErr", String(e.message || e));
-        document.getElementById("usageTable").innerHTML = "";
-      } finally {
-        setBusy(btn, false);
-      }
-    };
+      };
 
-    document.getElementById("btnFeedback").onclick = async () => {
-      showPanelErr("fbErr", "");
-      const btn = document.getElementById("btnFeedback");
-      localStorage.setItem(LS_API, document.getElementById("apiBase").value.trim());
-      localStorage.setItem(LS_KEY, document.getElementById("adminKey").value.trim());
-      const takeRaw = parseInt(document.getElementById("fbTake").value, 10);
-      const take = Math.min(500, Math.max(1, Number.isFinite(takeRaw) ? takeRaw : 100));
-      document.getElementById("fbTake").value = String(take);
-      const screenSel = document.getElementById("fbScreen").value;
-      let path = "/api/v1/admin/feedback?take=" + encodeURIComponent(take);
-      if (screenSel && screenSel !== "all") {
-        path += "&screen=" + encodeURIComponent(screenSel);
-      }
-      setBusy(btn, true);
-      try {
-        const data = await fetchJson(path);
-        const items = data.items || [];
-        const box = document.getElementById("feedbackList");
-        box.innerHTML = items.length ? items.map(renderFb).join("") : "<p class='empty'>Keine Einträge.</p>";
-      } catch (e) {
-        showPanelErr("fbErr", String(e.message || e));
-        document.getElementById("feedbackList").innerHTML = "";
-      } finally {
-        setBusy(btn, false);
-      }
-    };
+      $("btnUsage").onclick = async () => {
+        showPanelErr("usageErr", "");
+        const btn = $("btnUsage");
+        const days = Math.min(366, Math.max(1, parseInt($("days").value, 10) || 14));
+        $("days").value = String(days);
+        persistFromForm();
+        setBusy(btn, true);
+        try {
+          const data = await fetchJson("/api/v1/admin/usage/daily?days=" + encodeURIComponent(days));
+          const rows = data.rows || [];
+          let html = "<div class='table-wrap'><table class='data'><thead><tr><th>Tag (UTC)</th><th>Endpoint</th><th>Status</th><th>Modell</th><th>Anzahl</th><th>Prompt Σ</th><th>Comp. Σ</th><th>Total Σ</th><th>Ø Latenz</th><th>USD ~</th></tr></thead><tbody>";
+          let sumUsd = 0;
+          for (const r of rows) {
+            const usd = typeof r.costUsd === "number" ? r.costUsd : 0;
+            sumUsd += usd;
+            html += "<tr><td>" + escapeHtml(r.day) + "</td><td class='mono'>" + escapeHtml(r.endpoint) + "</td><td>" + escapeHtml(r.status) + "</td><td class='mono'>" + escapeHtml(r.model || "—") + "</td><td>" + r.count + "</td><td>" + r.promptSum + "</td><td>" + r.completionSum + "</td><td>" + r.totalSum + "</td><td>" + (r.avgLatencyMs ?? "–") + "</td><td>" + usd.toFixed(4) + "</td></tr>";
+          }
+          html += "</tbody></table></div>";
+          if (rows.length) {
+            html += "<p class='hint' style='margin-top:12px'>Summe geschätzt (USD): <strong>" + sumUsd.toFixed(4) + "</strong> — netto nach Token-Sätzen; optional feste Sätze per <code>OPENAI_PRICE_*</code> in der API-<code>.env</code>.</p>";
+          }
+          if (!rows.length) html = "<p class='empty'>Keine Daten im Zeitraum.</p>";
+          $("usageTable").innerHTML = html;
+        } catch (e) {
+          showPanelErr("usageErr", String(e.message || e));
+          $("usageTable").innerHTML = "";
+        } finally {
+          setBusy(btn, false);
+        }
+      };
 
-    function escapeHtml(s) {
-      return String(s).replace(/[&<>"']/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
-    }
+      function loadEventsPage(delta) {
+        const cur = Math.max(0, parseInt($("evPage").value, 10) || 0);
+        $("evPage").value = String(Math.max(0, cur + (delta || 0)));
+        runEventsFetch();
+      }
 
-    function renderFb(f) {
-      const screenLabel = f.screen != null && f.screen !== "" ? escapeHtml(f.screen) : "<em>—</em>";
-      const meta = escapeHtml(f.createdAt) + " · installId: " + escapeHtml(f.installId) + " · screen: " + screenLabel;
-      const rating = f.rating != null ? "Rating: " + f.rating : "Rating: –";
-      const c = f.comment ? "<div style='margin-top:6px'>" + escapeHtml(f.comment) + "</div>" : "";
-      const ctx = f.context ? "<details style='margin-top:6px'><summary>Kontext</summary><pre style='white-space:pre-wrap;overflow:auto;max-height:220px'>" + escapeHtml(f.context) + "</pre></details>" : "";
-      return "<div class='fb-item'><div class='fb-meta'>" + meta + "</div><div>" + rating + "</div>" + c + ctx + "</div>";
-    }
+      async function runEventsFetch() {
+        showPanelErr("eventsErr", "");
+        persistFromForm();
+        const hours = Math.min(2160, Math.max(1, parseInt($("evHours").value, 10) || 168));
+        const pageSize = Math.min(100, Math.max(1, parseInt($("evPageSize").value, 10) || 50));
+        const page = Math.max(0, parseInt($("evPage").value, 10) || 0);
+        $("evHours").value = String(hours);
+        $("evPageSize").value = String(pageSize);
+        const endpoint = $("evEndpoint").value.trim();
+        const status = $("evStatus").value.trim();
+        const installId = $("evInstall").value.trim();
+        let path = "/api/v1/admin/usage/events?page=" + encodeURIComponent(page) + "&pageSize=" + encodeURIComponent(pageSize) + "&hours=" + encodeURIComponent(hours);
+        if (endpoint) path += "&endpoint=" + encodeURIComponent(endpoint);
+        if (status) path += "&status=" + encodeURIComponent(status);
+        if (installId) path += "&installId=" + encodeURIComponent(installId);
+        const btn = $("btnEvents");
+        setBusy(btn, true);
+        $("btnEventsPrev").disabled = true;
+        $("btnEventsNext").disabled = true;
+        try {
+          const data = await fetchJson(path);
+          const items = data.items || [];
+          $("eventsMeta").textContent = "Seite " + (data.page + 1) + " · je " + data.pageSize + " Zeilen · weitere Seiten: " + (data.hasMore ? "ja" : "nein");
+          let rowsHtml = "";
+          for (const r of items) {
+            const stClass = r.status === "ok" ? "pill-ok" : "pill-err";
+            rowsHtml += "<tr><td class='mono'>" + escapeHtml(r.createdAt) + "</td><td class='mono'>" + escapeHtml(r.id) + "</td><td class='mono'>" + escapeHtml(r.installId || "—") + "</td><td class='mono'>" + escapeHtml(r.userId || "—") + "</td><td class='mono'>" + escapeHtml(r.endpoint) + "</td><td class='" + stClass + "'>" + escapeHtml(r.status) + "</td><td class='mono'>" + escapeHtml(r.errorCode || "—") + "</td><td class='mono'>" + escapeHtml(r.model || "—") + "</td><td>" + (r.promptTokens ?? "–") + "</td><td>" + (r.completionTokens ?? "–") + "</td><td>" + (r.totalTokens ?? "–") + "</td><td>" + (r.latencyMs ?? "–") + "</td></tr>";
+          }
+          if (!items.length) {
+            $("eventsTableWrap").innerHTML = "<p class='empty'>Keine Treffer (Zeitraum oder Filter anpassen).</p>";
+          } else {
+            $("eventsTableWrap").innerHTML =
+              "<table class='data'><thead><tr><th>Zeit (UTC)</th><th>id</th><th>installId</th><th>userId</th><th>Endpoint</th><th>Status</th><th>Fehlercode</th><th>Modell</th><th>prompt</th><th>comp.</th><th>total</th><th>Latenz ms</th></tr></thead><tbody>" +
+              rowsHtml +
+              "</tbody></table>";
+          }
+          $("btnEventsPrev").disabled = page <= 0;
+          $("btnEventsNext").disabled = !data.hasMore;
+        } catch (e) {
+          showPanelErr("eventsErr", String(e.message || e));
+          $("eventsTableWrap").innerHTML = "";
+          $("eventsMeta").textContent = "";
+        } finally {
+          setBusy(btn, false);
+        }
+      }
+
+      $("btnEvents").onclick = async () => {
+        $("evPage").value = "0";
+        await runEventsFetch();
+      };
+
+      $("btnEventsPrev").onclick = () => loadEventsPage(-1);
+      $("btnEventsNext").onclick = () => loadEventsPage(1);
+
+      $("btnFeedback").onclick = async () => {
+        showPanelErr("fbErr", "");
+        persistFromForm();
+        const btn = $("btnFeedback");
+        const takeRaw = parseInt($("fbTake").value, 10);
+        const take = Math.min(500, Math.max(1, Number.isFinite(takeRaw) ? takeRaw : 100));
+        $("fbTake").value = String(take);
+        const screenSel = $("fbScreen").value;
+        let path = "/api/v1/admin/feedback?take=" + encodeURIComponent(take);
+        if (screenSel && screenSel !== "all") path += "&screen=" + encodeURIComponent(screenSel);
+        setBusy(btn, true);
+        try {
+          const data = await fetchJson(path);
+          const items = data.items || [];
+          $("feedbackList").innerHTML = items.length ? items.map(renderFb).join("") : "<p class='empty'>Keine Einträge.</p>";
+        } catch (e) {
+          showPanelErr("fbErr", String(e.message || e));
+          $("feedbackList").innerHTML = "";
+        } finally {
+          setBusy(btn, false);
+        }
+      };
+
+      function renderFb(f) {
+        const screenLabel = f.screen != null && f.screen !== "" ? escapeHtml(f.screen) : "<em>—</em>";
+        const meta = escapeHtml(f.createdAt) + " · installId: " + escapeHtml(f.installId) + " · screen: " + screenLabel;
+        const rating = f.rating != null ? "Rating: " + f.rating : "Rating: –";
+        const c = f.comment ? "<div style='margin-top:6px'>" + escapeHtml(f.comment) + "</div>" : "";
+        const ctx = f.context ? "<details style='margin-top:6px'><summary>Kontext</summary><pre style='white-space:pre-wrap;overflow:auto;max-height:240px;font-size:0.78rem'>" + escapeHtml(f.context) + "</pre></details>" : "";
+        return "<div class='fb-item'><div class='fb-meta'>" + meta + "</div><div>" + rating + "</div>" + c + ctx + "</div>";
+      }
+
+      let selectedInstallId = "";
+
+      function showUserDetail(installId) {
+        selectedInstallId = installId;
+        $("userDetailCard").style.display = "block";
+        $("userDetailBody").innerHTML = "<p class='hint'>Lade …</p>";
+        showPanelErr("userDetailErr", "");
+        persistFromForm();
+        fetchJson("/api/v1/admin/users/" + encodeURIComponent(installId))
+          .then((data) => {
+            const u = data.user;
+            if (!u) throw new Error("Keine Daten");
+            const logs = (u.aiRequestLogs || []).slice(0, 40);
+            let logRows = "";
+            for (const L of logs) {
+              logRows += "<tr><td class='mono'>" + escapeHtml(L.createdAt) + "</td><td class='mono'>" + escapeHtml(L.endpoint) + "</td><td>" + escapeHtml(L.status) + "</td><td>" + (L.totalTokens ?? "–") + "</td></tr>";
+            }
+            $("userDetailBody").innerHTML =
+              "<p><strong>installId:</strong> <code class='mono'>" + escapeHtml(u.installId) + "</code></p>" +
+              "<p><strong>interne user-id:</strong> <code class='mono'>" + escapeHtml(u.id) + "</code> · <strong>Pro:</strong> " + (u.isPro ? "ja" : "nein") + "</p>" +
+              "<p class='hint'>createdAt: " + escapeHtml(u.createdAt) + " · lastSeenAt: " + escapeHtml(u.lastSeenAt || "—") + "</p>" +
+              "<h3>Letzte KI-Logs (max. 40 von 100 geladen)</h3>" +
+              "<div class='table-wrap'><table class='data'><thead><tr><th>Zeit</th><th>Endpoint</th><th>Status</th><th>Tokens</th></tr></thead><tbody>" +
+              (logRows || "<tr><td colspan='4' class='empty'>Keine Logs</td></tr>") +
+              "</tbody></table></div>";
+          })
+          .catch((e) => {
+            $("userDetailBody").innerHTML = "";
+            showPanelErr("userDetailErr", String(e.message || e));
+          });
+      }
+
+      $("btnUserSearch").onclick = async () => {
+        showPanelErr("userSearchErr", "");
+        persistFromForm();
+        const q = $("userQ").value.trim();
+        const btn = $("btnUserSearch");
+        if (!q) {
+          showPanelErr("userSearchErr", "Bitte Suchbegriff eingeben.");
+          return;
+        }
+        setBusy(btn, true);
+        $("userDetailCard").style.display = "none";
+        try {
+          const data = await fetchJson("/api/v1/admin/users/search?q=" + encodeURIComponent(q));
+          const users = data.users || [];
+          if (!users.length) {
+            $("userSearchResults").innerHTML = "<p class='empty'>Keine Treffer.</p>";
+            return;
+          }
+          let html = "<div class='table-wrap'><table class='data'><thead><tr><th>installId</th><th>Pro</th><th>updatedAt</th><th></th></tr></thead><tbody>";
+          for (const u of users) {
+            html += "<tr><td class='mono'>" + escapeHtml(u.installId) + "</td><td>" + (u.isPro ? "ja" : "nein") + "</td><td class='mono'>" + escapeHtml(u.updatedAt) + "</td><td><button type='button' class='ghost user-open' data-iid='" + encodeURIComponent(u.installId) + "'>Details</button></td></tr>";
+          }
+          html += "</tbody></table></div>";
+          $("userSearchResults").innerHTML = html;
+          document.querySelectorAll(".user-open").forEach((b) => {
+            b.onclick = () => showUserDetail(decodeURIComponent(b.getAttribute("data-iid") || ""));
+          });
+        } catch (e) {
+          showPanelErr("userSearchErr", String(e.message || e));
+          $("userSearchResults").innerHTML = "";
+        } finally {
+          setBusy(btn, false);
+        }
+      };
+
+      async function patchUserPro(isPro) {
+        if (!selectedInstallId) return;
+        showPanelErr("userDetailErr", "");
+        persistFromForm();
+        const path = "/api/v1/admin/users/" + encodeURIComponent(selectedInstallId);
+        try {
+          await fetchJson(path, { method: "PATCH", body: JSON.stringify({ isPro }) });
+          showUserDetail(selectedInstallId);
+        } catch (e) {
+          showPanelErr("userDetailErr", String(e.message || e));
+        }
+      }
+
+      $("btnUserProOn").onclick = () => patchUserPro(true);
+      $("btnUserProOff").onclick = () => patchUserPro(false);
+
+      if ($("panel-overview").classList.contains("active")) {
+        overviewLoadedOnce = true;
+        loadOverview();
+      }
+    })();
   </script>
 </body>
 </html>

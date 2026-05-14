@@ -1,8 +1,10 @@
-import { adminFeedbackListHandler, adminSearchUsersHandler, adminSetProHandler, adminUsageDailyHandler, adminUserDetailHandler, } from "../controllers/admin.controller.js";
+import { adminFeedbackListHandler, adminMetricsOverviewHandler, adminSearchUsersHandler, adminSetProHandler, adminUsageDailyHandler, adminUsageEventsHandler, adminUserDetailHandler, } from "../controllers/admin.controller.js";
 import { requireAdmin } from "../middleware/adminAuth.js";
 export async function registerAdminRoutes(app) {
     app.addHook("preHandler", requireAdmin);
+    app.get("/metrics/overview", adminMetricsOverviewHandler);
     app.get("/usage/daily", adminUsageDailyHandler);
+    app.get("/usage/events", adminUsageEventsHandler);
     app.get("/feedback", adminFeedbackListHandler);
     app.get("/users/search", adminSearchUsersHandler);
     app.get("/users/:installId", adminUserDetailHandler);

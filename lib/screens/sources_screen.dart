@@ -83,6 +83,14 @@ class SourcesScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 20),
                     _SourceCard(
+                      icon: Icons.auto_stories_outlined,
+                      title: 'Hadith des Tages (kuratiert)',
+                      body: 'Die Hadithe stammen aus einer lokalen Bibliothek. Unter „Einordnung“ steht jeweils ein kurzer redaktioneller Hinweis von Ihdina (keine KI), damit Thema und Bedeutung greifbar werden. Die „Kurzfassung“ fasst den Inhalt knapp auf Deutsch; vollständiger Wortlaut und Überliefererkette: siehe sunnah.com am verlinkten Eintrag.\n\nDie App erfindet keine Hadithe.',
+                      linkText: 'sunnah.com',
+                      linkUrl: 'https://sunnah.com',
+                    ),
+                    const SizedBox(height: 20),
+                    _SourceCard(
                       icon: Icons.auto_awesome,
                       title: 'KI-Erklärungen & Tafsir',
                       body: 'Die Erklärungen zu den Versen werden von einer künstlichen Intelligenz generiert. Die KI ist strikt angewiesen, sich ausschließlich auf klassische und authentische sunnitische Tafsir-Werke (wie Tafsir Ibn Kathir) zu stützen.\n\nHinweis: Da die Antworten maschinell zusammengefasst werden, können Fehler nicht zu 100 % ausgeschlossen werden. Für komplexe theologische Fragen (Fiqh) konsultiere bitte stets gelehrte Personen.',

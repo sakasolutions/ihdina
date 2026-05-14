@@ -1,4 +1,5 @@
 import type { FastifyReply, FastifyRequest } from "fastify";
+export declare function adminMetricsOverviewHandler(_req: FastifyRequest, reply: FastifyReply): Promise<never>;
 export declare function adminSearchUsersHandler(req: FastifyRequest<{
     Querystring: {
         q?: string;
@@ -20,6 +21,16 @@ export declare function adminSetProHandler(req: FastifyRequest<{
 export declare function adminUsageDailyHandler(req: FastifyRequest<{
     Querystring: {
         days?: string;
+    };
+}>, reply: FastifyReply): Promise<never>;
+export declare function adminUsageEventsHandler(req: FastifyRequest<{
+    Querystring: {
+        page?: string;
+        pageSize?: string;
+        hours?: string;
+        endpoint?: string;
+        status?: string;
+        installId?: string;
     };
 }>, reply: FastifyReply): Promise<never>;
 export declare function adminFeedbackListHandler(req: FastifyRequest<{

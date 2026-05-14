@@ -1,0 +1,85 @@
+{
+  "schemaVersion": 2,
+  "items": [
+    {
+      "id": 1,
+      "referenceDe": "Sahih al-Bukhari 1",
+      "sourceUrl": "https://sunnah.com/bukhari:1",
+      "einordnungDe": "Viele Sammlungen beginnen mit dieser Überlieferung: Sie erinnert daran, dass Allah zuerst das Herz und die Absicht sieht — nicht nur das, was wir nach außen tun.",
+      "textAr": "إنما الأعمال بالنيات",
+      "textDe": "Die Taten werden nur nach den Absichten bewertet, und jeder Mensch erhält nur das, was er beabsichtigt hat."
+    },
+    {
+      "id": 2,
+      "referenceDe": "Sahih al-Bukhari 2",
+      "sourceUrl": "https://sunnah.com/bukhari:2",
+      "einordnungDe": "Hier geht es um die Auswanderung (Hidschra) um Allahs willen: schon der aufrichtige Entschluss und der Weg zählen — auch wenn der Mensch unterwegs stirbt, bevor er sein Ziel erreicht.",
+      "textAr": "",
+      "textDe": "Wer seine Heimat verlässt um Allah und Seinen Gesandten und dann stirbt, noch bevor er ausgewandert ist, so wird ihm doch der Lohn des Ausgewanderten zuteil."
+    },
+    {
+      "id": 3,
+      "referenceDe": "Sahih Muslim 8a",
+      "sourceUrl": "https://sunnah.com/muslim:8a",
+      "einordnungDe": "Ein Grundriss des Islam: fünf tragende Säulen, die Glaube und Praxis zusammenhalten. Gut zum Überprüfen, was man schon lebt und was man noch vertiefen möchte.",
+      "textAr": "بُنِيَ الإِسْلامُ عَلَى خَمْسٍ",
+      "textDe": "Der Islam baut auf fünf Säulen: dem Zeugnis, dass es keinen Gott gibt außer Allah, dem Gebet, der Zakah, der Pilgerfahrt und dem Fasten im Ramadan."
+    },
+    {
+      "id": 4,
+      "referenceDe": "Sahih al-Bukhari 8",
+      "sourceUrl": "https://sunnah.com/bukhari:8",
+      "einordnungDe": "„An‑Nasīha“ (aufrichtiger Rat) umfasst auch Kritik an sich selbst: ehrlich zu Allah, zum Qur’an, zum Propheten und zur Gemeinschaft stehen — ohne Heuchelei.",
+      "textAr": "الدين النصيحة",
+      "textDe": "Die Religion ist aufrichtiger Rat — gegenüber Allah, Seinem Buch, Seinem Gesandten, den Führern der Muslime und der Gemeinschaft."
+    },
+    {
+      "id": 5,
+      "referenceDe": "Sahih Muslim 40a",
+      "sourceUrl": "https://sunnah.com/muslim:40a",
+      "einordnungDe": "Gemeint sind religiöse Neuerungen, die nicht auf Qur’an und bewährter Sunna fußen — nicht jede Erfindung im Alltag. So wird die Religion vor Verwässerung und Selbstgemachtem geschützt.",
+      "textAr": "من أحدث في أمرنا هذا ما ليس منه فهو رد",
+      "textDe": "Wer in unserer Angelegenheit etwas Neues einführt, was nicht dazugehört, wird zurückgewiesen."
+    },
+    {
+      "id": 6,
+      "referenceDe": "Sahih Muslim 45a",
+      "sourceUrl": "https://sunnah.com/muslim:45a",
+      "einordnungDe": "Der echte Glaube zeigt sich in der Bruderlichkeit: Neid und Egoismus weichen, wenn man dem anderen Gutes wünscht wie sich selbst — im Kleinen anfangen, im Alltag üben.",
+      "textAr": "لا يؤمن أحدكم حتى يحب لأخيه ما يحب لنفسه",
+      "textDe": "Keiner von euch glaubt wirklich, bis er für seinen Bruder liebt, was er für sich selbst liebt."
+    },
+    {
+      "id": 7,
+      "referenceDe": "Sahih Muslim 1053",
+      "sourceUrl": "https://sunnah.com/muslim:1053",
+      "einordnungDe": "Selbst ein kleiner Akt der Wohltätigkeit kann Schutz sein: Es geht um Aufrichtigkeit und darum, das Feuer durch gute Taten zu entfernen — nicht um den Betrag an sich.",
+      "textAr": "اتقوا النار ولو بشق تمرة",
+      "textDe": "Hütet euch vor dem Feuer, und wenn es nur mit einem halben Dattelstück ist, das ihr im Weg Allahs gebt."
+    },
+    {
+      "id": 8,
+      "referenceDe": "Jami' at-Tirmidhi 2646",
+      "sourceUrl": "https://sunnah.com/tirmidhi:2646",
+      "einordnungDe": "Wissen um Qur’an und Sunna zu suchen, ist kein „Extra“ für Gelehrte allein: Der Weg des Lernens wird mit dem Weg ins Paradies verbunden — Schritt für Schritt, mit Geduld.",
+      "textAr": "",
+      "textDe": "Wer einen Weg geht, um Wissen zu erlangen, dem ebnet Allah einen Weg zum Paradies."
+    },
+    {
+      "id": 9,
+      "referenceDe": "Sahih Muslim 1631",
+      "sourceUrl": "https://sunnah.com/muslim:1631",
+      "einordnungDe": "Ein Maßstab für Umgang und Charakter: Zunge und Hand sollen anderen nicht schaden — auch nicht durch Gerüchte, Hänseleien oder Druck im Internet.",
+      "textAr": "المسلم من سلم المسلمون من لسانه ويده",
+      "textDe": "Der Muslim ist derjenige, vor dessen Zunge und Hand andere Muslime in Sicherheit sind."
+    },
+    {
+      "id": 10,
+      "referenceDe": "Sahih al-Bukhari 42",
+      "sourceUrl": "https://sunnah.com/bukhari:42",
+      "einordnungDe": "Barmherzigkeit wirkt wie ein Spiegel: Wer sie anderen verweigert, kann kaum damit rechnen, selbst in Allahs Barmherzigkeit eingeschlossen zu sein — im Familien- und Nachbarschaftsleben spürbar.",
+      "textAr": "من لا يرحم لا يرحم",
+      "textDe": "Wer keine Barmherzigkeit zeigt, dem wird keine Barmherzigkeit gezeigt."
+    }
+  ]
+}

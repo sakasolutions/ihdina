@@ -9,11 +9,13 @@ import '../data/quran/translation_service.dart';
 import '../data/quran/models/ayah_model.dart';
 import '../data/bookmarks/bookmark_repository.dart';
 import '../data/reading/reading_progress_repository.dart';
+import '../data/reading/surah_read_progress_repository.dart';
 import '../data/settings/settings_repository.dart';
 import '../data/prayer/prayer_models.dart';
 import '../data/prayer/prayer_times_repository.dart';
 import '../theme/app_theme.dart';
 import '../theme/hero_theme.dart';
+import '../widgets/quran_printed_page_reader.dart';
 import '../widgets/quran_verse_reader_tile.dart';
 import '../widgets/surah_intro_bottom_sheet.dart';
 import '../models/surah.dart';
@@ -22,7 +24,7 @@ import '../services/audio_service.dart';
 import 'explanation_bottom_sheet.dart';
 
 /// Reader: ayahs from QuranRepository only. Bookmark toggle per verse.
-/// [initialAyahNumber] selects the initial page in the verse [PageView].
+/// [initialAyahNumber] wählt den Startvers. Darstellung: Karten (Standard) oder Seitenlesen (Beta) aus den Einstellungen.
 class QuranReaderScreen extends StatefulWidget {
   const QuranReaderScreen({super.key, required this.surah, this.initialAyahNumber});
 
@@ -42,8 +44,17 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
   double _arabicFontSize = 28;
   double _arabicLineHeight = 1.8;
   PrayerTimesResult? _prayerResult;
-  /// When true, show Latin transliteration instead of German translation in verse tiles.
+  /// Wenn true: lateinische Umschrift statt deutscher Übersetzung unter dem Arabischen (nur Kartenmodus).
   bool _showTransliteration = false;
+  /// `cards` = Standard; `page` = Seitenlesen (Beta).
+  String _readerLayout = 'cards';
+  /// Nur Seitenmodus: `arabic` oder `german`.
+  String _pageScript = 'arabic';
+  final GlobalKey<QuranPrintedPageReaderState> _printedReaderKey = GlobalKey();
+  /// Letzter Vers auf der aktuellen Druckseite (Footer + Sprung-Dialog).
+  int _printedFocusAyah = 1;
+  /// Startvers für den Seiten-Reader (einmal pro _load / beim Umschalten).
+  int? _printedSeedAyah;
 
   Timer? _debounceArabicFont;
   Timer? _debounceArabicLine;
@@ -70,6 +81,7 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
     if (s.surahId == widget.surah.number && s.ayahNumber == ayahNumber && (s.isPlaying || s.isLoading)) {
       AudioService.instance.stop();
     } else {
+      _persistReadingPosition(ayahNumber);
       AudioService.instance.playVerse(widget.surah.number, ayahNumber);
     }
   }
@@ -272,6 +284,7 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
       barrierColor: Colors.black.withOpacity(0.45),
       isScrollControlled: true,
       builder: (sheetContext) {
+        var readerToolsSubpage = 0;
         return Padding(
           padding: EdgeInsets.only(
             left: 16,
@@ -281,6 +294,122 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
           child: StatefulBuilder(
             builder: (ctx, setModal) {
               final verses = _verses;
+              const gold = Color(0xFFE5C07B);
+
+              Future<void> applyPageModeWithScript(String script) async {
+                await SettingsRepository.instance.setQuranReaderLayout('page');
+                await SettingsRepository.instance.setQuranPageScript(script);
+                if (verses != null && verses.isNotEmpty) {
+                  final lo = verses.first.ayah;
+                  final hi = verses.last.ayah;
+                  final int seed;
+                  if (_readerLayout == 'page') {
+                    seed = _printedFocusAyah.clamp(lo, hi);
+                  } else {
+                    final saved = await SurahReadProgressRepository.instance.getAyahForSurah(
+                      widget.surah.number,
+                      readerLayout: 'page',
+                    );
+                    if (saved != null && verses.any((v) => v.ayah == saved)) {
+                      seed = saved.clamp(lo, hi);
+                    } else {
+                      final i = _currentVerseIndex.clamp(0, verses.length - 1);
+                      seed = verses[i].ayah;
+                    }
+                  }
+                  _printedSeedAyah = seed;
+                }
+                if (!mounted) return;
+                if (!sheetContext.mounted) return;
+                Navigator.pop(sheetContext);
+                setState(() {
+                  _readerLayout = 'page';
+                  _pageScript = script;
+                  if (_printedSeedAyah != null) {
+                    _printedFocusAyah = _printedSeedAyah!;
+                  }
+                });
+              }
+
+              Widget sectionLabel(String t) => Padding(
+                    padding: const EdgeInsets.fromLTRB(16, 12, 16, 6),
+                    child: Text(
+                      t,
+                      style: GoogleFonts.inter(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        letterSpacing: 0.4,
+                        color: Colors.white.withOpacity(0.48),
+                      ),
+                    ),
+                  );
+
+              Widget thickDivider() => Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: Divider(height: 1, color: Colors.white.withOpacity(0.1)),
+                  );
+
+              Widget pageScriptBigChoice({
+                required String script,
+                required String title,
+                required String subtitle,
+                required IconData icon,
+              }) {
+                final selected = _pageScript == script;
+                return Padding(
+                  padding: const EdgeInsets.only(bottom: 10),
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () => applyPageModeWithScript(script),
+                      borderRadius: BorderRadius.circular(16),
+                      child: Ink(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(16),
+                          color: Colors.white.withOpacity(selected ? 0.07 : 0.035),
+                          border: Border.all(
+                            color: selected ? gold.withOpacity(0.55) : Colors.white.withOpacity(0.1),
+                            width: selected ? 1.5 : 1,
+                          ),
+                        ),
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        child: Row(
+                          children: [
+                            Icon(icon, color: Colors.white.withOpacity(0.82), size: 26),
+                            const SizedBox(width: 14),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    title,
+                                    style: GoogleFonts.inter(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.w600,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    subtitle,
+                                    style: GoogleFonts.inter(
+                                      fontSize: 12,
+                                      height: 1.35,
+                                      color: Colors.white.withOpacity(0.52),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            if (selected) const Icon(Icons.check_rounded, color: gold, size: 22),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                );
+              }
+
               return Material(
                 color: Colors.transparent,
                 child: Container(
@@ -311,106 +440,230 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
                           ),
                         ),
                       ),
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(12, 14, 12, 8),
-                        child: Text(
-                          'Lesen & Darstellung',
-                          style: GoogleFonts.playfairDisplay(
-                            fontSize: 19,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
+                      if (readerToolsSubpage == 0) ...[
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(12, 14, 12, 4),
+                          child: Text(
+                            'Lesen & Darstellung',
+                            style: GoogleFonts.playfairDisplay(
+                              fontSize: 19,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
                           ),
                         ),
-                      ),
-                      ListTile(
-                        enabled: verses != null,
-                        leading: Icon(
-                          Icons.format_list_numbered_rounded,
-                          color: verses != null ? Colors.white70 : Colors.white30,
-                        ),
-                        title: Text(
-                          'Zu Vers springen',
-                          style: GoogleFonts.inter(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w500,
-                            color: verses != null ? Colors.white : Colors.white38,
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
+                          child: Text(
+                            'Lesemodus, Sprung und Schrift — alles an einem Ort.',
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              height: 1.35,
+                              color: Colors.white.withOpacity(0.5),
+                            ),
                           ),
                         ),
-                        onTap: verses == null
-                            ? null
-                            : () {
-                                Navigator.pop(sheetContext);
-                                WidgetsBinding.instance.addPostFrameCallback((_) {
-                                  if (mounted) _showJumpToVerseDialog();
-                                });
-                              },
-                      ),
-                      ListTile(
-                        leading: Icon(Icons.info_outline_rounded, color: Colors.white.withOpacity(0.7)),
-                        title: Text(
-                          'Einordnung vor dem Lesen',
-                          style: GoogleFonts.inter(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.white,
+                        sectionLabel('LESEMODUS'),
+                        ListTile(
+                          leading: Icon(Icons.view_agenda_rounded, color: Colors.white.withOpacity(0.75)),
+                          title: Text(
+                            'Karten (Standard)',
+                            style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w500, color: Colors.white),
                           ),
-                        ),
-                        subtitle: Text(
-                          'Kurzer Orientierungstext zur Sure – kein Tafsir',
-                          style: GoogleFonts.inter(
-                            fontSize: 12,
-                            height: 1.35,
-                            color: Colors.white.withOpacity(0.55),
+                          subtitle: Text(
+                            'Arabisch und Übersetzung, Vers für Vers',
+                            style: GoogleFonts.inter(fontSize: 12, height: 1.35, color: Colors.white.withOpacity(0.5)),
                           ),
-                        ),
-                        onTap: () {
-                          Navigator.pop(sheetContext);
-                          WidgetsBinding.instance.addPostFrameCallback((_) {
-                            if (mounted) _openSurahIntroManual();
-                          });
-                        },
-                      ),
-                      ListTile(
-                        leading: Icon(Icons.format_size_rounded, color: Colors.white.withOpacity(0.7)),
-                        title: Text(
-                          'Arabische Schrift & Zeilenabstand',
-                          style: GoogleFonts.inter(
-                            fontSize: 15,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.white,
-                          ),
-                        ),
-                        onTap: () {
-                          Navigator.pop(sheetContext);
-                          WidgetsBinding.instance.addPostFrameCallback((_) {
-                            if (mounted) _showReaderTypographyBottomSheet();
-                          });
-                        },
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 8, 16, 4),
-                        child: Divider(height: 1, color: Colors.white.withOpacity(0.12)),
-                      ),
-                      Padding(
-                        padding: const EdgeInsets.fromLTRB(16, 4, 16, 8),
-                        child: Text(
-                          'Unter dem Vers anzeigen',
-                          style: GoogleFonts.inter(
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                            color: Colors.white.withOpacity(0.55),
-                          ),
-                        ),
-                      ),
-                      Center(
-                        child: _TransliterationToggle(
-                          showTransliteration: _showTransliteration,
-                          onChanged: (value) {
-                            setState(() => _showTransliteration = value);
-                            setModal(() {});
+                          trailing: _readerLayout == 'cards'
+                              ? const Icon(Icons.check_rounded, color: gold)
+                              : null,
+                          onTap: () async {
+                            await SettingsRepository.instance.setQuranReaderLayout('cards');
+                            if (!mounted) return;
+                            if (!sheetContext.mounted) return;
+                            Navigator.pop(sheetContext);
+                            final v = _verses;
+                            var newIndex = _currentVerseIndex;
+                            if (v != null && v.isNotEmpty) {
+                              final saved = await SurahReadProgressRepository.instance.getAyahForSurah(
+                                widget.surah.number,
+                                readerLayout: 'cards',
+                              );
+                              if (saved != null) {
+                                final i = v.indexWhere((x) => x.ayah == saved);
+                                if (i >= 0) newIndex = i;
+                              }
+                            }
+                            if (!mounted) return;
+                            setState(() {
+                              _readerLayout = 'cards';
+                              if (v != null && v.isNotEmpty) {
+                                _currentVerseIndex = newIndex.clamp(0, v.length - 1);
+                              }
+                            });
+                            WidgetsBinding.instance.addPostFrameCallback((_) {
+                              if (!mounted) return;
+                              final c = _pageController;
+                              if (c != null && c.hasClients) {
+                                c.jumpToPage(_currentVerseIndex);
+                              }
+                            });
                           },
                         ),
-                      ),
+                        ListTile(
+                          leading: Icon(Icons.menu_book_rounded, color: Colors.white.withOpacity(0.75)),
+                          title: Text(
+                            'Seitenlesen (Beta)',
+                            style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w500, color: Colors.white),
+                          ),
+                          subtitle: Text(
+                            _readerLayout == 'page'
+                                ? 'Aktiv · ${_pageScript == 'arabic' ? 'Arabisch' : 'Deutsch'} · tippen zum Wechseln'
+                                : 'Wie gedruckt blättern, eine Sprache pro Seite',
+                            style: GoogleFonts.inter(fontSize: 12, height: 1.35, color: Colors.white.withOpacity(0.5)),
+                          ),
+                          trailing: _readerLayout == 'page' ? const Icon(Icons.check_rounded, color: gold) : null,
+                          onTap: () => setModal(() => readerToolsSubpage = 1),
+                        ),
+                        thickDivider(),
+                        sectionLabel('SPRINGEN & ORIENTIERUNG'),
+                        ListTile(
+                          enabled: verses != null,
+                          leading: Icon(
+                            Icons.format_list_numbered_rounded,
+                            color: verses != null ? Colors.white70 : Colors.white30,
+                          ),
+                          title: Text(
+                            'Zu Vers springen',
+                            style: GoogleFonts.inter(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w500,
+                              color: verses != null ? Colors.white : Colors.white38,
+                            ),
+                          ),
+                          onTap: verses == null
+                              ? null
+                              : () {
+                                  Navigator.pop(sheetContext);
+                                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                                    if (mounted) _showJumpToVerseDialog();
+                                  });
+                                },
+                        ),
+                        ListTile(
+                          leading: Icon(Icons.info_outline_rounded, color: Colors.white.withOpacity(0.7)),
+                          title: Text(
+                            'Einordnung vor dem Lesen',
+                            style: GoogleFonts.inter(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.white,
+                            ),
+                          ),
+                          subtitle: Text(
+                            'Kurzer Orientierungstext zur Sure – kein Tafsir',
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              height: 1.35,
+                              color: Colors.white.withOpacity(0.55),
+                            ),
+                          ),
+                          onTap: () {
+                            Navigator.pop(sheetContext);
+                            WidgetsBinding.instance.addPostFrameCallback((_) {
+                              if (mounted) _openSurahIntroManual();
+                            });
+                          },
+                        ),
+                        thickDivider(),
+                        sectionLabel('SCHRIFT'),
+                        ListTile(
+                          leading: Icon(Icons.format_size_rounded, color: Colors.white.withOpacity(0.7)),
+                          title: Text(
+                            'Arabische Schrift & Zeilenabstand',
+                            style: GoogleFonts.inter(
+                              fontSize: 15,
+                              fontWeight: FontWeight.w500,
+                              color: Colors.white,
+                            ),
+                          ),
+                          onTap: () {
+                            Navigator.pop(sheetContext);
+                            WidgetsBinding.instance.addPostFrameCallback((_) {
+                              if (mounted) _showReaderTypographyBottomSheet();
+                            });
+                          },
+                        ),
+                        if (_readerLayout == 'cards') ...[
+                          Padding(
+                            padding: const EdgeInsets.fromLTRB(16, 6, 16, 4),
+                            child: Text(
+                              'Unter dem Vers (nur Karten)',
+                              style: GoogleFonts.inter(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 0.35,
+                                color: Colors.white.withOpacity(0.45),
+                              ),
+                            ),
+                          ),
+                          Center(
+                            child: _TransliterationToggle(
+                              showTransliteration: _showTransliteration,
+                              onChanged: (value) {
+                                setState(() => _showTransliteration = value);
+                                setModal(() {});
+                              },
+                            ),
+                          ),
+                        ],
+                      ] else ...[
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(4, 6, 8, 0),
+                          child: Row(
+                            children: [
+                              IconButton(
+                                onPressed: () => setModal(() => readerToolsSubpage = 0),
+                                icon: Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: Colors.white.withOpacity(0.85)),
+                              ),
+                              Expanded(
+                                child: Text(
+                                  'Seitenlesen',
+                                  style: GoogleFonts.playfairDisplay(
+                                    fontSize: 18,
+                                    fontWeight: FontWeight.w600,
+                                    color: Colors.white,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 48),
+                            ],
+                          ),
+                        ),
+                        Padding(
+                          padding: const EdgeInsets.fromLTRB(20, 4, 20, 12),
+                          child: Text(
+                            'Welche Sprache soll auf jeder Seite stehen? Audio und Verstehen bleiben pro Vers verfügbar.',
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              height: 1.4,
+                              color: Colors.white.withOpacity(0.52),
+                            ),
+                          ),
+                        ),
+                        pageScriptBigChoice(
+                          script: 'arabic',
+                          title: 'Arabisch',
+                          subtitle: 'Mushaf-Zeilen, rechtsbündig',
+                          icon: Icons.format_textdirection_r_to_l_rounded,
+                        ),
+                        pageScriptBigChoice(
+                          script: 'german',
+                          title: 'Deutsch',
+                          subtitle: 'Übersetzung, linksbündig',
+                          icon: Icons.translate_rounded,
+                        ),
+                      ],
                     ],
                   ),
                 ),
@@ -452,6 +705,19 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
     if (mounted) setState(() {});
   }
 
+  /// Global „Weiterlesen“ + pro-Sure-Merker je Lesemodus (Karten / Seite).
+  void _persistReadingPosition(int ayahNumber) {
+    final sid = widget.surah.number;
+    unawaited(ReadingProgressRepository.instance.setLastRead(surahId: sid, ayahNumber: ayahNumber));
+    unawaited(
+      SurahReadProgressRepository.instance.setAyahForSurah(
+        surahId: sid,
+        ayahNumber: ayahNumber,
+        readerLayout: _readerLayout,
+      ),
+    );
+  }
+
   Future<void> _loadPrayerTimes() async {
     final settings = await SettingsRepository.instance.getPrayerSettings();
     if (!mounted) return;
@@ -471,11 +737,15 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
       settingsRepo.getArabicFontSize(),
       settingsRepo.getArabicLineHeight(),
       TranslationService.instance.ensureLoaded(),
+      settingsRepo.getQuranReaderLayout(),
+      settingsRepo.getQuranPageScript(),
     ]);
     final ayahs = results[0] as List<AyahModel>;
     final bookmarked = results[1] as Set<int>;
     final fontSize = results[2] as double;
     final lineHeight = results[3] as double;
+    final layout = results[5] as String;
+    final script = results[6] as String;
     if (!mounted) return;
     final translation = TranslationService.instance;
     final verses = ayahs
@@ -486,12 +756,15 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
               transliteration: a.textTranslit?.isNotEmpty == true ? a.textTranslit : null,
             ))
         .toList();
-    final initialListIndex = verses.indexWhere((v) => v.ayah == widget.initialAyahNumber);
+    final int? targetAyah = widget.initialAyahNumber ??
+        await SurahReadProgressRepository.instance.getAyahForSurah(surahId, readerLayout: layout);
+    final initialListIndex = targetAyah == null ? -1 : verses.indexWhere((v) => v.ayah == targetAyah);
     final initialIndex = verses.isEmpty
         ? 0
         : (initialListIndex < 0
             ? 0
             : initialListIndex.clamp(0, verses.length - 1));
+    final ayahAtOpen = verses.isEmpty ? 1 : verses[initialIndex].ayah;
     _pageController?.dispose();
     _pageController = PageController(initialPage: initialIndex);
     setState(() {
@@ -500,12 +773,24 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
       _arabicFontSize = fontSize;
       _arabicLineHeight = lineHeight;
       _currentVerseIndex = initialIndex;
+      _readerLayout = layout;
+      _pageScript = script;
+      _printedSeedAyah = ayahAtOpen;
+      _printedFocusAyah = ayahAtOpen;
     });
-    await ReadingProgressRepository.instance.setLastRead(
-      surahId: surahId,
-      ayahNumber: widget.initialAyahNumber ?? 1,
-    );
+    await ReadingProgressRepository.instance.setLastRead(surahId: surahId, ayahNumber: ayahAtOpen);
     WidgetsBinding.instance.addPostFrameCallback((_) => _tryAutoShowSurahIntro());
+  }
+
+  void _onPrintedPageCommit(int lastAyahOnPage) {
+    final v = _verses;
+    if (!mounted || v == null) return;
+    final idx = v.indexWhere((x) => x.ayah == lastAyahOnPage);
+    setState(() {
+      _printedFocusAyah = lastAyahOnPage;
+      if (idx >= 0) _currentVerseIndex = idx;
+    });
+    _persistReadingPosition(lastAyahOnPage);
   }
 
   /// Einmal pro Sure automatisch, wenn Text vorliegt und Nutzer das nicht deaktiviert hat.
@@ -559,10 +844,7 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
   }
 
   void _onVerseTap(int index, Verse verse) {
-    ReadingProgressRepository.instance.setLastRead(
-      surahId: widget.surah.number,
-      ayahNumber: verse.ayah,
-    );
+    _persistReadingPosition(verse.ayah);
     showAiExplanationWithQuotaCheck(
       context,
       verseTitle: '${widget.surah.nameDe}, Vers ${verse.ayah}',
@@ -612,7 +894,8 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
 
   Future<void> _showJumpToVerseDialog() async {
     final verses = _verses;
-    if (verses == null || _pageController == null || !mounted) return;
+    if (verses == null || !mounted) return;
+    if (_readerLayout == 'cards' && _pageController == null) return;
 
     await showDialog<void>(
       context: context,
@@ -697,12 +980,25 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
                             }
                             Navigator.pop(ctx);
                             Future.microtask(() async {
-                              await _pageController!.animateToPage(
-                                n - 1,
-                                duration: const Duration(milliseconds: 300),
-                                curve: Curves.easeInOut,
-                              );
-                              if (mounted) _startJumpHighlight(n);
+                              if (_readerLayout == 'page') {
+                                _printedReaderKey.currentState?.jumpToAyah(n);
+                                if (mounted) {
+                                  final idx = verses.indexWhere((v) => v.ayah == n);
+                                  setState(() {
+                                    _printedFocusAyah = n;
+                                    if (idx >= 0) _currentVerseIndex = idx;
+                                  });
+                                  _persistReadingPosition(n);
+                                  _startJumpHighlight(n);
+                                }
+                              } else {
+                                await _pageController!.animateToPage(
+                                  n - 1,
+                                  duration: const Duration(milliseconds: 300),
+                                  curve: Curves.easeInOut,
+                                );
+                                if (mounted) _startJumpHighlight(n);
+                              }
                             });
                           },
                           child: const Text(
@@ -792,89 +1088,138 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
               ),
             ),
             SafeArea(
-              child: verses == null || _pageController == null
+              child: verses == null
                   ? const Center(
                       child: CircularProgressIndicator(color: Colors.white70),
                     )
-                  : Column(
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        Visibility(
-                          visible: _showSwipeHint,
-                          maintainSize: false,
-                          maintainAnimation: false,
-                          maintainState: false,
-                          child: Center(
-                            child: Text(
-                              '← Wischen zum Blättern →',
-                              textAlign: TextAlign.center,
-                              style: GoogleFonts.inter(
-                                fontSize: 12,
-                                color: Colors.white.withOpacity(0.5),
+                  : _readerLayout == 'page'
+                      ? Column(
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            Expanded(
+                              child: QuranPrintedPageReader(
+                                key: _printedReaderKey,
+                                verses: verses,
+                                useArabicScript: _pageScript == 'arabic',
+                                arabicFontSize: _arabicFontSize,
+                                arabicLineHeight: _arabicLineHeight,
+                                surahNameDe: surah.nameDe,
+                                bookmarkedAyahNumbers: _bookmarkedAyahNumbers,
+                                onVerstehenTap: (v) => _onVerseTap(0, v),
+                                onPlayTap: (v) => _onPlayVerse(v.ayah),
+                                onBookmarkTap: (v) => _toggleBookmark(v.ayah),
+                                onPageCommit: _onPrintedPageCommit,
+                                initialAyah: widget.initialAyahNumber ?? _printedSeedAyah,
+                                playingAyah: _playingAyahNumber,
+                                loadingAyah: _loadingAyahNumber,
+                                showSwipeHint: _showSwipeHint,
                               ),
                             ),
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Expanded(
-                          child: Stack(
-                            fit: StackFit.expand,
-                            children: [
-                              PageView.builder(
-                                controller: _pageController!,
-                                onPageChanged: (index) {
-                                  setState(() => _currentVerseIndex = index);
-                                  HapticFeedback.lightImpact();
-                                },
-                                itemCount: verses.length,
-                                itemBuilder: (context, index) {
-                                  final verse = verses[index];
-                                    return SingleChildScrollView(
-                                    padding: const EdgeInsets.fromLTRB(24, 16, 24, 150),
-                                    child: QuranVerseReaderTile(
-                                      verse: verse,
-                                      isBookmarked: _bookmarkedAyahNumbers.contains(verse.ayah),
-                                      arabicFontSize: _arabicFontSize,
-                                      arabicLineHeight: _arabicLineHeight,
-                                      showTransliteration: _showTransliteration,
-                                      isPlaying: _playingAyahNumber == verse.ayah,
-                                      isLoading: _loadingAyahNumber == verse.ayah,
-                                      showJumpHighlight: _jumpHighlightAyah == verse.ayah,
-                                      onVerstehenTap: () => _onVerseTap(index, verse),
-                                      onBookmarkTap: () => _toggleBookmark(verse.ayah),
-                                      onPlayTap: () => _onPlayVerse(verse.ayah),
-                                    ),
-                                  );
-                                },
-                              ),
-                              Positioned(
-                                bottom: 100,
-                                left: 0,
-                                right: 0,
-                                child: Center(
-                                  child: Container(
-                                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                                    decoration: BoxDecoration(
-                                      color: Colors.black.withOpacity(0.3),
-                                      borderRadius: BorderRadius.circular(20),
-                                      border: Border.all(color: Colors.white.withOpacity(0.1)),
-                                    ),
-                                    child: Text(
-                                      'Vers ${verses[_currentVerseIndex].ayah} / ${verses.length}',
-                                      style: GoogleFonts.inter(
-                                        fontSize: 12,
-                                        color: Colors.white.withOpacity(0.7),
-                                        fontWeight: FontWeight.w500,
-                                      ),
+                            Padding(
+                              padding: const EdgeInsets.only(bottom: 100),
+                              child: Center(
+                                child: Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withOpacity(0.3),
+                                    borderRadius: BorderRadius.circular(20),
+                                    border: Border.all(color: Colors.white.withOpacity(0.1)),
+                                  ),
+                                  child: Text(
+                                    'Bis Vers $_printedFocusAyah · ${verses.length} Verse',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 12,
+                                      color: Colors.white.withOpacity(0.7),
+                                      fontWeight: FontWeight.w500,
                                     ),
                                   ),
                                 ),
                               ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
+                            ),
+                          ],
+                        )
+                      : (_pageController == null
+                          ? const Center(child: CircularProgressIndicator(color: Colors.white70))
+                          : Column(
+                              crossAxisAlignment: CrossAxisAlignment.stretch,
+                              children: [
+                                Visibility(
+                                  visible: _showSwipeHint,
+                                  maintainSize: false,
+                                  maintainAnimation: false,
+                                  maintainState: false,
+                                  child: Center(
+                                    child: Text(
+                                      '← Wischen zum Blättern →',
+                                      textAlign: TextAlign.center,
+                                      style: GoogleFonts.inter(
+                                        fontSize: 12,
+                                        color: Colors.white.withOpacity(0.5),
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                                const SizedBox(height: 8),
+                                Expanded(
+                                  child: Stack(
+                                    fit: StackFit.expand,
+                                    children: [
+                                      PageView.builder(
+                                        controller: _pageController!,
+                                        onPageChanged: (index) {
+                                          setState(() => _currentVerseIndex = index);
+                                          HapticFeedback.lightImpact();
+                                          _persistReadingPosition(verses[index].ayah);
+                                        },
+                                        itemCount: verses.length,
+                                        itemBuilder: (context, index) {
+                                          final verse = verses[index];
+                                          return SingleChildScrollView(
+                                            padding: const EdgeInsets.fromLTRB(24, 16, 24, 150),
+                                            child: QuranVerseReaderTile(
+                                              verse: verse,
+                                              isBookmarked: _bookmarkedAyahNumbers.contains(verse.ayah),
+                                              arabicFontSize: _arabicFontSize,
+                                              arabicLineHeight: _arabicLineHeight,
+                                              showTransliteration: _showTransliteration,
+                                              isPlaying: _playingAyahNumber == verse.ayah,
+                                              isLoading: _loadingAyahNumber == verse.ayah,
+                                              showJumpHighlight: _jumpHighlightAyah == verse.ayah,
+                                              onVerstehenTap: () => _onVerseTap(index, verse),
+                                              onBookmarkTap: () => _toggleBookmark(verse.ayah),
+                                              onPlayTap: () => _onPlayVerse(verse.ayah),
+                                            ),
+                                          );
+                                        },
+                                      ),
+                                      Positioned(
+                                        bottom: 100,
+                                        left: 0,
+                                        right: 0,
+                                        child: Center(
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                                            decoration: BoxDecoration(
+                                              color: Colors.black.withOpacity(0.3),
+                                              borderRadius: BorderRadius.circular(20),
+                                              border: Border.all(color: Colors.white.withOpacity(0.1)),
+                                            ),
+                                            child: Text(
+                                              'Vers ${verses[_currentVerseIndex].ayah} / ${verses.length}',
+                                              style: GoogleFonts.inter(
+                                                fontSize: 12,
+                                                color: Colors.white.withOpacity(0.7),
+                                                fontWeight: FontWeight.w500,
+                                              ),
+                                            ),
+                                          ),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            )),
             ),
           ],
         ),

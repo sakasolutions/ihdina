@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui' show FontFeature, ImageFilter;
 
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -15,8 +16,11 @@ import '../theme/app_theme.dart';
 import '../theme/hero_theme.dart';
 import '../widgets/glass_card.dart';
 import '../widgets/home_daily_verse_hero.dart';
+import '../widgets/home_daily_hadith_card.dart' show kShowDailyHadithOnHome;
 import '../models/surah.dart';
 import '../data/daily_verse/daily_verse_service.dart';
+import '../data/daily_hadith/daily_hadith_entry.dart';
+import '../data/daily_hadith/daily_hadith_service.dart';
 import 'explanation_bottom_sheet.dart';
 import 'quran_reader_screen.dart';
 import 'my_verses_screen.dart';
@@ -24,13 +28,18 @@ import 'my_verses_screen.dart';
 // ——— Layout constants ———
 const double _outerPadding = 24;
 const double _heroCardRadius = 26;
-const double _greetingToHeroGap = 48;
-const double _heroToPrayerGap = 40;
-const double _bottomScrollInset = 120;
+const double _greetingToHeroGap = 40;
+const double _heroToPrayerGap = 20;
+const double _scrollBottomBreathing = 28;
+/// Abstand unter der Gebetsleiste: schwebende Tabbar (PremiumBottomNav ~72 + Rand 24) + Puffer.
+const double _floatingNavClearance = 112;
 const Duration _karahatSunriseDuration = Duration(minutes: 20);
 const Duration _karahatZenithBefore = Duration(minutes: 5);
 const Duration _karahatZenithAfter = Duration(minutes: 5);
 const Duration _karahatSunsetDuration = Duration(minutes: 20);
+
+/// Obere Rundung wie KI-Erklärungs-Sheet (`explanation_bottom_sheet.dart`).
+const double _prayerSheetTopRadius = 24;
 
 class _KarahatInlineInfo {
   const _KarahatInlineInfo({
@@ -64,19 +73,14 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
   String? _lastReadSurahNameAr;
   PrayerTimesResult? _prayerResult;
   Timer? _prayerTimer;
-  final List<GlobalKey> _prayerKeys = List.generate(6, (_) => GlobalKey());
-  final ScrollController _prayerScrollController = ScrollController();
   final ScrollController _mainScrollController = ScrollController();
-  // Initial true: kein Scroll aus build(); Chip-Ausrichtung nur in _loadPrayerTimes.
-  // ignore: unused_field, prefer_final_fields
-  bool _prayerScrollDone = true;
-  late final Future<Map<String, dynamic>> _verseOfTheDayFuture;
+  late final Future<_HomeDailyPack> _homeDailyPackFuture;
   Future<String>? _dailyTakeawayFuture;
 
   @override
   void initState() {
     super.initState();
-    _verseOfTheDayFuture = DailyVerseService.instance.getVerseOfTheDay();
+    _homeDailyPackFuture = _loadHomeDailyPack();
     _loadLastRead();
     _loadPrayerTimes();
     _prayerTimer = Timer.periodic(const Duration(seconds: 1), (_) => _updatePrayerCountdown());
@@ -85,37 +89,17 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
   @override
   void dispose() {
     _prayerTimer?.cancel();
-    _prayerScrollController.dispose();
     _mainScrollController.dispose();
     super.dispose();
   }
 
-  void _scrollToCurrentPrayer(int currentIndex) {
-    if (currentIndex < 0 || currentIndex >= _prayerKeys.length) return;
-    final keyContext = _prayerKeys[currentIndex].currentContext;
-    if (keyContext != null) {
-      Scrollable.ensureVisible(
-        keyContext,
-        alignment: 0.5,
-        duration: const Duration(milliseconds: 500),
-        curve: Curves.easeInOut,
-      );
-    } else {
-      final pos = _prayerScrollController.hasClients
-          ? _prayerScrollController.position
-          : null;
-      if (pos != null) {
-        const approxItemWidth = 93.0;
-        final viewportWidth = pos.viewportDimension;
-        var offset = currentIndex * approxItemWidth - viewportWidth / 2 + approxItemWidth / 2;
-        offset = offset.clamp(0.0, pos.maxScrollExtent);
-        _prayerScrollController.animateTo(
-          offset,
-          duration: const Duration(milliseconds: 500),
-          curve: Curves.easeInOut,
-        );
-      }
+  Future<_HomeDailyPack> _loadHomeDailyPack() async {
+    final verse = await DailyVerseService.instance.getVerseOfTheDay();
+    DailyHadithEntry? hadith;
+    if (kShowDailyHadithOnHome) {
+      hadith = await DailyHadithService.instance.getHadithOfTheDay();
     }
+    return _HomeDailyPack(verse: verse, hadith: hadith);
   }
 
   Future<void> _loadPrayerTimes() async {
@@ -125,14 +109,6 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
     final result = PrayerTimesRepository.instance.computeToday(settings, now);
     if (mounted) {
       setState(() => _prayerResult = result);
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        if (!mounted || _prayerResult == null) return;
-        final nextIdx = prayerTypeOrderForDisplay.indexOf(_prayerResult!.nextPrayerType);
-        if (nextIdx >= 0) {
-          final currIdx = (nextIdx - 1 + prayerTypeOrderForDisplay.length) % prayerTypeOrderForDisplay.length;
-          _scrollToCurrentPrayer(currIdx);
-        }
-      });
     }
     final enabled = await SettingsRepository.instance.getNotificationsEnabled();
     if (mounted && enabled) {
@@ -193,165 +169,433 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
           ),
           child: Stack(
             fit: StackFit.expand,
-            clipBehavior: Clip.none,
+            clipBehavior: Clip.hardEdge,
             children: [
-            // Layer 1: Pure mosque image, no color filter – faint so gradient stays vibrant
-            Positioned.fill(
-              child: Opacity(
-                opacity: 0.1,
-                child: Image.asset(
-                  DynamicHeroTheme.backgroundAsset(heroPhase),
-                  fit: BoxFit.cover,
-                  width: double.infinity,
-                  height: double.infinity,
-                  errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+              Positioned.fill(
+                child: Opacity(
+                  opacity: 0.1,
+                  child: Image.asset(
+                    DynamicHeroTheme.backgroundAsset(heroPhase),
+                    fit: BoxFit.cover,
+                    width: double.infinity,
+                    height: double.infinity,
+                    errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                  ),
                 ),
               ),
-            ),
-          // Layer 2: Dashboard (vertikal nicht scrollbar)
-          SafeArea(
-            child: CustomScrollView(
-              controller: _mainScrollController,
-              physics: const NeverScrollableScrollPhysics(),
-              // Schatten des Tagesvers-Hero (Gold-Glow) liegen außerhalb der Box — sonst clippt die Viewport.
-              clipBehavior: Clip.none,
-              slivers: [
-                SliverPadding(
-                  padding: const EdgeInsets.fromLTRB(
-                    _outerPadding,
-                    _greetingToHeroGap,
-                    _outerPadding,
-                    _heroToPrayerGap,
-                  ),
-                  sliver: SliverToBoxAdapter(
-                    child: FutureBuilder<Map<String, dynamic>>(
-                      future: _verseOfTheDayFuture,
-                      builder: (context, snapshot) {
-                        if (snapshot.connectionState == ConnectionState.waiting) {
-                          return GlassCard(
-                            borderRadius: _heroCardRadius,
-                            child: Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 48),
-                              child: Center(
-                                child: SizedBox(
-                                  width: 22,
-                                  height: 22,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: _accentChampagneGold,
+              Positioned.fill(
+                child: SafeArea(
+                  bottom: false,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: [
+                      Expanded(
+                        child: Stack(
+                          fit: StackFit.expand,
+                          clipBehavior: Clip.hardEdge,
+                          children: [
+                            CustomScrollView(
+                              controller: _mainScrollController,
+                              physics: const BouncingScrollPhysics(
+                                parent: AlwaysScrollableScrollPhysics(),
+                              ),
+                              clipBehavior: Clip.hardEdge,
+                              slivers: [
+                                SliverPadding(
+                                  padding: const EdgeInsets.fromLTRB(
+                                    _outerPadding,
+                                    _greetingToHeroGap,
+                                    _outerPadding,
+                                    _heroToPrayerGap,
+                                  ),
+                                  sliver: SliverToBoxAdapter(
+                                    child: FutureBuilder<_HomeDailyPack>(
+                                      future: _homeDailyPackFuture,
+                                      builder: (context, snapshot) {
+                                        if (snapshot.connectionState == ConnectionState.waiting) {
+                                          return GlassCard(
+                                            borderRadius: _heroCardRadius,
+                                            child: Padding(
+                                              padding: const EdgeInsets.symmetric(vertical: 48),
+                                              child: Center(
+                                                child: SizedBox(
+                                                  width: 22,
+                                                  height: 22,
+                                                  child: CircularProgressIndicator(
+                                                    strokeWidth: 2,
+                                                    color: _accentChampagneGold,
+                                                  ),
+                                                ),
+                                              ),
+                                            ),
+                                          );
+                                        }
+                                        final pack = snapshot.data;
+                                        if (pack == null) {
+                                          return const SizedBox.shrink();
+                                        }
+                                        final data = pack.verse;
+                                        final surahNameEn = data['surahNameEn'] as String? ?? '';
+                                        final ayahNumber = data['ayahNumber'] as int? ?? 0;
+                                        final textAr = data['textAr'] as String? ?? '';
+                                        final textDe = data['textDe'] as String? ?? '—';
+                                        _dailyTakeawayFuture ??= TakeawayService.generateTakeaway(
+                                          arabic: textAr,
+                                          translation: textDe,
+                                          surahName: surahNameEn,
+                                          ayahNumber: ayahNumber,
+                                        );
+                                        void openExplanation() => showAiExplanationWithQuotaCheck(
+                                              context,
+                                              verseTitle: '$surahNameEn, Vers $ayahNumber',
+                                              surahName: surahNameEn,
+                                              ayahNumber: ayahNumber,
+                                              textAr: textAr,
+                                              textDe: textDe,
+                                              isFreeDailyVerse: true,
+                                            );
+                                        void openWeiterlesen() {
+                                          final p = _lastRead!;
+                                          final surah = Surah(
+                                            number: p.surahId,
+                                            nameDe: _lastReadSurahNameEn ?? 'Sure ${p.surahId}',
+                                            nameAr: _lastReadSurahNameAr ?? '',
+                                            verses: const [],
+                                          );
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute<void>(
+                                              builder: (_) => QuranReaderScreen(
+                                                surah: surah,
+                                                initialAyahNumber: p.ayahNumber,
+                                              ),
+                                            ),
+                                          ).then((_) => _loadLastRead());
+                                        }
+
+                                        void openSpeichern() {
+                                          Navigator.push(
+                                            context,
+                                            MaterialPageRoute<void>(
+                                                builder: (_) => const MyVersesScreen()),
+                                          );
+                                        }
+
+                                        return FutureBuilder<String>(
+                                          future: _dailyTakeawayFuture,
+                                          builder: (context, takeawaySnap) {
+                                            final loadingTakeaway = takeawaySnap.connectionState ==
+                                                ConnectionState.waiting;
+                                            final takeawayRaw = takeawaySnap.data;
+                                            final takeawayLine =
+                                                loadingTakeaway ? '...' : (takeawayRaw ?? '...');
+                                            final takeawayNeutral = loadingTakeaway ||
+                                                takeawayRaw == null ||
+                                                takeawayRaw == TakeawayService.fallbackMessage;
+                                            return Padding(
+                                              padding: const EdgeInsets.symmetric(
+                                                  vertical: 8, horizontal: 2),
+                                              child: HomeDailyVerseHero(
+                                                surahNameEn: surahNameEn,
+                                                ayahNumber: ayahNumber,
+                                                arabic: textAr,
+                                                german: textDe,
+                                                personalTakeaway: takeawayLine,
+                                                takeawayNeutralPresentation: takeawayNeutral,
+                                                onMehrVerstehen: openExplanation,
+                                                onBookmarkTap: () {},
+                                                onWeiterlesen:
+                                                    _lastRead != null ? openWeiterlesen : null,
+                                                onSpeichern: openSpeichern,
+                                                dailyHadith:
+                                                    kShowDailyHadithOnHome ? pack.hadith : null,
+                                              ),
+                                            );
+                                          },
+                                        );
+                                      },
+                                    ),
                                   ),
                                 ),
-                              ),
+                                const SliverToBoxAdapter(
+                                  child: SizedBox(height: 16),
+                                ),
+                                const SliverToBoxAdapter(
+                                  child: SizedBox(height: _scrollBottomBreathing),
+                                ),
+                              ],
                             ),
-                          );
-                        }
-                        final data = snapshot.data;
-                        if (data == null) {
-                          return const SizedBox.shrink();
-                        }
-                        final surahNameEn = data['surahNameEn'] as String? ?? '';
-                        final ayahNumber = data['ayahNumber'] as int? ?? 0;
-                        final textAr = data['textAr'] as String? ?? '';
-                        final textDe = data['textDe'] as String? ?? '—';
-                        _dailyTakeawayFuture ??= TakeawayService.generateTakeaway(
-                          arabic: textAr,
-                          translation: textDe,
-                          surahName: surahNameEn,
-                          ayahNumber: ayahNumber,
-                        );
-                        void openExplanation() => showAiExplanationWithQuotaCheck(
-                              context,
-                              verseTitle: '$surahNameEn, Vers $ayahNumber',
-                              surahName: surahNameEn,
-                              ayahNumber: ayahNumber,
-                              textAr: textAr,
-                              textDe: textDe,
-                              isFreeDailyVerse: true,
-                            );
-                        void openWeiterlesen() {
-                          final p = _lastRead!;
-                          final surah = Surah(
-                            number: p.surahId,
-                            nameDe: _lastReadSurahNameEn ?? 'Sure ${p.surahId}',
-                            nameAr: _lastReadSurahNameAr ?? '',
-                            verses: const [],
-                          );
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute<void>(
-                              builder: (_) => QuranReaderScreen(
-                                surah: surah,
-                                initialAyahNumber: p.ayahNumber,
-                              ),
-                            ),
-                          ).then((_) => _loadLastRead());
-                        }
-
-                        void openSpeichern() {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute<void>(builder: (_) => const MyVersesScreen()),
-                          );
-                        }
-
-                        return FutureBuilder<String>(
-                          future: _dailyTakeawayFuture,
-                          builder: (context, takeawaySnap) {
-                            final loadingTakeaway =
-                                takeawaySnap.connectionState == ConnectionState.waiting;
-                            final takeawayRaw = takeawaySnap.data;
-                            final takeawayLine =
-                                loadingTakeaway ? '...' : (takeawayRaw ?? '...');
-                            final takeawayNeutral = loadingTakeaway ||
-                                takeawayRaw == null ||
-                                takeawayRaw == TakeawayService.fallbackMessage;
-                            return Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 2),
-                              child: HomeDailyVerseHero(
-                                surahNameEn: surahNameEn,
-                                ayahNumber: ayahNumber,
-                                arabic: textAr,
-                                german: textDe,
-                                personalTakeaway: takeawayLine,
-                                takeawayNeutralPresentation: takeawayNeutral,
-                                onMehrVerstehen: openExplanation,
-                                onBookmarkTap: () {},
-                                onWeiterlesen: _lastRead != null ? openWeiterlesen : null,
-                                onSpeichern: openSpeichern,
-                              ),
-                            );
-                          },
-                        );
-                      },
-                    ),
+                          ],
+                        ),
+                      ),
+                      SafeArea(
+                        top: false,
+                        child: _buildPrayerDock(),
+                      ),
+                    ],
                   ),
                 ),
-                SliverToBoxAdapter(
-                  child: _buildPrayerSummarySecondary(),
-                ),
-                SliverToBoxAdapter(
-                  child: _buildPrayerChips(),
-                ),
-                const SliverToBoxAdapter(
-                  child: SizedBox(height: 16),
-                ),
-                SliverToBoxAdapter(
-                  child: SizedBox(height: 24 + _bottomScrollInset),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
-        ),
         ),
       ),
     );
   }
 
-  /// Zeit, nächstes Gebet und Countdown — bewusst zurückhaltender als der Tagesvers-Hero.
-  Widget _buildPrayerSummarySecondary() {
+  void _showPrayerTimesHalfSheet(BuildContext context) {
+    final media = MediaQuery.of(context);
+    final h = media.size.height;
+    final bottomInset = media.padding.bottom;
+    final keyboardBottom = media.viewInsets.bottom;
+    final maxScrollRegion = h * 0.58;
+
+    showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      useSafeArea: false,
+      backgroundColor: Colors.transparent,
+      barrierColor: Colors.transparent,
+      builder: (ctx) {
+        final sheetTint = Color.lerp(
+          AppColors.emeraldDark,
+          Colors.black,
+          0.28,
+        )!.withOpacity(0.93);
+
+        return SizedBox(
+          height: h,
+          child: Stack(
+            fit: StackFit.expand,
+            children: [
+              Positioned.fill(
+                child: GestureDetector(
+                  behavior: HitTestBehavior.opaque,
+                  onTap: () => Navigator.pop(ctx),
+                  child: ColoredBox(
+                    color: Colors.black.withOpacity(0.35),
+                  ),
+                ),
+              ),
+              Positioned(
+                left: 0,
+                right: 0,
+                bottom: 8 + bottomInset + keyboardBottom,
+                child: ClipRRect(
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(_prayerSheetTopRadius),
+                  ),
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 18, sigmaY: 18),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        color: sheetTint,
+                        borderRadius: const BorderRadius.vertical(
+                          top: Radius.circular(_prayerSheetTopRadius),
+                        ),
+                        border: Border(
+                          top: BorderSide(
+                            color: Colors.white.withOpacity(0.28),
+                            width: 1,
+                          ),
+                        ),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.only(
+                          left: 14,
+                          right: 14,
+                          top: 12,
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          crossAxisAlignment: CrossAxisAlignment.stretch,
+                          children: [
+                            const SizedBox(height: 8),
+                            Center(
+                              child: Container(
+                                width: 40,
+                                height: 4,
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.45),
+                                  borderRadius: BorderRadius.circular(2),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            ConstrainedBox(
+                              constraints: BoxConstraints(maxHeight: maxScrollRegion),
+                              child: CustomScrollView(
+                                shrinkWrap: true,
+                                physics: const BouncingScrollPhysics(),
+                                slivers: [
+                                  SliverPadding(
+                                    padding: const EdgeInsets.fromLTRB(10, 0, 10, 16),
+                                    sliver: SliverToBoxAdapter(
+                                      child: Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                                        children: [
+                                          _buildPrayerSummaryPaddedBody(
+                                            showChevron: false,
+                                            contextForKarahat: ctx,
+                                          ),
+                                          _prayerExpandedSoftDivider(),
+                                          _buildPrayerDayOverview(),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildPrayerDock() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(0, 10, 0, _floatingNavClearance),
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(_outerPadding, 0, _outerPadding, 6),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: BorderRadius.circular(22),
+            onTap: () => _showPrayerTimesHalfSheet(context),
+            splashColor: Colors.white.withOpacity(0.06),
+            highlightColor: Colors.white.withOpacity(0.03),
+            child: DecoratedBox(
+              decoration: BoxDecoration(
+                borderRadius: BorderRadius.circular(22),
+                color: AppColors.emeraldDark.withOpacity(0.94),
+                border: Border.all(color: Colors.white.withOpacity(0.14)),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.28),
+                    blurRadius: 18,
+                    spreadRadius: -2,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
+              ),
+              child: _buildPrayerSummaryPaddedBody(showChevron: true),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _prayerExpandedSoftDivider() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(14, 4, 14, 2),
+      child: Container(
+        height: 1,
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(1),
+          gradient: LinearGradient(
+            colors: [
+              Colors.transparent,
+              Colors.white.withOpacity(0.07),
+              Colors.white.withOpacity(0.1),
+              Colors.white.withOpacity(0.07),
+              Colors.transparent,
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  void _showKarahatDetail(BuildContext context, _KarahatInlineInfo k) {
+    showModalBottomSheet<void>(
+      context: context,
+      backgroundColor: Colors.transparent,
+      builder: (ctx) {
+        final bottom = MediaQuery.paddingOf(ctx).bottom;
+        return Padding(
+          padding: EdgeInsets.fromLTRB(16, 0, 16, 12 + bottom),
+          child: DecoratedBox(
+            decoration: BoxDecoration(
+              color: AppColors.emeraldDark,
+              borderRadius: BorderRadius.circular(18),
+              border: Border.all(color: Colors.white.withOpacity(0.12)),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(20, 20, 20, 12),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  Text(
+                    'Karahat',
+                    style: GoogleFonts.playfairDisplay(
+                      fontSize: 20,
+                      fontWeight: FontWeight.w600,
+                      color: Colors.white.withOpacity(0.96),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    k.label,
+                    style: GoogleFonts.inter(
+                      fontSize: 15,
+                      height: 1.45,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.white.withOpacity(0.88),
+                    ),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    k.timeRange,
+                    style: GoogleFonts.inter(
+                      fontSize: 15,
+                      fontWeight: FontWeight.w700,
+                      color: k.isActive ? _accentChampagneGold : Colors.white.withOpacity(0.9),
+                    ),
+                  ),
+                  Align(
+                    alignment: Alignment.centerRight,
+                    child: TextButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      child: Text(
+                        'Schließen',
+                        style: GoogleFonts.inter(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: _accentChampagneGold.withOpacity(0.95),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildPrayerSummaryPaddedBody({
+    bool showChevron = false,
+    bool chevronOpen = false,
+    BuildContext? contextForKarahat,
+  }) {
+    final ctx = contextForKarahat ?? context;
     final now = DateTime.now();
-    final timeStr = '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
+    final timeStr =
+        '${now.hour.toString().padLeft(2, '0')}:${now.minute.toString().padLeft(2, '0')}';
     final nextPrayerType = _prayerResult?.nextPrayerType;
     final nextLabel = nextPrayerType?.label ?? '—';
     final countdownStr = _prayerResult != null
@@ -359,103 +603,124 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
         : '—:——';
     final karahat = _buildKarahatInlineInfo(_prayerResult);
 
-    return Padding(
-      padding: const EdgeInsets.fromLTRB(_outerPadding, 0, _outerPadding, 14),
-      child: Opacity(
-        opacity: 0.86,
-        child: GlassCard(
-          borderRadius: 18,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                Text(
-                  timeStr,
-                  style: GoogleFonts.playfairDisplay(
-                    fontSize: 28,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white.withOpacity(0.92),
-                    letterSpacing: -0.4,
-                  ),
+    final chevron = Icon(
+      chevronOpen ? Icons.expand_less_rounded : Icons.expand_more_rounded,
+      size: 26,
+      color: Colors.white.withOpacity(0.52),
+    );
+
+    final row = Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          timeStr,
+          style: GoogleFonts.playfairDisplay(
+            fontSize: 22,
+            fontWeight: FontWeight.w600,
+            color: Colors.white.withOpacity(0.92),
+            letterSpacing: -0.35,
+            shadows: [
+              Shadow(
+                color: Colors.black.withOpacity(0.35),
+                blurRadius: 8,
+                offset: const Offset(0, 1),
+              ),
+            ],
+          ),
+        ),
+        Padding(
+          padding: const EdgeInsets.fromLTRB(12, 2, 12, 0),
+          child: Container(
+            width: 1,
+            height: 40,
+            color: Colors.white.withOpacity(0.14),
+          ),
+        ),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                'Nächstes Gebet',
+                style: GoogleFonts.inter(
+                  fontSize: 10,
+                  fontWeight: FontWeight.w600,
+                  letterSpacing: 0.85,
+                  color: Colors.white.withOpacity(0.48),
                 ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Container(
-                    width: 1,
-                    height: 36,
-                    color: Colors.white.withOpacity(0.12),
-                  ),
+              ),
+              const SizedBox(height: 3),
+              Text(
+                '$nextLabel in $countdownStr',
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: GoogleFonts.inter(
+                  fontSize: 13.5,
+                  fontWeight: FontWeight.w500,
+                  height: 1.28,
+                  color: Colors.white.withOpacity(0.88),
                 ),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Nächstes Gebet',
-                        style: GoogleFonts.inter(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w600,
-                          letterSpacing: 0.9,
-                          color: Colors.white.withOpacity(0.45),
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '$nextLabel in $countdownStr',
-                        style: GoogleFonts.inter(
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                          height: 1.3,
-                          color: Colors.white.withOpacity(0.82),
-                        ),
-                      ),
-                      if (karahat != null) ...[
-                        const SizedBox(height: 8),
-                        Row(
-                          children: [
-                            Icon(
-                              Icons.info_outline_rounded,
-                              size: 14,
+              ),
+              if (karahat != null) ...[
+                const SizedBox(height: 6),
+                Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: () => _showKarahatDetail(ctx, karahat),
+                    borderRadius: BorderRadius.circular(8),
+                    splashColor: Colors.white.withOpacity(0.08),
+                    child: Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 3, horizontal: 2),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Icons.info_outline_rounded,
+                            size: 13,
+                            color: karahat.isActive
+                                ? _accentChampagneGold
+                                : Colors.white.withOpacity(0.76),
+                          ),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              karahat.label,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: GoogleFonts.inter(
+                                fontSize: 11,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white.withOpacity(0.86),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            karahat.timeRange,
+                            style: GoogleFonts.inter(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w700,
                               color: karahat.isActive
                                   ? _accentChampagneGold
-                                  : Colors.white.withOpacity(0.74),
+                                  : Colors.white.withOpacity(0.9),
                             ),
-                            const SizedBox(width: 6),
-                            Expanded(
-                              child: Text(
-                                karahat.label,
-                                maxLines: 1,
-                                overflow: TextOverflow.ellipsis,
-                                style: GoogleFonts.inter(
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.w600,
-                                  color: Colors.white.withOpacity(0.86),
-                                ),
-                              ),
-                            ),
-                            const SizedBox(width: 8),
-                            Text(
-                              karahat.timeRange,
-                              style: GoogleFonts.inter(
-                                fontSize: 12,
-                                fontWeight: FontWeight.w700,
-                                color: karahat.isActive
-                                    ? _accentChampagneGold
-                                    : Colors.white.withOpacity(0.88),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ],
+                          ),
+                        ],
+                      ),
+                    ),
                   ),
                 ),
               ],
-            ),
+            ],
           ),
         ),
-      ),
+        if (showChevron) Padding(padding: const EdgeInsets.only(left: 2, top: 6), child: chevron),
+      ],
+    );
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      child: row,
     );
   }
 
@@ -513,72 +778,151 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
     );
   }
 
-  Widget _buildPrayerChips() {
-    final nextPrayerType = _prayerResult?.nextPrayerType;
-    final nextPrayerIndex = nextPrayerType != null
-        ? prayerTypeOrderForDisplay.indexOf(nextPrayerType)
-        : -1;
-    final currentPrayerIndex = nextPrayerIndex >= 0
-        ? (nextPrayerIndex - 1 + prayerTypeOrderForDisplay.length) % prayerTypeOrderForDisplay.length
-        : -1;
-    final currentPrayerType = currentPrayerIndex >= 0
-        ? prayerTypeOrderForDisplay[currentPrayerIndex]
-        : null;
+  Widget _buildPrayerDayOverview() {
+    final current = _currentPrayerBlockType();
+    const mid = 3;
+    final row1 = prayerTypeOrderForDisplay.sublist(0, mid);
+    final row2 = prayerTypeOrderForDisplay.sublist(mid);
 
-    return Opacity(
-      opacity: 0.88,
-      child: SizedBox(
-        height: 44,
-        child: ListView.separated(
-        key: const PageStorageKey<String>('prayer_chips'),
-        controller: _prayerScrollController,
-        scrollDirection: Axis.horizontal,
-        padding: const EdgeInsets.symmetric(horizontal: 24),
-        itemCount: prayerTypeOrderForDisplay.length,
-        separatorBuilder: (_, __) => const SizedBox(width: 8),
-        itemBuilder: (context, index) {
-          final prayerType = prayerTypeOrderForDisplay[index];
-          final isCurrent = currentPrayerType == prayerType;
-          final chipTime = _prayerResult != null && _prayerResult!.timeFor(prayerType) != null
-              ? PrayerTimesRepository.instance.formatTime(_prayerResult!.timeFor(prayerType)!)
-              : null;
-          final label = chipTime != null ? '${prayerType.label} $chipTime' : prayerType.label;
-          return Container(
-            key: _prayerKeys[index],
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(12),
-              color: isCurrent ? Colors.white.withOpacity(0.18) : Colors.white.withOpacity(0.08),
-              border: Border.all(
-                color: isCurrent ? _accentChampagneGold.withOpacity(0.45) : Colors.white.withOpacity(0.12),
-                width: isCurrent ? 0.85 : 0.5,
-              ),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 9, vertical: 7),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(
-                    prayerType.icon,
-                    size: 15,
-                    color: isCurrent ? _accentChampagneGold.withOpacity(0.95) : Colors.white.withOpacity(0.88),
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(_outerPadding - 2, 0, _outerPadding - 2, 0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              for (int i = 0; i < row1.length; i++) ...[
+                if (i > 0) _prayerGridVerticalRule(),
+                Expanded(
+                  child: _PrayerOverviewSlot(
+                    prayerType: row1[i],
+                    result: _prayerResult,
+                    isCurrent: row1[i] == current,
                   ),
-                  const SizedBox(width: 5),
-                  Text(
-                    label,
-                    style: GoogleFonts.inter(
-                      fontSize: 11,
-                      fontWeight: isCurrent ? FontWeight.w600 : FontWeight.w500,
-                      color: Colors.white.withOpacity(isCurrent ? 0.95 : 0.85),
-                    ),
+                ),
+              ],
+            ],
+          ),
+          Padding(
+            padding: const EdgeInsets.symmetric(vertical: 8),
+            child: Divider(height: 1, thickness: 1, color: Colors.white.withOpacity(0.06)),
+          ),
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              for (int i = 0; i < row2.length; i++) ...[
+                if (i > 0) _prayerGridVerticalRule(),
+                Expanded(
+                  child: _PrayerOverviewSlot(
+                    prayerType: row2[i],
+                    result: _prayerResult,
+                    isCurrent: row2[i] == current,
                   ),
-                ],
-              ),
-            ),
-          );
-        },
-      ),
+                ),
+              ],
+            ],
+          ),
+        ],
       ),
     );
   }
+
+  Widget _prayerGridVerticalRule() {
+    return Padding(
+      padding: const EdgeInsets.only(top: 6, bottom: 6),
+      child: Center(
+        child: Container(
+          width: 1,
+          height: 44,
+          color: Colors.white.withOpacity(0.09),
+        ),
+      ),
+    );
+  }
+
+  PrayerType? _currentPrayerBlockType() {
+    final nextPrayerType = _prayerResult?.nextPrayerType;
+    final nextPrayerIndex =
+        nextPrayerType != null ? prayerTypeOrderForDisplay.indexOf(nextPrayerType) : -1;
+    final currentPrayerIndex = nextPrayerIndex >= 0
+        ? (nextPrayerIndex - 1 + prayerTypeOrderForDisplay.length) %
+            prayerTypeOrderForDisplay.length
+        : -1;
+    if (currentPrayerIndex < 0) return null;
+    return prayerTypeOrderForDisplay[currentPrayerIndex];
+  }
+}
+
+class _PrayerOverviewSlot extends StatelessWidget {
+  const _PrayerOverviewSlot({
+    required this.prayerType,
+    required this.result,
+    required this.isCurrent,
+  });
+
+  final PrayerType prayerType;
+  final PrayerTimesResult? result;
+  final bool isCurrent;
+
+  @override
+  Widget build(BuildContext context) {
+    final t = result?.timeFor(prayerType);
+    final timeStr = t != null ? PrayerTimesRepository.instance.formatTime(t) : '—';
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Text(
+            prayerType.label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.center,
+            style: GoogleFonts.inter(
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.35,
+              color: isCurrent
+                  ? _accentChampagneGold.withOpacity(0.9)
+                  : Colors.white.withOpacity(0.44),
+            ),
+          ),
+          const SizedBox(height: 5),
+          Text(
+            timeStr,
+            textAlign: TextAlign.center,
+            style: GoogleFonts.inter(
+              fontSize: 15,
+              fontWeight: isCurrent ? FontWeight.w700 : FontWeight.w600,
+              fontFeatures: const [FontFeature.tabularFigures()],
+              letterSpacing: 0.15,
+              color: isCurrent
+                  ? Colors.white.withOpacity(0.96)
+                  : Colors.white.withOpacity(0.86),
+            ),
+          ),
+          const SizedBox(height: 7),
+          Container(
+            height: 2.5,
+            width: 36,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(2),
+              color: isCurrent
+                  ? _accentChampagneGold.withOpacity(0.92)
+                  : Colors.transparent,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _HomeDailyPack {
+  const _HomeDailyPack({required this.verse, this.hadith});
+
+  final Map<String, dynamic> verse;
+  final DailyHadithEntry? hadith;
 }
