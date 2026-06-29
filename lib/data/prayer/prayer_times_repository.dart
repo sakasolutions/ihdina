@@ -27,6 +27,25 @@ class PrayerTimesRepository {
     return DateTime(t.year, t.month, t.day, t.hour, t.minute + addMin, 0, 0);
   }
 
+  static DateTime _diyanetHighLatIsha({
+    required DateTime maghrib,
+    required DateTime astronomicalIsha,
+  }) {
+    final interval = astronomicalIsha.difference(maghrib).inMinutes;
+    final capped = interval > 80 ? 80 : interval;
+    return maghrib.add(Duration(minutes: capped));
+  }
+
+  static DateTime _diyanetHighLatFajr({
+    required DateTime sunrise,
+    required DateTime maghrib,
+    required DateTime astronomicalIsha,
+  }) {
+    final ishaInterval = astronomicalIsha.difference(maghrib).inMinutes;
+    final capped = ishaInterval > 80 ? 80 : ishaInterval;
+    return sunrise.subtract(Duration(minutes: capped + 10));
+  }
+
   /// Get CalculationParameters for the given method and madhab.
   /// Madhab wird im Konstruktor gesetzt, damit die Bibliothek Asr korrekt berechnet (Hanafi = 2x Schatten, später).
   CalculationParameters _paramsFromSettings(PrayerSettings settings) {
@@ -111,13 +130,33 @@ class PrayerTimesRepository {
       precision: true,
     );
 
+    DateTime fajr = _roundToMinute(_toLocal(pt.fajr));
+    DateTime isha = _roundToMinute(_toLocal(pt.isha));
+    final maghrib = _roundToMinute(_toLocal(pt.maghrib));
+    final sunrise = _roundToMinute(_toLocal(pt.sunrise));
+
+    final isSummer = localCalendarDate.month >= 3 && localCalendarDate.month <= 9;
+    if (settings.method == PrayerMethodOption.turkiye &&
+        settings.latitude.abs() > 45 &&
+        isSummer) {
+      isha = _diyanetHighLatIsha(
+        maghrib: maghrib,
+        astronomicalIsha: isha,
+      );
+      fajr = _diyanetHighLatFajr(
+        sunrise: sunrise,
+        maghrib: maghrib,
+        astronomicalIsha: _roundToMinute(_toLocal(pt.isha)),
+      );
+    }
+
     return <PrayerType, DateTime>{
-      PrayerType.fajr: _roundToMinute(_toLocal(pt.fajr)),
-      PrayerType.sunrise: _roundToMinute(_toLocal(pt.sunrise)),
+      PrayerType.fajr: fajr,
+      PrayerType.sunrise: sunrise,
       PrayerType.dhuhr: _roundToMinute(_toLocal(pt.dhuhr)),
       PrayerType.asr: _roundToMinute(_toLocal(pt.asr)),
-      PrayerType.maghrib: _roundToMinute(_toLocal(pt.maghrib)),
-      PrayerType.isha: _roundToMinute(_toLocal(pt.isha)),
+      PrayerType.maghrib: maghrib,
+      PrayerType.isha: isha,
     };
   }
 

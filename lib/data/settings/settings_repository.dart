@@ -71,7 +71,7 @@ class SettingsRepository {
         ? (double.tryParse(lngStr) ?? _defaultLng)
         : _defaultLng;
     final locationLabel = label?.isNotEmpty == true ? label! : _defaultLocationLabel;
-    final method = PrayerMethodOption.fromValue(methodStr ?? 'mwl');
+    final method = PrayerMethodOption.fromValue(methodStr ?? 'turkiye');
     final madhab = MadhabOption.fromValue(madhabStr ?? 'shafi');
 
     return PrayerSettings(

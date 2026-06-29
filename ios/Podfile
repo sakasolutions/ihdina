@@ -35,6 +35,31 @@ target 'Runner' do
   end
 end
 
+# CocoaPods/Xcode can emit broken relative paths to ~/.pub-cache when the project
+# lives deep in the filesystem (e.g. OneDrive). They resolve to /.pub-cache/… and
+# fail with lstat. Rewrite to ios/.symlinks/plugins/… which always exists.
+def fix_pods_pub_cache_paths!(installer)
+  ios_dir = File.dirname(__FILE__)
+  pub_cache_re = %r{(?:\.\./)*\.pub-cache/hosted/pub\.dev/([a-zA-Z0-9_]+)-[\d.+\w-]+/(.*)\z}
+
+  installer.pods_project.objects.each do |obj|
+    next unless obj.respond_to?(:path) && obj.path&.include?('.pub-cache/hosted/pub.dev/')
+
+    match = obj.path.match(pub_cache_re)
+    next unless match
+
+    abs_path = File.expand_path(
+      File.join('.symlinks/plugins', match[1], match[2]),
+      ios_dir
+    )
+    next unless File.exist?(abs_path)
+
+    obj.path = abs_path
+    obj.source_tree = '<absolute>' if obj.respond_to?(:source_tree=)
+  end
+  installer.pods_project.save
+end
+
 post_install do |installer|
   installer.pods_project.targets.each do |target|
     flutter_additional_ios_build_settings(target)
@@ -48,4 +73,5 @@ post_install do |installer|
       config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] = defs
     end
   end
+  fix_pods_pub_cache_paths!(installer)
 end

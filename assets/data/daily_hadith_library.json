@@ -1,85 +1,1620 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
+  "noRepeatDays": 30,
+  "rotationOrder": [
+    1,
+    3,
+    4,
+    6,
+    44,
+    11,
+    12,
+    16,
+    17,
+    9,
+    10,
+    14,
+    19,
+    21,
+    24,
+    30,
+    31,
+    33,
+    36,
+    27,
+    46,
+    48,
+    50,
+    8,
+    86,
+    87,
+    89,
+    7,
+    58,
+    60,
+    61,
+    63,
+    64,
+    65,
+    23,
+    22,
+    72,
+    73,
+    76,
+    77,
+    38,
+    39,
+    40,
+    41,
+    42,
+    43,
+    51,
+    52,
+    53,
+    54,
+    55,
+    2,
+    5,
+    15,
+    18,
+    20,
+    25,
+    26,
+    28,
+    29,
+    32,
+    34,
+    35,
+    37,
+    45,
+    47,
+    49,
+    56,
+    57,
+    59,
+    62,
+    66,
+    67,
+    68,
+    69,
+    70,
+    71,
+    74,
+    75,
+    78,
+    79,
+    80,
+    81,
+    82,
+    83,
+    84,
+    85,
+    88,
+    90,
+    13
+  ],
   "items": [
     {
       "id": 1,
       "referenceDe": "Sahih al-Bukhari 1",
       "sourceUrl": "https://sunnah.com/bukhari:1",
-      "einordnungDe": "Viele Sammlungen beginnen mit dieser Überlieferung: Sie erinnert daran, dass Allah zuerst das Herz und die Absicht sieht — nicht nur das, was wir nach außen tun.",
+      "textDe": "Die Taten werden nur nach den Absichten bewertet, und jeder Mensch erhält nur das, was er beabsichtigt hat.",
       "textAr": "إنما الأعمال بالنيات",
-      "textDe": "Die Taten werden nur nach den Absichten bewertet, und jeder Mensch erhält nur das, was er beabsichtigt hat."
+      "einordnungDe": "Viele Sammlungen beginnen mit dieser Überlieferung: Allah sieht zuerst das Herz und die Absicht — nicht nur das Äußere.",
+      "tags": [
+        "niyya",
+        "grundlage"
+      ],
+      "season": [
+        "all"
+      ],
+      "fridayOk": true,
+      "tier": 1
     },
     {
       "id": 2,
       "referenceDe": "Sahih al-Bukhari 2",
       "sourceUrl": "https://sunnah.com/bukhari:2",
-      "einordnungDe": "Hier geht es um die Auswanderung (Hidschra) um Allahs willen: schon der aufrichtige Entschluss und der Weg zählen — auch wenn der Mensch unterwegs stirbt, bevor er sein Ziel erreicht.",
+      "textDe": "Wer seine Heimat verlässt um Allah und Seinen Gesandten und dann stirbt, noch bevor er ausgewandert ist, dem wird doch der Lohn des Ausgewanderten zuteil.",
       "textAr": "",
-      "textDe": "Wer seine Heimat verlässt um Allah und Seinen Gesandten und dann stirbt, noch bevor er ausgewandert ist, so wird ihm doch der Lohn des Ausgewanderten zuteil."
+      "einordnungDe": "Es geht um aufrichtigen Entschluss: schon der Weg und die Absicht zählen — auch wenn man das Ziel nicht mehr erreicht.",
+      "tags": [
+        "niyya",
+        "hidschra"
+      ],
+      "season": [
+        "all"
+      ],
+      "fridayOk": true,
+      "tier": 2
     },
     {
       "id": 3,
       "referenceDe": "Sahih Muslim 8a",
       "sourceUrl": "https://sunnah.com/muslim:8a",
-      "einordnungDe": "Ein Grundriss des Islam: fünf tragende Säulen, die Glaube und Praxis zusammenhalten. Gut zum Überprüfen, was man schon lebt und was man noch vertiefen möchte.",
+      "textDe": "Der Islam baut auf fünf Säulen: dem Zeugnis, dass es keinen Gott gibt außer Allah, dem Gebet, der Zakah, der Pilgerfahrt und dem Fasten im Ramadan.",
       "textAr": "بُنِيَ الإِسْلامُ عَلَى خَمْسٍ",
-      "textDe": "Der Islam baut auf fünf Säulen: dem Zeugnis, dass es keinen Gott gibt außer Allah, dem Gebet, der Zakah, der Pilgerfahrt und dem Fasten im Ramadan."
+      "einordnungDe": "Ein Grundriss des Glaubens — gut, um zu prüfen, was man schon lebt und was man vertiefen möchte.",
+      "tags": [
+        "iman",
+        "islam",
+        "grundlage"
+      ],
+      "season": [
+        "all"
+      ],
+      "fridayOk": true,
+      "tier": 1
     },
     {
       "id": 4,
       "referenceDe": "Sahih al-Bukhari 8",
       "sourceUrl": "https://sunnah.com/bukhari:8",
-      "einordnungDe": "„An‑Nasīha“ (aufrichtiger Rat) umfasst auch Kritik an sich selbst: ehrlich zu Allah, zum Qur’an, zum Propheten und zur Gemeinschaft stehen — ohne Heuchelei.",
+      "textDe": "Die Religion ist aufrichtiger Rat — gegenüber Allah, Seinem Buch, Seinem Gesandten, den Führern der Muslime und der Gemeinschaft.",
       "textAr": "الدين النصيحة",
-      "textDe": "Die Religion ist aufrichtiger Rat — gegenüber Allah, Seinem Buch, Seinem Gesandten, den Führern der Muslime und der Gemeinschaft."
+      "einordnungDe": "Aufrichtigkeit umfasst auch ehrliche Selbstkritik — gegenüber Allah, Qur’an und der Ummah.",
+      "tags": [
+        "nasihah",
+        "gemeinschaft"
+      ],
+      "season": [
+        "all"
+      ],
+      "fridayOk": true,
+      "tier": 1
     },
     {
       "id": 5,
       "referenceDe": "Sahih Muslim 40a",
       "sourceUrl": "https://sunnah.com/muslim:40a",
-      "einordnungDe": "Gemeint sind religiöse Neuerungen, die nicht auf Qur’an und bewährter Sunna fußen — nicht jede Erfindung im Alltag. So wird die Religion vor Verwässerung und Selbstgemachtem geschützt.",
+      "textDe": "Wer in unserer Angelegenheit etwas Neues einführt, was nicht dazugehört, wird zurückgewiesen.",
       "textAr": "من أحدث في أمرنا هذا ما ليس منه فهو رد",
-      "textDe": "Wer in unserer Angelegenheit etwas Neues einführt, was nicht dazugehört, wird zurückgewiesen."
+      "einordnungDe": "Gemeint sind religiöse Neuerungen ohne Grundlage in Qur’an und bewährter Sunna — nicht jede Alltagserfindung.",
+      "tags": [
+        "sunna",
+        "grundlage"
+      ],
+      "season": [
+        "all"
+      ],
+      "fridayOk": false,
+      "tier": 2
     },
     {
       "id": 6,
       "referenceDe": "Sahih Muslim 45a",
       "sourceUrl": "https://sunnah.com/muslim:45a",
-      "einordnungDe": "Der echte Glaube zeigt sich in der Bruderlichkeit: Neid und Egoismus weichen, wenn man dem anderen Gutes wünscht wie sich selbst — im Kleinen anfangen, im Alltag üben.",
+      "textDe": "Keiner von euch glaubt wirklich, bis er für seinen Bruder liebt, was er für sich selbst liebt.",
       "textAr": "لا يؤمن أحدكم حتى يحب لأخيه ما يحب لنفسه",
-      "textDe": "Keiner von euch glaubt wirklich, bis er für seinen Bruder liebt, was er für sich selbst liebt."
+      "einordnungDe": "Echter Glaube zeigt sich in Bruderlichkeit — im Kleinen üben, Neid und Egoismus ablegen.",
+      "tags": [
+        "bruderlichkeit",
+        "akhlak"
+      ],
+      "season": [
+        "all"
+      ],
+      "fridayOk": true,
+      "tier": 1
     },
     {
       "id": 7,
       "referenceDe": "Sahih Muslim 1053",
       "sourceUrl": "https://sunnah.com/muslim:1053",
-      "einordnungDe": "Selbst ein kleiner Akt der Wohltätigkeit kann Schutz sein: Es geht um Aufrichtigkeit und darum, das Feuer durch gute Taten zu entfernen — nicht um den Betrag an sich.",
+      "textDe": "Hütet euch vor dem Feuer, und wenn es nur mit einem halben Dattelstück ist, das ihr im Weg Allahs gebt.",
       "textAr": "اتقوا النار ولو بشق تمرة",
-      "textDe": "Hütet euch vor dem Feuer, und wenn es nur mit einem halben Dattelstück ist, das ihr im Weg Allahs gebt."
+      "einordnungDe": "Schon kleine Aufrichtigkeit zählt — es geht um Aufrichtigkeit, nicht um den Betrag.",
+      "tags": [
+        "spende",
+        "aufrichtigkeit"
+      ],
+      "season": [
+        "all"
+      ],
+      "fridayOk": true,
+      "tier": 1
     },
     {
       "id": 8,
       "referenceDe": "Jami' at-Tirmidhi 2646",
       "sourceUrl": "https://sunnah.com/tirmidhi:2646",
-      "einordnungDe": "Wissen um Qur’an und Sunna zu suchen, ist kein „Extra“ für Gelehrte allein: Der Weg des Lernens wird mit dem Weg ins Paradies verbunden — Schritt für Schritt, mit Geduld.",
+      "textDe": "Wer einen Weg geht, um Wissen zu erlangen, dem ebnet Allah einen Weg zum Paradies.",
       "textAr": "",
-      "textDe": "Wer einen Weg geht, um Wissen zu erlangen, dem ebnet Allah einen Weg zum Paradies."
+      "einordnungDe": "Lernen um Qur’an und Sunna ist kein Extra für Gelehrte — Schritt für Schritt, mit Geduld.",
+      "tags": [
+        "wissen",
+        "quran"
+      ],
+      "season": [
+        "all"
+      ],
+      "fridayOk": true,
+      "tier": 1
     },
     {
       "id": 9,
       "referenceDe": "Sahih Muslim 1631",
       "sourceUrl": "https://sunnah.com/muslim:1631",
-      "einordnungDe": "Ein Maßstab für Umgang und Charakter: Zunge und Hand sollen anderen nicht schaden — auch nicht durch Gerüchte, Hänseleien oder Druck im Internet.",
+      "textDe": "Der Muslim ist derjenige, vor dessen Zunge und Hand andere Muslime in Sicherheit sind.",
       "textAr": "المسلم من سلم المسلمون من لسانه ويده",
-      "textDe": "Der Muslim ist derjenige, vor dessen Zunge und Hand andere Muslime in Sicherheit sind."
+      "einordnungDe": "Ein Maßstab für Umgang: auch online keine Verletzung durch Worte oder Druck.",
+      "tags": [
+        "zunge",
+        "akhlak"
+      ],
+      "season": [
+        "all"
+      ],
+      "fridayOk": true,
+      "tier": 1
     },
     {
       "id": 10,
       "referenceDe": "Sahih al-Bukhari 42",
       "sourceUrl": "https://sunnah.com/bukhari:42",
-      "einordnungDe": "Barmherzigkeit wirkt wie ein Spiegel: Wer sie anderen verweigert, kann kaum damit rechnen, selbst in Allahs Barmherzigkeit eingeschlossen zu sein — im Familien- und Nachbarschaftsleben spürbar.",
+      "textDe": "Wer keine Barmherzigkeit zeigt, dem wird keine Barmherzigkeit gezeigt.",
       "textAr": "من لا يرحم لا يرحم",
-      "textDe": "Wer keine Barmherzigkeit zeigt, dem wird keine Barmherzigkeit gezeigt."
+      "einordnungDe": "Barmherzigkeit wirkt wie ein Spiegel — in Familie und Nachbarschaft spürbar.",
+      "tags": [
+        "barmherzigkeit",
+        "akhlak"
+      ],
+      "season": [
+        "all"
+      ],
+      "fridayOk": true,
+      "tier": 1
+    },
+    {
+      "id": 11,
+      "referenceDe": "Sahih al-Bukhari 13",
+      "sourceUrl": "https://sunnah.com/bukhari:13",
+      "textDe": "Von den Besten unter euch sind diejenigen, die den besten Charakter haben.",
+      "textAr": "",
+      "einordnungDe": "Guter Charakter ist kein Nebenthema — er gehört zum Kern des Islam im Alltag.",
+      "tags": [
+        "akhlak",
+        "charakter"
+      ],
+      "season": [
+        "all"
+      ],
+      "fridayOk": true,
+      "tier": 1
+    },
+    {
+      "id": 12,
+      "referenceDe": "Sahih al-Bukhari 5027",
+      "sourceUrl": "https://sunnah.com/bukhari:5027",
+      "textDe": "Der Beste unter euch ist der, der den Qur’an lernt und ihn lehrt.",
+      "textAr": "خيركم من تعلم القرآن وعلمه",
+      "einordnungDe": "Lernen und Weitergeben gehören zusammen — auch eine Ayah an Kinder oder Freunde.",
+      "tags": [
+        "quran",
+        "wissen"
+      ],
+      "season": [
+        "all"
+      ],
+      "fridayOk": true,
+      "tier": 1
+    },
+    {
+      "id": 13,
+      "referenceDe": "Sahih al-Bukhari 6014",
+      "sourceUrl": "https://sunnah.com/bukhari:6014",
+      "textDe": "Vermeidet den Verdacht: denn Verdacht ist die lügenhafteste Rede. Spioniert nicht, führt keine Ränke gegeneinander und hasst euch nicht.",
+      "textAr": "",
+      "einordnungDe": "Gerüchte und Misstrauen zerstören Gemeinschaft — lieber nachfragen als vermuten.",
+      "tags": [
+        "zunge",
+        "gemeinschaft"
+      ],
+      "season": [
+        "all"
+      ],
+      "fridayOk": true,
+      "tier": 1
+    },
+    {
+      "id": 14,
+      "referenceDe": "Sahih Muslim 54",
+      "sourceUrl": "https://sunnah.com/muslim:54",
+      "textDe": "Ihr werdet das Paradies nicht betreten, bis ihr glaubt, und ihr werdet nicht glauben, bis ihr einander liebt. Soll ich euch etwas nennen, das, wenn ihr es tut, euch lieben lässt? Verbreitet den Salam unter euch.",
+      "textAr": "أفلا أدلكم على شيء إذا فعلتموه تحاببتم",
+      "einordnungDe": "Der Salam ist mehr als Höflichkeit — er öffnet Herzen und baut Vertrauen auf.",
+      "tags": [
+        "salam",
+        "bruderlichkeit"
+      ],
+      "season": [
+        "all"
+      ],
+      "fridayOk": true,
+      "tier": 1
+    },
+    {
+      "id": 15,
+      "referenceDe": "Sahih al-Bukhari 11",
+      "sourceUrl": "https://sunnah.com/bukhari:11",
+      "textDe": "Keiner von euch glaubt wirklich, bis ich ihm lieber bin als sein Vater, sein Kind und alle Menschen.",
+      "textAr": "",
+      "einordnungDe": "Liebe zum Propheten ordnet Prioritäten neu — ohne Familie zu vernachlässigen, sondern im Licht der Sunna.",
+      "tags": [
+        "iman",
+        "prophet"
+      ],
+      "season": [
+        "all"
+      ],
+      "fridayOk": true,
+      "tier": 2
+    },
+    {
+      "id": 16,
+      "referenceDe": "Sahih Muslim 223",
+      "sourceUrl": "https://sunnah.com/muslim:223",
+      "textDe": "Reinheit ist die Hälfte des Glaubens.",
+      "textAr": "الطهور شطر الإيمان",
+      "einordnungDe": "Wudu und Sauberkeit verbinden Körper und Herz — eine kleine Vorbereitung vor dem Gebet.",
+      "tags": [
+        "reinheit",
+        "salat"
+      ],
+      "season": [
+        "all"
+      ],
+      "fridayOk": true,
+      "tier": 1
+    },
+    {
+      "id": 17,
+      "referenceDe": "Sahih al-Bukhari 527",
+      "sourceUrl": "https://sunnah.com/bukhari:527",
+      "textDe": "Allah hat euch das Gebet auferlegt; wer es pflegt, bewahrt es, und wer es verachtet, dem wird kein Anteil am Schutz Allahs zugesichert.",
+      "textAr": "",
+      "einordnungDe": "Das Gebet ist Vertrag mit Allah — regelmäßigkeit wichtiger als Perfektion beim ersten Mal.",
+      "tags": [
+        "salat",
+        "pflicht"
+      ],
+      "season": [
+        "all"
+      ],
+      "fridayOk": true,
+      "tier": 1
+    },
+    {
+      "id": 18,
+      "referenceDe": "Sahih Muslim 82",
+      "sourceUrl": "https://sunnah.com/muslim:82",
+      "textDe": "Der Glaube besteht aus über siebzig Zweigen; der höchste ist das Zeugnis, dass es keinen Gott gibt außer Allah, und der niedrigste ist, etwas Schädliches vom Weg zu entfernen. Die Schamhaftigkeit gehört zum Glauben.",
+      "textAr": "",
+      "einordnungDe": "Glaube ist breit: von der Shahada bis zu kleinen Taten der Rücksicht im Alltag.",
+      "tags": [
+        "iman",
+        "schamhaftigkeit"
+      ],
+      "season": [
+        "all"
+      ],
+      "fridayOk": true,
+      "tier": 1
+    },
+    {
+      "id": 19,
+      "referenceDe": "Sahih al-Bukhari 6464",
+      "sourceUrl": "https://sunnah.com/bukhari:6464",
+      "textDe": "Wer an Allah und den Jüngsten Tag glaubt, soll Gutes sprechen oder schweigen.",
+      "textAr": "من كان يؤمن بالله واليوم الآخر فليقل خيرا أو ليصمت",
+      "einordnungDe": "Worte haben Gewicht — besonders in Wut oder in Gruppenchats.",
+      "tags": [
+        "zunge",
+        "akhlak"
+      ],
+      "season": [
+        "all"
+      ],
+      "fridayOk": true,
+      "tier": 1
+    },
+    {
+      "id": 20,
+      "referenceDe": "Sahih Muslim 45",
+      "sourceUrl": "https://sunnah.com/muslim:45",
+      "textDe": "Keiner von euch glaubt wirklich, bis er für seinen Bruder liebt, was er für sich selbst liebt — und bis er ihm dasselbe wünscht, was er sich selbst wünscht.",
+      "textAr": "",
+      "einordnungDe": "Bruderlichkeit konkret: Gutes für andere wünschen wie für sich selbst.",
+      "tags": [
+        "bruderlichkeit"
+      ],
+      "season": [
+        "all"
+      ],
+      "fridayOk": true,
+      "tier": 1
+    },
+    {
+      "id": 21,
+      "referenceDe": "Sahih al-Bukhari 6116",
+      "sourceUrl": "https://sunnah.com/bukhari:6116",
+      "textDe": "Der Starke ist nicht der, der im Ringkampf siegt, sondern der, der sich beherrscht, wenn er wütend ist.",
+      "textAr": "ليس الشديد بالصرعة",
+      "einordnungDe": "Wut ist eine Prüfung — Pause, Dua und Weggehen können mehr Stärke zeigen als laut werden.",
+      "tags": [
+        "wut",
+        "sabr",
+        "akhlak"
+      ],
+      "season": [
+        "all"
+      ],
+      "fridayOk": true,
+      "tier": 1
+    },
+    {
+      "id": 22,
+      "referenceDe": "Sahih Muslim 2586",
+      "sourceUrl": "https://sunnah.com/muslim:2586",
+      "textDe": "Wer an Allah und den Jüngsten Tag glaubt, soll seinen Gast ehren.",
+      "textAr": "",
+      "einordnungDe": "Gastfreundschaft stärkt Bande — auch ein einfaches Essen oder ein ehrlicher Empfang.",
+      "tags": [
+        "gastfreundschaft",
+        "adab"
+      ],
+      "season": [
+        "all"
+      ],
+      "fridayOk": true,
+      "tier": 1
+    },
+    {
+      "id": 23,
+      "referenceDe": "Sahih al-Bukhari 6018",
+      "sourceUrl": "https://sunnah.com/bukhari:6018",
+      "textDe": "Wer an Allah und den Jüngsten Tag glaubt, soll seinen Nachbarn nicht schaden.",
+      "textAr": "",
+      "einordnungDe": "Der Nachbar hat Rechte — Lärm, Rauch oder Gleichgültigkeit können schon genügen, um sie zu verletzen.",
+      "tags": [
+        "nachbar",
+        "adab"
+      ],
+      "season": [
+        "all"
+      ],
+      "fridayOk": true,
+      "tier": 1
+    },
+    {
+      "id": 24,
+      "referenceDe": "Sahih Muslim 2625",
+      "sourceUrl": "https://sunnah.com/muslim:2625",
+      "textDe": "Allah liebt, wenn einer von euch etwas tut, dass er es ordentlich tut.",
+      "textAr": "إن الله يحب إذا عمل أحدكم عملا أن يتقنه",
+      "einordnungDe": "Ihsan im Kleinen: Gebet, Arbeit, Hilfe — Qualität als Form von Gottesfurcht.",
+      "tags": [
+        "ihsan",
+        "aufrichtigkeit"
+      ],
+      "season": [
+        "all"
+      ],
+      "fridayOk": true,
+      "tier": 1
+    },
+    {
+      "id": 25,
+      "referenceDe": "Sahih al-Bukhari 52",
+      "sourceUrl": "https://sunnah.com/bukhari:52",
+      "textDe": "Das Erlaubte ist klar und das Verbotene ist klar; zwischen beiden liegen zweifelhafte Dinge, die viele nicht kennen.",
+      "textAr": "الحلال بين والحرام بين",
+      "einordnungDe": "Bei Unsicherheit lieber nachfragen oder zurückhalten — Vorsicht schützt den Glauben.",
+      "tags": [
+        "fiqh",
+        "vorsicht"
+      ],
+      "season": [
+        "all"
+      ],
+      "fridayOk": false,
+      "tier": 2
+    },
+    {
+      "id": 26,
+      "referenceDe": "Jami' at-Tirmidhi 2318",
+      "sourceUrl": "https://sunnah.com/tirmidhi:2318",
+      "textDe": "Von der Vollkommenheit des Islam eines Menschen ist es, dass er lässt, was ihn nichts angeht.",
+      "textAr": "من حسن إسلام المرء تركه ما لا يعنيه",
+      "einordnungDe": "Weniger Tratsch, weniger Neugier auf Privates — mehr Energie für das, was Allah liebt.",
+      "tags": [
+        "zunge",
+        "adab"
+      ],
+      "season": [
+        "all"
+      ],
+      "fridayOk": true,
+      "tier": 1
+    },
+    {
+      "id": 27,
+      "referenceDe": "Sahih Muslim 2699",
+      "sourceUrl": "https://sunnah.com/muslim:2699",
+      "textDe": "Der Diener sagt: Mein Herr! Mein Herr! — doch Allah fragt: Hast du mir etwas vorgesetzt, das ich dir vergelten soll, oder hast du nur deinen Mund gebraucht, während dein Herz abwesend war?",
+      "textAr": "",
+      "einordnungDe": "Aufrichtigkeit im Dua: nicht nur Worte, sondern Vertrauen und Demut.",
+      "tags": [
+        "dua",
+        "aufrichtigkeit"
+      ],
+      "season": [
+        "all"
+      ],
+      "fridayOk": true,
+      "tier": 1
+    },
+    {
+      "id": 28,
+      "referenceDe": "Sahih al-Bukhari 6405",
+      "sourceUrl": "https://sunnah.com/bukhari:6405",
+      "textDe": "Ruft Allah an, während ihr Gewissheit habt, und wisset, dass Allah nicht das Gebet eines Herzens annimmt, das zerstreut und leichtfertig ist.",
+      "textAr": "",
+      "einordnungDe": "Kurze Momente echter Anrufung sind wertvoller als lange Worte ohne Gegenwart.",
+      "tags": [
+        "dua",
+        "tawakkul"
+      ],
+      "season": [
+        "all"
+      ],
+      "fridayOk": true,
+      "tier": 1
+    },
+    {
+      "id": 29,
+      "referenceDe": "Sahih Muslim 2731",
+      "sourceUrl": "https://sunnah.com/muslim:2731",
+      "textDe": "Es gibt keinen Muslim, der Allah um etwas bittet, bei dem keine Sünde oder kein Familienbruch ist, ohne dass Allah ihm eine von drei Gaben gibt: bald erhören, Schaden davon abwenden oder für das Jenseits aufheben.",
+      "textAr": "",
+      "einordnungDe": "Dua wird gehört — auch wenn die Antwort anders aussieht, als wir erwarten.",
+      "tags": [
+        "dua",
+        "tawakkul"
+      ],
+      "season": [
+        "all"
+      ],
+      "fridayOk": true,
+      "tier": 1
+    },
+    {
+      "id": 30,
+      "referenceDe": "Sahih al-Bukhari 6306",
+      "sourceUrl": "https://sunnah.com/bukhari:6306",
+      "textDe": "Wer sich auf Allah verlässt, dem genügt Er.",
+      "textAr": "ومن يتوكل على الله فهو حسبه",
+      "einordnungDe": "Tawakkul ist keine Passivität — man tut sein Bestes und übergibt den Rest.",
+      "tags": [
+        "tawakkul",
+        "sabr"
+      ],
+      "season": [
+        "all"
+      ],
+      "fridayOk": true,
+      "tier": 1
+    },
+    {
+      "id": 31,
+      "referenceDe": "Sahih Muslim 2999",
+      "sourceUrl": "https://sunnah.com/muslim:2999",
+      "textDe": "Wunderbar ist die Angelegenheit des Gläubigen: Alles ist gut für ihn — und das gilt nur für den Gläubigen. Freut er sich, dankt er; trifft ihn Leid, ist er geduldig.",
+      "textAr": "",
+      "einordnungDe": "Schwierige Tage können durch Dankbarkeit und Sabr eine andere Farbe bekommen.",
+      "tags": [
+        "sabr",
+        "shukr"
+      ],
+      "season": [
+        "all"
+      ],
+      "fridayOk": true,
+      "tier": 1
+    },
+    {
+      "id": 32,
+      "referenceDe": "Sahih Muslim 91e",
+      "sourceUrl": "https://sunnah.com/muslim:91e",
+      "textDe": "Allah ist schön und liebt die Schönheit.",
+      "textAr": "إن الله جميل يحب الجمال",
+      "einordnungDe": "Sauberkeit, ordentliche Kleidung und schöne Worte — ohne Prahlerei oder Verschwendung.",
+      "tags": [
+        "adab",
+        "ihsan"
+      ],
+      "season": [
+        "all"
+      ],
+      "fridayOk": true,
+      "tier": 1
+    },
+    {
+      "id": 33,
+      "referenceDe": "Sahih al-Bukhari 5645",
+      "sourceUrl": "https://sunnah.com/bukhari:5645",
+      "textDe": "Wer unter den Menschen am meisten Dank gegenüber Allah zeigt, der dankt auch den Menschen am meisten.",
+      "textAr": "",
+      "einordnungDe": "Dankbarkeit beginnt bei Allah und zeigt sich in kleinen Worten gegenüber anderen.",
+      "tags": [
+        "shukr",
+        "akhlak"
+      ],
+      "season": [
+        "all"
+      ],
+      "fridayOk": true,
+      "tier": 1
+    },
+    {
+      "id": 34,
+      "referenceDe": "Sahih al-Bukhari 6416",
+      "sourceUrl": "https://sunnah.com/bukhari:6416",
+      "textDe": "Seid in dieser Welt, als wärt ihr ein Fremder oder ein Reisender.",
+      "textAr": "كن في الدنيا كأنك غريب أو عابر سبيل",
+      "einordnungDe": "Besitz und Status sind vorübergehend — was bleibt, sind gute Taten und ein reines Herz.",
+      "tags": [
+        "besinnung",
+        "welt"
+      ],
+      "season": [
+        "all"
+      ],
+      "fridayOk": true,
+      "tier": 1
+    },
+    {
+      "id": 35,
+      "referenceDe": "Sahih al-Bukhari 5649",
+      "sourceUrl": "https://sunnah.com/bukhari:5649",
+      "textDe": "Wer nicht den Menschen dankt, dankt nicht Allah.",
+      "textAr": "",
+      "einordnungDe": "Ein ehrliches Danke an Eltern, Partner oder Kollegen ist Teil des Glaubens.",
+      "tags": [
+        "shukr"
+      ],
+      "season": [
+        "all"
+      ],
+      "fridayOk": true,
+      "tier": 1
+    },
+    {
+      "id": 36,
+      "referenceDe": "Sahih Muslim 2577",
+      "sourceUrl": "https://sunnah.com/muslim:2577",
+      "textDe": "Allah freut sich über die Reue Seines Dieners mehr als über einen, der in der Wüste sein Kamel verliert und es dann wiederfindet.",
+      "textAr": "",
+      "einordnungDe": "Reue ist kein Ende, sondern Rückkehr — Allah nimmt sie an, wenn sie aufrichtig ist.",
+      "tags": [
+        "reue",
+        "hoffnung"
+      ],
+      "season": [
+        "all"
+      ],
+      "fridayOk": true,
+      "tier": 1
+    },
+    {
+      "id": 37,
+      "referenceDe": "Sahih al-Bukhari 6307",
+      "sourceUrl": "https://sunnah.com/bukhari:6307",
+      "textDe": "Bei Allah ist die Reue des Dieners angenehmer als die Freude dessen, der in der Wüste sein Reittier verliert und es wiederfindet.",
+      "textAr": "",
+      "einordnungDe": "Keine Sünde ist zu groß für aufrichtige Reue — der erste Schritt zählt.",
+      "tags": [
+        "reue"
+      ],
+      "season": [
+        "all"
+      ],
+      "fridayOk": true,
+      "tier": 1
+    },
+    {
+      "id": 38,
+      "referenceDe": "Sahih Muslim 2747",
+      "sourceUrl": "https://sunnah.com/muslim:2747",
+      "textDe": "Allah neigt sich in der letzten Nacht des Ramadan zu Seiner Schöpfung und vergibt allen außer dem Götzendiener und dem, der Zwietracht stiftet.",
+      "textAr": "",
+      "einordnungDe": "Laylat al-Qadr und die letzten Ramadan-Nächte laden zu aufrichtiger Bitte und Versöhnung ein.",
+      "tags": [
+        "ramadan",
+        "vergebung"
+      ],
+      "season": [
+        "all",
+        "ramadan"
+      ],
+      "fridayOk": true,
+      "tier": 1
+    },
+    {
+      "id": 39,
+      "referenceDe": "Sahih al-Bukhari 1901",
+      "sourceUrl": "https://sunnah.com/bukhari:1901",
+      "textDe": "Wenn der Ramadan beginnt, werden die Tore des Paradieses geöffnet, die Tore des Feuers geschlossen und die Teufel gefesselt.",
+      "textAr": "",
+      "einordnungDe": "Der Monat ist eine Einladung zu mehr Gebet, Qur’an und innerer Sammlung.",
+      "tags": [
+        "ramadan"
+      ],
+      "season": [
+        "all",
+        "ramadan"
+      ],
+      "fridayOk": true,
+      "tier": 1
+    },
+    {
+      "id": 40,
+      "referenceDe": "Sahih Muslim 1079",
+      "sourceUrl": "https://sunnah.com/muslim:1079",
+      "textDe": "Wer im Ramadan aus Glauben und in Erwartung des Lohnes fastet, dem werden seine früheren Sünden vergeben.",
+      "textAr": "",
+      "einordnungDe": "Fasten verbindet Hunger mit Bewusstsein — nicht nur Verzicht auf Essen.",
+      "tags": [
+        "ramadan",
+        "fasten"
+      ],
+      "season": [
+        "all",
+        "ramadan"
+      ],
+      "fridayOk": true,
+      "tier": 1
+    },
+    {
+      "id": 41,
+      "referenceDe": "Sahih al-Bukhari 6",
+      "sourceUrl": "https://sunnah.com/bukhari:6",
+      "textDe": "Der Islam wurde auf fünf Säulen errichtet: Zeugnis, Gebet, Zakah, Fasten im Ramadan und Hajj.",
+      "textAr": "",
+      "einordnungDe": "Die fünf Säulen sind ein Kompass — nicht alles auf einmal perfekt, aber bewusst leben.",
+      "tags": [
+        "islam",
+        "ramadan"
+      ],
+      "season": [
+        "all",
+        "ramadan"
+      ],
+      "fridayOk": true,
+      "tier": 1
+    },
+    {
+      "id": 42,
+      "referenceDe": "Sahih Muslim 1151",
+      "sourceUrl": "https://sunnah.com/muslim:1151",
+      "textDe": "Das Fasten ist ein Schutzschild. An einem Tag, an dem einer von euch fastet, soll er weder schlecht reden noch lärmen; wenn jemand ihn beleidigt, soll er sagen: Ich faste.",
+      "textAr": "",
+      "einordnungDe": "Fasten betrifft Zunge und Verhalten — nicht nur den Magen.",
+      "tags": [
+        "ramadan",
+        "fasten",
+        "zunge"
+      ],
+      "season": [
+        "all",
+        "ramadan"
+      ],
+      "fridayOk": true,
+      "tier": 1
+    },
+    {
+      "id": 43,
+      "referenceDe": "Sahih al-Bukhari 5927",
+      "sourceUrl": "https://sunnah.com/bukhari:5927",
+      "textDe": "Wer fastet, hat zwei Freuden: wenn er bricht, freut er sich über das Fastenbrechen, und wenn er seinen Herrn trifft, freut er sich über sein Fasten.",
+      "textAr": "",
+      "einordnungDe": "Die innere Freude am Fasten bleibt — eine Erinnerung an Allahs Nähe.",
+      "tags": [
+        "ramadan",
+        "fasten"
+      ],
+      "season": [
+        "all",
+        "ramadan"
+      ],
+      "fridayOk": true,
+      "tier": 1
+    },
+    {
+      "id": 44,
+      "referenceDe": "Sahih Muslim 6",
+      "sourceUrl": "https://sunnah.com/muslim:6",
+      "textDe": "Der Glaube ist, dass du an Allah, Seine Engel, Seine Bücher, Seine Gesandten und den Jüngsten Tag glaubst, und an die Vorbestimmung — Gutes wie Schlechtes.",
+      "textAr": "",
+      "einordnungDe": "Die sechs Glaubensartikel ordnen das Herz — auch wenn man manches erst nach und nach begreift.",
+      "tags": [
+        "iman",
+        "grundlage"
+      ],
+      "season": [
+        "all"
+      ],
+      "fridayOk": true,
+      "tier": 1
+    },
+    {
+      "id": 45,
+      "referenceDe": "Sahih al-Bukhari 50",
+      "sourceUrl": "https://sunnah.com/bukhari:50",
+      "textDe": "Wer glaubt an Allah und den Jüngsten Tag, soll seinen Gast ehren; wer glaubt, soll seinen Nachbarn nicht schaden; wer glaubt, soll, wenn er spricht, Gutes sagen oder schweigen.",
+      "textAr": "",
+      "einordnungDe": "Glaube zeigt sich in drei Alltagsbereichen: Gäste, Nachbarn, Worte.",
+      "tags": [
+        "iman",
+        "adab"
+      ],
+      "season": [
+        "all"
+      ],
+      "fridayOk": true,
+      "tier": 1
+    },
+    {
+      "id": 46,
+      "referenceDe": "Sahih Muslim 2567",
+      "sourceUrl": "https://sunnah.com/muslim:2567",
+      "textDe": "Lest den Qur’an, denn er wird am Tag der Auferstehung als Fürsprecher für die kommen, die ihn gelesen haben.",
+      "textAr": "",
+      "einordnungDe": "Schon wenige Verse regelmäßig können mehr bewirken als selten viel auf einmal.",
+      "tags": [
+        "quran"
+      ],
+      "season": [
+        "all"
+      ],
+      "fridayOk": true,
+      "tier": 1
+    },
+    {
+      "id": 47,
+      "referenceDe": "Sahih al-Bukhari 5027",
+      "sourceUrl": "https://sunnah.com/bukhari:5027",
+      "textDe": "Der Qur’an wird am Jüngsten Tag für den sprechen, der ihn gelesen hat.",
+      "textAr": "",
+      "einordnungDe": "Die Verbindung zum Buch ist eine Investition — mit Geduld und ohne Druck.",
+      "tags": [
+        "quran"
+      ],
+      "season": [
+        "all"
+      ],
+      "fridayOk": true,
+      "tier": 1
+    },
+    {
+      "id": 48,
+      "referenceDe": "Sahih Muslim 782",
+      "sourceUrl": "https://sunnah.com/muslim:782",
+      "textDe": "Die ersten Dinge, über die der Mensch gerichtet wird, sind sein Gebet.",
+      "textAr": "",
+      "einordnungDe": "Das Gebet steht im Zentrum — Verbesserung Schritt für Schritt ist besser als Aufgeben.",
+      "tags": [
+        "salat",
+        "jenseits"
+      ],
+      "season": [
+        "all"
+      ],
+      "fridayOk": true,
+      "tier": 1
+    },
+    {
+      "id": 49,
+      "referenceDe": "Sahih al-Bukhari 528",
+      "sourceUrl": "https://sunnah.com/bukhari:528",
+      "textDe": "Das Gebet ist das Erste, wofür der Diener zur Rechenschaft gezogen wird.",
+      "textAr": "",
+      "einordnungDe": "Wer sein Gebet verbessert, hat viel gewonnen — wer es vernachlässigt, hat viel verloren.",
+      "tags": [
+        "salat"
+      ],
+      "season": [
+        "all"
+      ],
+      "fridayOk": true,
+      "tier": 1
+    },
+    {
+      "id": 50,
+      "referenceDe": "Sahih Muslim 223",
+      "sourceUrl": "https://sunnah.com/muslim:223",
+      "textDe": "Die Reinheit ist die Hälfte des Glaubens, und das Preisen Allahs füllt die Waage.",
+      "textAr": "",
+      "einordnungDe": "Wudu vor dem Gebet kann den Kopf vom Alltag lösen und das Herz sammeln.",
+      "tags": [
+        "reinheit",
+        "dhikr"
+      ],
+      "season": [
+        "all"
+      ],
+      "fridayOk": true,
+      "tier": 1
+    },
+    {
+      "id": 51,
+      "referenceDe": "Sahih al-Bukhari 1124",
+      "sourceUrl": "https://sunnah.com/bukhari:1124",
+      "textDe": "Das Freitagsgebet ist eine Pflicht für jeden Muslim — ausgenommen Sklaven, Frauen, Kinder und Reisende.",
+      "textAr": "",
+      "einordnungDe": "Der Jumuʿah ist ein wöchentlicher Anker der Gemeinschaft — auch wenn man manchmal müde ist.",
+      "tags": [
+        "freitag",
+        "gemeinschaft",
+        "salat"
+      ],
+      "season": [
+        "all"
+      ],
+      "fridayOk": true,
+      "tier": 1
+    },
+    {
+      "id": 52,
+      "referenceDe": "Sahih Muslim 856",
+      "sourceUrl": "https://sunnah.com/muslim:856",
+      "textDe": "An einem Freitag gibt es eine Stunde, in der kein gläubiger Diener betet, ohne dass Allah ihm gibt, worum er bittet.",
+      "textAr": "",
+      "einordnungDe": "Am Freitag bewusst Dua machen — besonders nach Asr, wie viele Gelehrte lehren.",
+      "tags": [
+        "freitag",
+        "dua"
+      ],
+      "season": [
+        "all"
+      ],
+      "fridayOk": true,
+      "tier": 1
+    },
+    {
+      "id": 53,
+      "referenceDe": "Sahih al-Bukhari 917",
+      "sourceUrl": "https://sunnah.com/bukhari:917",
+      "textDe": "Wer am Freitag gut badet, sich parfumiert, wenn er es hat, und die Moschee aufsucht ohne Trennung, und schweigt, bis der Imam aus ist — dem werden seine Sünden zwischen zwei Freitagen vergeben.",
+      "textAr": "",
+      "einordnungDe": "Freitag als kleine wöchentliche Erneuerung — Vorbereitung zählt.",
+      "tags": [
+        "freitag",
+        "reue"
+      ],
+      "season": [
+        "all"
+      ],
+      "fridayOk": true,
+      "tier": 1
+    },
+    {
+      "id": 54,
+      "referenceDe": "Sahih Muslim 2333",
+      "sourceUrl": "https://sunnah.com/muslim:2333",
+      "textDe": "Die besten Tage, an denen die Sonne aufgeht, sind die zehn Tage von Dhu l-Hiddscha.",
+      "textAr": "",
+      "einordnungDe": "In den ersten zehn Tagen des Pilgermonats: mehr Tasbih, Tahmid und gute Taten.",
+      "tags": [
+        "dhul_hijjah"
+      ],
+      "season": [
+        "all",
+        "dhul_hijjah"
+      ],
+      "fridayOk": true,
+      "tier": 1
+    },
+    {
+      "id": 55,
+      "referenceDe": "Sahih al-Bukhari 969",
+      "sourceUrl": "https://sunnah.com/bukhari:969",
+      "textDe": "Es gibt keinen Tag, an dem Allah mehr Diener aus dem Feuer befreit als am Tag des Opferfestes.",
+      "textAr": "",
+      "einordnungDe": "Das Opferfest verbindet Opferbereitschaft, Dank und Gemeinschaft.",
+      "tags": [
+        "dhul_hijjah",
+        "opfer"
+      ],
+      "season": [
+        "all",
+        "dhul_hijjah"
+      ],
+      "fridayOk": true,
+      "tier": 1
+    },
+    {
+      "id": 56,
+      "referenceDe": "Sahih Muslim 1162",
+      "sourceUrl": "https://sunnah.com/muslim:1162",
+      "textDe": "Nehmt euch einen Anteil vom Hajj: die Umra.",
+      "textAr": "",
+      "einordnungDe": "Auch wer nicht pilgern kann, kann sich mit Hajj und Umra vertraut machen und dafür bitten.",
+      "tags": [
+        "hajj"
+      ],
+      "season": [
+        "all"
+      ],
+      "fridayOk": true,
+      "tier": 1
+    },
+    {
+      "id": 57,
+      "referenceDe": "Sahih al-Bukhari 1519",
+      "sourceUrl": "https://sunnah.com/bukhari:1519",
+      "textDe": "Wer den Hajj vollzieht, ohne Unanständiges oder Sünde, kehrt zurück wie am Tag, an dem seine Mutter ihn geboren hat.",
+      "textAr": "",
+      "einordnungDe": "Hajj ist Reinigung — für die, die gehen können, eine einmalige Lebensreise.",
+      "tags": [
+        "hajj"
+      ],
+      "season": [
+        "all"
+      ],
+      "fridayOk": false,
+      "tier": 2
+    },
+    {
+      "id": 58,
+      "referenceDe": "Sahih Muslim 1015",
+      "sourceUrl": "https://sunnah.com/muslim:1015",
+      "textDe": "Die Zakah ist eine Pflicht — sie reinigt Vermögen und Herzen.",
+      "textAr": "",
+      "einordnungDe": "Zakah verbindet Reichtum mit Verantwortung — auch kleine regelmäßige Gaben im Geist der Pflicht.",
+      "tags": [
+        "zakat",
+        "spende"
+      ],
+      "season": [
+        "all"
+      ],
+      "fridayOk": true,
+      "tier": 1
+    },
+    {
+      "id": 59,
+      "referenceDe": "Sahih al-Bukhari 1395",
+      "sourceUrl": "https://sunnah.com/bukhari:1395",
+      "textDe": "Gib eine Almosensteuer, auch wenn es nur eine Handvoll Gerste ist.",
+      "textAr": "",
+      "einordnungDe": "Es geht nicht nur um Summen — Aufrichtigkeit und Regelmäßigkeit.",
+      "tags": [
+        "zakat",
+        "spende"
+      ],
+      "season": [
+        "all"
+      ],
+      "fridayOk": true,
+      "tier": 1
+    },
+    {
+      "id": 60,
+      "referenceDe": "Sahih Muslim 2588",
+      "sourceUrl": "https://sunnah.com/muslim:2588",
+      "textDe": "Die rechte Hand soll nicht wissen, was die linke gibt.",
+      "textAr": "",
+      "einordnungDe": "Heimliche Spende schützt vor Prahlerei und bewahrt die Aufrichtigkeit.",
+      "tags": [
+        "spende",
+        "aufrichtigkeit"
+      ],
+      "season": [
+        "all"
+      ],
+      "fridayOk": true,
+      "tier": 1
+    },
+    {
+      "id": 61,
+      "referenceDe": "Sahih al-Bukhari 1416",
+      "sourceUrl": "https://sunnah.com/bukhari:1416",
+      "textDe": "Der Unterstützer einer Witwe und der Armen gleicht dem, der im Weg Allahs kämpft oder wie der, der tagsüber fastet und nachts betet.",
+      "textAr": "",
+      "einordnungDe": "Hilfe für Schwache ist großer Gottesdienst — oft näher als man denkt.",
+      "tags": [
+        "spende",
+        "barmherzigkeit"
+      ],
+      "season": [
+        "all"
+      ],
+      "fridayOk": true,
+      "tier": 1
+    },
+    {
+      "id": 62,
+      "referenceDe": "Sahih Muslim 2582",
+      "sourceUrl": "https://sunnah.com/muslim:2582",
+      "textDe": "Der Unterstützer einer Witwe hat die Belohnung dessen, der unablässig im Weg Allahs steht.",
+      "textAr": "",
+      "einordnungDe": "Familien in Not praktisch unterstützen — Essen, Zeit oder Zuhören.",
+      "tags": [
+        "spende",
+        "familie"
+      ],
+      "season": [
+        "all"
+      ],
+      "fridayOk": true,
+      "tier": 1
+    },
+    {
+      "id": 63,
+      "referenceDe": "Sahih al-Bukhari 5971",
+      "sourceUrl": "https://sunnah.com/bukhari:5971",
+      "textDe": "Das Paradies liegt zu Füßen der Mütter.",
+      "textAr": "الجنة تحت أقدام الأمهات",
+      "einordnungDe": "Der Umgang mit den Eltern ist ein direkter Weg zu Allahs Zufriedenheit.",
+      "tags": [
+        "familie",
+        "eltern"
+      ],
+      "season": [
+        "all"
+      ],
+      "fridayOk": true,
+      "tier": 1
+    },
+    {
+      "id": 64,
+      "referenceDe": "Sahih Muslim 2546",
+      "sourceUrl": "https://sunnah.com/muslim:2546",
+      "textDe": "Der Beste unter euch ist der Beste zu seiner Familie, und ich bin der Beste zu meiner Familie.",
+      "textAr": "",
+      "einordnungDe": "Gutes Benehmen zu Partner und Kindern ist Maßstab des Charakters.",
+      "tags": [
+        "familie",
+        "akhlak"
+      ],
+      "season": [
+        "all"
+      ],
+      "fridayOk": true,
+      "tier": 1
+    },
+    {
+      "id": 65,
+      "referenceDe": "Sahih al-Bukhari 5991",
+      "sourceUrl": "https://sunnah.com/bukhari:5991",
+      "textDe": "Keiner von euch glaubt wirklich, bis er für seine Familie das Beste wünscht, was er für sich selbst wünscht.",
+      "textAr": "",
+      "einordnungDe": "Fairness beginnt zu Hause — Gerechtigkeit zwischen Geschwistern und Kindern.",
+      "tags": [
+        "familie",
+        "bruderlichkeit"
+      ],
+      "season": [
+        "all"
+      ],
+      "fridayOk": true,
+      "tier": 1
+    },
+    {
+      "id": 66,
+      "referenceDe": "Sahih Muslim 1623",
+      "sourceUrl": "https://sunnah.com/muslim:1623",
+      "textDe": "Der Glaube hat über sechzig Äste; das Höchste ist: Es gibt keinen Gott außer Allah, das Niedrigste ist, etwas Schädliches vom Weg zu entfernen, und die Schamhaftigkeit ist ein Ast des Glaubens.",
+      "textAr": "",
+      "einordnungDe": "Schamhaftigkeit schützt Herz und Blick — ein Zeichen von Würde.",
+      "tags": [
+        "iman",
+        "schamhaftigkeit"
+      ],
+      "season": [
+        "all"
+      ],
+      "fridayOk": true,
+      "tier": 1
+    },
+    {
+      "id": 67,
+      "referenceDe": "Sahih al-Bukhari 6114",
+      "sourceUrl": "https://sunnah.com/bukhari:6114",
+      "textDe": "Schamhaftigkeit bringt nur Gutes.",
+      "textAr": "الحياء لا يأتي إلا بخير",
+      "einordnungDe": "Scham im guten Sinne ist keine Schwäche, sondern Reinheit.",
+      "tags": [
+        "schamhaftigkeit",
+        "akhlak"
+      ],
+      "season": [
+        "all"
+      ],
+      "fridayOk": true,
+      "tier": 1
+    },
+    {
+      "id": 68,
+      "referenceDe": "Sahih Muslim 35",
+      "sourceUrl": "https://sunnah.com/muslim:35",
+      "textDe": "Lasst mich euch vor dem größten der großen Sünden warnen: Shirk an Allah, Ungehorsam gegenüber den Eltern — und er setzte sich aufrecht hin und sagte: Und das falsche Zeugnis und das falsche Reden.",
+      "textAr": "",
+      "einordnungDe": "Die schwersten Sünden betreffen Allah, Eltern und Wahrheit — bewusst machen hilft, sie zu meiden.",
+      "tags": [
+        "warnung",
+        "eltern"
+      ],
+      "season": [
+        "all"
+      ],
+      "fridayOk": false,
+      "tier": 2
+    },
+    {
+      "id": 69,
+      "referenceDe": "Sahih al-Bukhari 5970",
+      "sourceUrl": "https://sunnah.com/bukhari:5970",
+      "textDe": "Wer seine Eltern ehrt, dem wird sein Kind ehren; wer sie entehrt, dem wird sein Kind entehren.",
+      "textAr": "",
+      "einordnungDe": "Wie wir mit Eltern umgehen, prägt oft die nächste Generation.",
+      "tags": [
+        "eltern",
+        "familie"
+      ],
+      "season": [
+        "all"
+      ],
+      "fridayOk": true,
+      "tier": 1
+    },
+    {
+      "id": 70,
+      "referenceDe": "Sahih Muslim 2564",
+      "sourceUrl": "https://sunnah.com/muslim:2564",
+      "textDe": "Keiner von euch glaubt wirklich, bis er für seinen Bruder liebt, was er für sich liebt.",
+      "textAr": "",
+      "einordnungDe": "Eifersucht aufbricht, wenn man dem anderen Gutes wünscht — bewusst üben.",
+      "tags": [
+        "bruderlichkeit"
+      ],
+      "season": [
+        "all"
+      ],
+      "fridayOk": true,
+      "tier": 1
+    },
+    {
+      "id": 71,
+      "referenceDe": "Sahih al-Bukhari 2442",
+      "sourceUrl": "https://sunnah.com/bukhari:2442",
+      "textDe": "Keiner von euch glaubt wirklich, bis er für seinen Bruder liebt, was er für sich liebt.",
+      "textAr": "",
+      "einordnungDe": "Bruderlichkeit ist tägliche Arbeit — nicht nur in der Moschee.",
+      "tags": [
+        "bruderlichkeit"
+      ],
+      "season": [
+        "all"
+      ],
+      "fridayOk": true,
+      "tier": 1
+    },
+    {
+      "id": 72,
+      "referenceDe": "Sahih Muslim 2560",
+      "sourceUrl": "https://sunnah.com/muslim:2560",
+      "textDe": "Der Gläubige mit dem Gläubigen ist wie ein Gebäude, dessen Teile einander stützen.",
+      "textAr": "مثل المؤمنين في توادهم",
+      "einordnungDe": "Die Ummah trägt einander — auch ein Anruf oder eine Hilfe im Alltag.",
+      "tags": [
+        "gemeinschaft",
+        "bruderlichkeit"
+      ],
+      "season": [
+        "all"
+      ],
+      "fridayOk": true,
+      "tier": 1
+    },
+    {
+      "id": 73,
+      "referenceDe": "Sahih al-Bukhari 6011",
+      "sourceUrl": "https://sunnah.com/bukhari:6011",
+      "textDe": "Die Gläubigen in ihrer gegenseitigen Liebe, Barmherzigkeit und Mitleid sind wie ein Körper: Wenn ein Glied leidet, leidet der ganze Körper mit Fieber und Schlaflosigkeit.",
+      "textAr": "",
+      "einordnungDe": "Empathie für Muslime weltweit — ohne Hetze, mit Dua und konkreter Hilfe wo möglich.",
+      "tags": [
+        "gemeinschaft",
+        "barmherzigkeit"
+      ],
+      "season": [
+        "all"
+      ],
+      "fridayOk": true,
+      "tier": 1
+    },
+    {
+      "id": 74,
+      "referenceDe": "Sahih Muslim 2586",
+      "sourceUrl": "https://sunnah.com/muslim:2586",
+      "textDe": "Besucht einander, liebt einander, seid Brüder.",
+      "textAr": "",
+      "einordnungDe": "Freundschaft im Glauben braucht Pflege — nicht nur Likes, sondern echte Zeit.",
+      "tags": [
+        "gemeinschaft"
+      ],
+      "season": [
+        "all"
+      ],
+      "fridayOk": true,
+      "tier": 1
+    },
+    {
+      "id": 75,
+      "referenceDe": "Sahih al-Bukhari 13",
+      "sourceUrl": "https://sunnah.com/bukhari:13",
+      "textDe": "Ich wurde gesandt, um vollendeten guten Charakter zu vollenden.",
+      "textAr": "",
+      "einordnungDe": "Der Prophet ﷺ bringt Moral auf die Spitze — Höflichkeit, Ehrlichkeit, Geduld.",
+      "tags": [
+        "akhlak",
+        "prophet"
+      ],
+      "season": [
+        "all"
+      ],
+      "fridayOk": true,
+      "tier": 1
+    },
+    {
+      "id": 76,
+      "referenceDe": "Sahih Muslim 746a",
+      "sourceUrl": "https://sunnah.com/muslim:746a",
+      "textDe": "Die Barmherzigkeit wird nur den Barmherzigen gezeigt. Erbarmt euch derer auf der Erde, damit Der im Himmel Sich eurer erbarmt.",
+      "textAr": "ارحموا من في الأرض يرحمكم من في السماء",
+      "einordnungDe": "Mitgefühl öffnet Türen — zu Menschen und zu Allahs Barmherzigkeit.",
+      "tags": [
+        "barmherzigkeit"
+      ],
+      "season": [
+        "all"
+      ],
+      "fridayOk": true,
+      "tier": 1
+    },
+    {
+      "id": 77,
+      "referenceDe": "Sahih al-Bukhari 5997",
+      "sourceUrl": "https://sunnah.com/bukhari:5997",
+      "textDe": "Wer kein Mitleid mit unseren Kleinen zeigt und unsere Alten nicht ehrt, ist nicht von uns.",
+      "textAr": "",
+      "einordnungDe": "Kinder ernst nehmen, Ältere respektieren — das gehört zur Sunna des Umgangs.",
+      "tags": [
+        "familie",
+        "barmherzigkeit"
+      ],
+      "season": [
+        "all"
+      ],
+      "fridayOk": true,
+      "tier": 1
+    },
+    {
+      "id": 78,
+      "referenceDe": "Sahih Muslim 2599",
+      "sourceUrl": "https://sunnah.com/muslim:2599",
+      "textDe": "Wer einen Hund vor Durst rettet, dem vergibt Allah eine Sünde. Wer eine Katze füttert, dem vergibt Allah eine Sünde.",
+      "textAr": "",
+      "einordnungDe": "Güte gegenüber Tieren lehrt Sanftmut — auch im Umgang mit Menschen.",
+      "tags": [
+        "barmherzigkeit"
+      ],
+      "season": [
+        "all"
+      ],
+      "fridayOk": true,
+      "tier": 1
+    },
+    {
+      "id": 79,
+      "referenceDe": "Sahih al-Bukhari 2361",
+      "sourceUrl": "https://sunnah.com/bukhari:2361",
+      "textDe": "Wer ein Lebewesen tötet ohne rechtmäßigen Grund, dem wird es am Tag der Auferstehung vorgehalten.",
+      "textAr": "",
+      "einordnungDe": "Verantwortung für das Leben — kein Spiel mit Schmerz.",
+      "tags": [
+        "verantwortung"
+      ],
+      "season": [
+        "all"
+      ],
+      "fridayOk": false,
+      "tier": 2
+    },
+    {
+      "id": 80,
+      "referenceDe": "Sahih Muslim 1571",
+      "sourceUrl": "https://sunnah.com/muslim:1571",
+      "textDe": "Der Ehrliche, vertrauenswürdige Händler steht bei den Propheten, den Wahrhaftigen und den Märtyrern.",
+      "textAr": "",
+      "einordnungDe": "Ehrlichkeit im Beruf ist Gottesdienst — kein Verkauf mit Tricks.",
+      "tags": [
+        "ehrlichkeit",
+        "beruf"
+      ],
+      "season": [
+        "all"
+      ],
+      "fridayOk": true,
+      "tier": 1
+    },
+    {
+      "id": 81,
+      "referenceDe": "Sahih al-Bukhari 33",
+      "sourceUrl": "https://sunnah.com/bukhari:33",
+      "textDe": "Die Wahrhaftigkeit führt zur Rechtschaffenheit, und die Rechtschaffenheit führt ins Paradies.",
+      "textAr": "",
+      "einordnungDe": "Ein kleines Versprechen halten kann mehr sein als große Worte.",
+      "tags": [
+        "ehrlichkeit"
+      ],
+      "season": [
+        "all"
+      ],
+      "fridayOk": true,
+      "tier": 1
+    },
+    {
+      "id": 82,
+      "referenceDe": "Sahih Muslim 2607",
+      "sourceUrl": "https://sunnah.com/muslim:2607",
+      "textDe": "Lüge führt zur Frevlerei, und Frevlerei führt ins Feuer.",
+      "textAr": "",
+      "einordnungDe": "Weiße Lügen und Übertreibungen summieren sich — Wahrheit schützt das Herz.",
+      "tags": [
+        "ehrlichkeit",
+        "zunge"
+      ],
+      "season": [
+        "all"
+      ],
+      "fridayOk": true,
+      "tier": 1
+    },
+    {
+      "id": 83,
+      "referenceDe": "Sahih al-Bukhari 6474",
+      "sourceUrl": "https://sunnah.com/bukhari:6474",
+      "textDe": "Denkt oft an das, was den Genuss zerstört: der Tod.",
+      "textAr": "",
+      "einordnungDe": "Memento mori ist keine Depressión — es ordnet Prioritäten und macht dankbar.",
+      "tags": [
+        "tod",
+        "besinnung"
+      ],
+      "season": [
+        "all"
+      ],
+      "fridayOk": false,
+      "tier": 2
+    },
+    {
+      "id": 84,
+      "referenceDe": "Sahih Muslim 2877",
+      "sourceUrl": "https://sunnah.com/muslim:2877",
+      "textDe": "Bereitet euch vor, bevor ihr gerufen werdet.",
+      "textAr": "",
+      "einordnungDe": "Gutes tun, solange Gesundheit und Zeit da sind — nicht auf „später“ warten.",
+      "tags": [
+        "tod",
+        "vorbereitung"
+      ],
+      "season": [
+        "all"
+      ],
+      "fridayOk": false,
+      "tier": 2
+    },
+    {
+      "id": 85,
+      "referenceDe": "Sahih al-Bukhari 6412",
+      "sourceUrl": "https://sunnah.com/bukhari:6412",
+      "textDe": "Wenn der Sohn Adams stirbt, enden seine Taten — außer drei: laufende Sadaqah, nützliches Wissen oder ein rechtschaffenes Kind, das für ihn betet.",
+      "textAr": "",
+      "einordnungDe": "Anhaltende Wirkung: Stiftung, Lehren, Kinder erziehen — Investition fürs Hier und Jenseits.",
+      "tags": [
+        "jenseits",
+        "wissen"
+      ],
+      "season": [
+        "all"
+      ],
+      "fridayOk": true,
+      "tier": 1
+    },
+    {
+      "id": 86,
+      "referenceDe": "Sahih Muslim 163",
+      "sourceUrl": "https://sunnah.com/muslim:163",
+      "textDe": "Wer einen Weg zum Lernen geht, dem wird der Weg ins Paradies erleichtert.",
+      "textAr": "",
+      "einordnungDe": "Jede Ayah, die man versteht und lebt, ist ein Schritt.",
+      "tags": [
+        "wissen",
+        "quran"
+      ],
+      "season": [
+        "all"
+      ],
+      "fridayOk": true,
+      "tier": 1
+    },
+    {
+      "id": 87,
+      "referenceDe": "Sahih al-Bukhari 79",
+      "sourceUrl": "https://sunnah.com/bukhari:79",
+      "textDe": "Von Allah werden nur die Gelehrten unter Seinen Dienern gefürchtet.",
+      "textAr": "",
+      "einordnungDe": "Wissen mit Demut — nicht um Recht zu haben, sondern um Allah zu dienen.",
+      "tags": [
+        "wissen"
+      ],
+      "season": [
+        "all"
+      ],
+      "fridayOk": true,
+      "tier": 1
+    },
+    {
+      "id": 88,
+      "referenceDe": "Sahih al-Bukhari 6471",
+      "sourceUrl": "https://sunnah.com/bukhari:6471",
+      "textDe": "Keiner von euch glaubt wirklich, bis er für seinen Bruder liebt, was er für sich liebt.",
+      "textAr": "",
+      "einordnungDe": "Der Bruder im Glauben — auch wenn man sich manchmal entfremdet hat, Gutes wünschen üben.",
+      "tags": [
+        "bruderlichkeit"
+      ],
+      "season": [
+        "all"
+      ],
+      "fridayOk": true,
+      "tier": 1
+    },
+    {
+      "id": 89,
+      "referenceDe": "Sahih al-Bukhari 6408",
+      "sourceUrl": "https://sunnah.com/bukhari:6408",
+      "textDe": "Zwei Worte, leicht auf der Zunge, schwer in der Waage: Subhan Allah wa bihamdihi, Subhan Allah al-Azim.",
+      "textAr": "",
+      "einordnungDe": "Tasbih zwischendurch — im Weg, beim Warten, vor dem Schlafen.",
+      "tags": [
+        "dhikr"
+      ],
+      "season": [
+        "all"
+      ],
+      "fridayOk": true,
+      "tier": 1
+    },
+    {
+      "id": 90,
+      "referenceDe": "Sahih Muslim 2691",
+      "sourceUrl": "https://sunnah.com/muslim:2691",
+      "textDe": "Soll ich euch etwas nennen, das die Waagschalen am Jüngsten Tag schwer macht? Subhan Allah wa bihamdihi, Subhan Allah al-Azim — hundert Mal.",
+      "textAr": "",
+      "einordnungDe": "Kleine Formeln mit großer Wirkung — Gewohnheit statt einmaliger Eile.",
+      "tags": [
+        "dhikr",
+        "jenseits"
+      ],
+      "season": [
+        "all"
+      ],
+      "fridayOk": true,
+      "tier": 1
     }
   ]
 }

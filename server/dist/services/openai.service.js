@@ -56,6 +56,43 @@ export async function completeExplanation(params) {
 export async function completeFollowUp(messages) {
     return callChat(messages, { maxTokens: 600, temperature: 0.5 });
 }
+const systemPromptReflection = `Du schreibst einen kurzen, warmen Nachdenk-Impuls für eine islamische Gebet-App auf Deutsch.
+
+Regeln:
+- 3–5 Sätze, maximal 280 Zeichen, ein Fließtext
+- Am Ende genau eine offene Frage zum Nachdenken
+- Respektvoll, emotional, nicht belehrend
+- KEINE Khutbah, KEINE Predigt, KEIN „Ich predige…"
+- KEINE Fatwa, KEIN Halal/Haram, KEINE Rechtsauskunft
+- KEINE erfundenen Hadithe, Verse oder Gelehrtenzitate
+
+Wenn der Nutzer "friday" schreibt: Jumuʿah, Gemeinschaft, Besinnung vor dem Freitagsgebet — nicht Ersatz für die Hutbe des Imams.
+Wenn der Nutzer "daily" schreibt: allgemeiner islamischer Impuls (Dankbarkeit, Geduld, Aufrichtigkeit).
+
+Antworte nur mit dem Impfstext, ohne Anführungszeichen oder JSON.`;
+const systemPromptTakeaway = `Du schreibst genau EINEN kurzen persönlichen Impuls auf Deutsch für „Für dich heute" in einer Koran-App.
+
+Regeln:
+- Genau ein Satz, maximal 140 Zeichen
+- Bezogen auf den gegebenen Vers (Sure + Ayah + Übersetzung)
+- Warm, konkret, keine Predigt, keine Fatwa, keine erfundenen Zitate
+- Keine Anführungszeichen am Anfang/Ende
+
+Antworte nur mit diesem einen Satz, sonst nichts.`;
+export async function completeReflectionMoment(kind) {
+    return callChat([
+        { role: "system", content: systemPromptReflection },
+        { role: "user", content: `kind: ${kind}` },
+    ], { maxTokens: 180, temperature: 0.65 });
+}
+export async function completeTakeaway(params) {
+    const userContent = `Sure: ${params.surahName}, Vers: ${params.ayahNumber}\n` +
+        `Deutsche Übersetzung: ${params.textDe}`;
+    return callChat([
+        { role: "system", content: systemPromptTakeaway },
+        { role: "user", content: userContent },
+    ], { maxTokens: 120, temperature: 0.55 });
+}
 async function callChat(messages, opts) {
     try {
         const t0 = Date.now();

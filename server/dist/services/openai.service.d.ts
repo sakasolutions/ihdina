@@ -15,4 +15,10 @@ export declare function completeExplanation(params: {
     textDe: string;
 }): Promise<ChatCompletionResult>;
 export declare function completeFollowUp(messages: OpenAI.Chat.ChatCompletionMessageParam[]): Promise<ChatCompletionResult>;
+export declare function completeReflectionMoment(kind: "friday" | "daily"): Promise<ChatCompletionResult>;
+export declare function completeTakeaway(params: {
+    surahName: string;
+    ayahNumber: number;
+    textDe: string;
+}): Promise<ChatCompletionResult>;
 export { systemPromptExplain };

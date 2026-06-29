@@ -11,6 +11,8 @@ import 'services/revenuecat_service.dart';
 import 'theme/app_theme.dart';
 import 'screens/bootstrap_screen.dart';
 
+final appRestartNotifier = ValueNotifier<int>(0);
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // Security: never require API keys in release builds.
@@ -51,30 +53,36 @@ class IhdinaApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      scaffoldMessengerKey: rootScaffoldMessengerKey,
-      title: 'Ihdina',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        colorScheme: ColorScheme.fromSeed(
-          seedColor: AppColors.accent,
-          primary: AppColors.accent,
-          surface: AppColors.sandBg,
-          brightness: Brightness.light,
-        ),
-        pageTransitionsTheme: const PageTransitionsTheme(
-          builders: {
-            TargetPlatform.android: _AppPageTransitionsBuilder(),
-            TargetPlatform.iOS: _AppPageTransitionsBuilder(),
-            TargetPlatform.macOS: _AppPageTransitionsBuilder(),
-            TargetPlatform.windows: _AppPageTransitionsBuilder(),
-            TargetPlatform.linux: _AppPageTransitionsBuilder(),
-            TargetPlatform.fuchsia: _AppPageTransitionsBuilder(),
-          },
-        ),
-        useMaterial3: true,
-      ),
-      home: const BootstrapScreen(),
+    return ValueListenableBuilder<int>(
+      valueListenable: appRestartNotifier,
+      builder: (context, value, child) {
+        return MaterialApp(
+          key: ValueKey(value),
+          scaffoldMessengerKey: rootScaffoldMessengerKey,
+          title: 'Ihdina',
+          debugShowCheckedModeBanner: false,
+          theme: ThemeData(
+            colorScheme: ColorScheme.fromSeed(
+              seedColor: AppColors.accent,
+              primary: AppColors.accent,
+              surface: AppColors.sandBg,
+              brightness: Brightness.light,
+            ),
+            pageTransitionsTheme: const PageTransitionsTheme(
+              builders: {
+                TargetPlatform.android: _AppPageTransitionsBuilder(),
+                TargetPlatform.iOS: _AppPageTransitionsBuilder(),
+                TargetPlatform.macOS: _AppPageTransitionsBuilder(),
+                TargetPlatform.windows: _AppPageTransitionsBuilder(),
+                TargetPlatform.linux: _AppPageTransitionsBuilder(),
+                TargetPlatform.fuchsia: _AppPageTransitionsBuilder(),
+              },
+            ),
+            useMaterial3: true,
+          ),
+          home: const BootstrapScreen(),
+        );
+      },
     );
   }
 }

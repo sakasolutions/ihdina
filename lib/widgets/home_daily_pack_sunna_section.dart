@@ -12,100 +12,119 @@ const Color _accentGoldSunna = Color(0xFFE5C07B);
 /// Wie KI-/Gebets-Sheet (`explanation_bottom_sheet`, Home-Gebet).
 const double _sunnaSheetTopRadius = 24;
 
-/// Kompakte Sunna-Zeile in der Tagespaket-Karte; Details im Bottom Sheet (Tier‑1, weniger Lärm).
+/// Footer-Streifen: zweite Rolle (nicht zweiter Tagesvers); Inhalt im Sheet.
 class HomeDailyPackSunnaSection extends StatelessWidget {
-  const HomeDailyPackSunnaSection({super.key, required this.entry});
+  const HomeDailyPackSunnaSection({
+    super.key,
+    required this.entry,
+    this.embedOnHeroGlass = false,
+  });
 
   final DailyHadithEntry entry;
+  final bool embedOnHeroGlass;
 
   @override
   Widget build(BuildContext context) {
-    final e = entry;
+    final boxDecoration = embedOnHeroGlass
+        ? BoxDecoration(
+            color: Colors.white.withOpacity(0.035),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: _accentGoldSunna.withOpacity(0.11),
+              width: 0.5,
+            ),
+          )
+        : BoxDecoration(
+            color: const Color(0xFF0F2A1E),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: _accentGoldSunna.withOpacity(0.16),
+              width: 0.5,
+            ),
+          );
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      children: [
-        const SizedBox(height: 18),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 4),
-          child: Divider(height: 1, thickness: 1, color: Colors.white.withOpacity(0.08)),
-        ),
-        const SizedBox(height: 14),
-        Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: () => _openSunnaSheet(context, e),
-            borderRadius: BorderRadius.circular(18),
-            splashColor: Colors.white.withOpacity(0.06),
-            highlightColor: Colors.white.withOpacity(0.03),
+    return Padding(
+      padding: EdgeInsets.only(top: embedOnHeroGlass ? 12 : 10),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () => _openSunnaSheet(context, entry),
+          borderRadius: BorderRadius.circular(12),
+          splashColor: Colors.white.withOpacity(0.06),
+          highlightColor: Colors.white.withOpacity(0.03),
+          child: DecoratedBox(
+            decoration: boxDecoration,
             child: Padding(
-              padding: const EdgeInsets.fromLTRB(4, 10, 4, 10),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.stretch,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 11),
+              child: Row(
                 children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Icon(
-                        Icons.wb_sunny_outlined,
-                        size: 20,
-                        color: _accentGoldSunna.withOpacity(0.9),
-                      ),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          'Hadith zum Mitnehmen',
-                          style: GoogleFonts.inter(
-                            fontSize: 10,
-                            fontWeight: FontWeight.w700,
-                            letterSpacing: 1.15,
-                            color: Colors.white.withOpacity(0.4),
-                          ),
-                        ),
-                      ),
-                    ],
-                  ),
-                  if (e.textDe.trim().isNotEmpty) ...[
-                    const SizedBox(height: 12),
-                    Text(
-                      e.textDe.trim(),
-                      textAlign: TextAlign.left,
-                      maxLines: 4,
-                      overflow: TextOverflow.ellipsis,
-                      style: GoogleFonts.inter(
-                        fontSize: 15,
-                        height: 1.48,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.white.withOpacity(0.9),
+                  Container(
+                    width: 28,
+                    height: 28,
+                    decoration: BoxDecoration(
+                      color: _accentGoldSunna.withOpacity(0.12),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: _accentGoldSunna.withOpacity(0.2),
+                        width: 0.5,
                       ),
                     ),
-                  ],
-                  const SizedBox(height: 12),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
-                    children: [
-                      Text(
-                        'Quelle, Kontext & Arabisch',
-                        style: GoogleFonts.inter(
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w600,
-                          color: _accentGoldSunna.withOpacity(0.95),
+                    child: Center(
+                      child: Icon(
+                        Icons.wb_sunny_outlined,
+                        size: 15,
+                        color: _accentGoldSunna.withOpacity(0.95),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(
+                          'SUNNA ZUM TAG',
+                          style: GoogleFonts.inter(
+                            fontSize: 8.5,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 1.05,
+                            color: _accentGoldSunna.withOpacity(0.58),
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 5),
-                      Icon(
-                        Icons.arrow_forward_ios_rounded,
-                        size: 10,
-                        color: _accentGoldSunna.withOpacity(0.85),
-                      ),
-                    ],
+                        const SizedBox(height: 2),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: Text(
+                                'Kurzfassung & Kontext',
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: GoogleFonts.inter(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w500,
+                                  height: 1.3,
+                                  color: Colors.white.withOpacity(0.72),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 6),
+                            Icon(
+                              Icons.arrow_forward_rounded,
+                              size: 18,
+                              color: _accentGoldSunna.withOpacity(0.88),
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
             ),
           ),
         ),
-      ],
+      ),
     );
   }
 }

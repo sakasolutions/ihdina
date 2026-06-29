@@ -21,6 +21,7 @@ import '../widgets/surah_intro_bottom_sheet.dart';
 import '../models/surah.dart';
 import '../models/verse.dart';
 import '../services/audio_service.dart';
+import '../services/media_playback_coordinator.dart';
 import 'explanation_bottom_sheet.dart';
 
 /// Reader: ayahs from QuranRepository only. Bookmark toggle per verse.
@@ -82,7 +83,8 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
       AudioService.instance.stop();
     } else {
       _persistReadingPosition(ayahNumber);
-      AudioService.instance.playVerse(widget.surah.number, ayahNumber);
+      MediaPlaybackCoordinator.instance
+          .playVerseRecitation(widget.surah.number, ayahNumber);
     }
   }
 
@@ -979,27 +981,28 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
                               return;
                             }
                             Navigator.pop(ctx);
-                            Future.microtask(() async {
-                              if (_readerLayout == 'page') {
+                            if (_readerLayout == 'page') {
+                              WidgetsBinding.instance.addPostFrameCallback((_) {
+                                if (!mounted) return;
                                 _printedReaderKey.currentState?.jumpToAyah(n);
-                                if (mounted) {
-                                  final idx = verses.indexWhere((v) => v.ayah == n);
-                                  setState(() {
-                                    _printedFocusAyah = n;
-                                    if (idx >= 0) _currentVerseIndex = idx;
-                                  });
-                                  _persistReadingPosition(n);
-                                  _startJumpHighlight(n);
-                                }
-                              } else {
+                                final idx = verses.indexWhere((v) => v.ayah == n);
+                                setState(() {
+                                  _printedFocusAyah = n;
+                                  if (idx >= 0) _currentVerseIndex = idx;
+                                });
+                                _persistReadingPosition(n);
+                                _startJumpHighlight(n);
+                              });
+                            } else {
+                              Future.microtask(() async {
                                 await _pageController!.animateToPage(
                                   n - 1,
                                   duration: const Duration(milliseconds: 300),
                                   curve: Curves.easeInOut,
                                 );
                                 if (mounted) _startJumpHighlight(n);
-                              }
-                            });
+                              });
+                            }
                           },
                           child: const Text(
                             'Springen',

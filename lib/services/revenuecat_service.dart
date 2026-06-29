@@ -22,6 +22,8 @@ class RevenueCatService {
   /// Notifies listeners when Pro status changes.
   static final ValueNotifier<bool> isProNotifier = ValueNotifier<bool>(false);
 
+  static Offerings? _cachedOfferings;
+
   static void _setEntitlementsFrom(CustomerInfo customerInfo) {
     final pro = customerInfo.entitlements.active.containsKey('pro');
     isPro = pro;
@@ -30,6 +32,7 @@ class RevenueCatService {
 
   /// [appUserId] = persistentes Geräte-`installId` (muss vor dem Aufruf geladen sein).
   static Future<void> init({required String appUserId}) async {
+    _cachedOfferings = null;
     final trimmed = appUserId.trim();
     if (trimmed.isEmpty) {
       throw StateError('RevenueCatService.init requires a non-empty appUserId (installId).');
@@ -68,13 +71,25 @@ class RevenueCatService {
 
   /// Fetches current offerings from RevenueCat. Returns null on error.
   static Future<Offerings?> getOfferings() async {
+    if (_cachedOfferings != null) return _cachedOfferings;
     try {
-      return await Purchases.getOfferings();
+      _cachedOfferings = await Purchases.getOfferings();
+      return _cachedOfferings;
     } catch (e, st) {
       if (kDebugMode) {
         debugPrint('[RevenueCat] getOfferings failed: $e\n$st');
       }
       return null;
+    }
+  }
+
+  static Future<List<Package>> getAvailablePackages() async {
+    try {
+      final offerings = await getOfferings();
+      return offerings?.current?.availablePackages ?? [];
+    } catch (e, st) {
+      if (kDebugMode) debugPrint('[RevenueCat] getAvailablePackages failed: $e\n$st');
+      return [];
     }
   }
 

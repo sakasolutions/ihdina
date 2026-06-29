@@ -1,0 +1,15 @@
+{
+  "replacements": [
+    { "from": "Al-Ma'idah", "to": "Al-Maida" },
+    { "from": "Ar-Ra'd", "to": "Ar-Rad" },
+    { "from": "Al-Mu'minun", "to": "Al-Muminun" },
+    { "from": "Adh-Dhariyat", "to": "Ad-Dhariyat" },
+    { "from": "Al-Muddaththir", "to": "Al-Mudathir" },
+    { "from": "Al-Muzzammil", "to": "Al-Musammil" },
+    { "from": "Al-Bayyinah", "to": "Al-Bajinah" },
+    { "from": "Az-Zalzalah", "to": "As-Salsala" },
+    { "from": "Al-Fatihah", "to": "Al-Fatiha" },
+    { "from": "Al-Baqarah", "to": "Al-Bakara" },
+    { "from": "Al-Ikhlas", "to": "Al-Ichlas" }
+  ]
+}

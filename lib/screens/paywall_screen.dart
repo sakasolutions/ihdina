@@ -3,7 +3,9 @@ import 'dart:math' show min;
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/intl.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 import '../services/revenuecat_service.dart';
 import '../theme/app_theme.dart';
@@ -21,7 +23,7 @@ const double _paywallDesignWidth = 352;
 
 /// RevenueCat-Paket-IDs — müssen zum Dashboard / Offering passen.
 const String _proMonthlyPackageId = 'pro_monthly';
-const String _proYearlyPackageId = 'pro_yearly';
+const String _proYearlyPackageId = 'pro_annual';
 
 /// Paywall: Kauf-/Restore über [handlePurchase] / RevenueCat (Logik unverändert).
 class PaywallScreen extends StatefulWidget {
@@ -35,6 +37,46 @@ class _PaywallScreenState extends State<PaywallScreen> {
   bool isLoading = false;
   bool isRestoring = false;
   bool _yearlySelected = true;
+  List<Package> _packages = [];
+  bool _packagesLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadPackages();
+  }
+
+  Future<void> _loadPackages() async {
+    final packages = await RevenueCatService.getAvailablePackages();
+    if (mounted) {
+      setState(() {
+        _packages = packages;
+        _packagesLoading = false;
+      });
+    }
+  }
+
+  Package? _packageByIdentifier(String id) {
+    for (final p in _packages) {
+      if (p.identifier == id) return p;
+    }
+    return null;
+  }
+
+  String get _monthlyPriceString =>
+      _packageByIdentifier(_proMonthlyPackageId)?.storeProduct.priceString ?? '—';
+
+  String get _yearlyPriceString =>
+      _packageByIdentifier(_proYearlyPackageId)?.storeProduct.priceString ?? '—';
+
+  String get _yearlyPerMonthLabel {
+    final annual = _packageByIdentifier(_proYearlyPackageId);
+    if (annual == null) return '—';
+    final perMonth = annual.storeProduct.price / 12;
+    final currency = annual.storeProduct.currencyCode;
+    final formatted = NumberFormat.simpleCurrency(name: currency).format(perMonth);
+    return 'entspricht nur $formatted / Monat';
+  }
 
   Future<void> handlePurchase(String packageId) async {
     if (isLoading) return;
@@ -144,6 +186,10 @@ class _PaywallScreenState extends State<PaywallScreen> {
                             },
                             isLoading: isLoading,
                             isRestoring: isRestoring,
+                            packagesLoading: _packagesLoading,
+                            monthlyPriceString: _monthlyPriceString,
+                            yearlyPriceString: _yearlyPriceString,
+                            yearlyPerMonthLabel: _yearlyPerMonthLabel,
                             onClose: () => Navigator.of(context).pop(),
                             onPurchase: _onPurchaseTap,
                             onRestore: _onRestore,
@@ -168,6 +214,10 @@ class _PaywallPremiumCard extends StatelessWidget {
     required this.onYearlySelected,
     required this.isLoading,
     required this.isRestoring,
+    required this.packagesLoading,
+    required this.monthlyPriceString,
+    required this.yearlyPriceString,
+    required this.yearlyPerMonthLabel,
     required this.onClose,
     required this.onPurchase,
     required this.onRestore,
@@ -177,6 +227,10 @@ class _PaywallPremiumCard extends StatelessWidget {
   final ValueChanged<bool> onYearlySelected;
   final bool isLoading;
   final bool isRestoring;
+  final bool packagesLoading;
+  final String monthlyPriceString;
+  final String yearlyPriceString;
+  final String yearlyPerMonthLabel;
   final VoidCallback onClose;
   final VoidCallback onPurchase;
   final Future<void> Function() onRestore;
@@ -282,11 +336,29 @@ class _PaywallPremiumCard extends StatelessWidget {
                   onChanged: onYearlySelected,
                 ),
                 const SizedBox(height: 14),
-                _DualPriceRows(
-                  yearlySelected: yearlySelected,
-                  onSelectMonthly: () => onYearlySelected(false),
-                  onSelectYearly: () => onYearlySelected(true),
-                ),
+                if (packagesLoading)
+                  const Padding(
+                    padding: EdgeInsets.symmetric(vertical: 28),
+                    child: Center(
+                      child: SizedBox(
+                        width: 28,
+                        height: 28,
+                        child: CircularProgressIndicator(
+                          strokeWidth: 2.2,
+                          color: _accentChampagneGold,
+                        ),
+                      ),
+                    ),
+                  )
+                else
+                  _DualPriceRows(
+                    yearlySelected: yearlySelected,
+                    onSelectMonthly: () => onYearlySelected(false),
+                    onSelectYearly: () => onYearlySelected(true),
+                    monthlyPriceString: monthlyPriceString,
+                    yearlyPriceString: yearlyPriceString,
+                    yearlyPerMonthLabel: yearlyPerMonthLabel,
+                  ),
                 const SizedBox(height: 12),
                 _BenefitLine(
                   icon: Icons.auto_stories_outlined,
@@ -347,6 +419,38 @@ class _PaywallPremiumCard extends StatelessWidget {
                       ),
                     ),
                   ),
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    TextButton(
+                      onPressed: () => launchUrl(
+                        Uri.parse('https://ihdina.app/datenschutz'),
+                        mode: LaunchMode.externalApplication,
+                      ),
+                      child: Text(
+                        'Datenschutz',
+                        style: GoogleFonts.inter(
+                          fontSize: 11,
+                          color: Colors.white38,
+                        ),
+                      ),
+                    ),
+                    Text('·', style: const TextStyle(color: Colors.white24, fontSize: 11)),
+                    TextButton(
+                      onPressed: () => launchUrl(
+                        Uri.parse('https://ihdina.app/agb'),
+                        mode: LaunchMode.externalApplication,
+                      ),
+                      child: Text(
+                        'Nutzungsbedingungen',
+                        style: GoogleFonts.inter(
+                          fontSize: 11,
+                          color: Colors.white38,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
           ),
@@ -482,11 +586,17 @@ class _DualPriceRows extends StatelessWidget {
     required this.yearlySelected,
     required this.onSelectMonthly,
     required this.onSelectYearly,
+    required this.monthlyPriceString,
+    required this.yearlyPriceString,
+    required this.yearlyPerMonthLabel,
   });
 
   final bool yearlySelected;
   final VoidCallback onSelectMonthly;
   final VoidCallback onSelectYearly;
+  final String monthlyPriceString;
+  final String yearlyPriceString;
+  final String yearlyPerMonthLabel;
 
   @override
   Widget build(BuildContext context) {
@@ -511,7 +621,7 @@ class _DualPriceRows extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  '3,99 €',
+                  monthlyPriceString,
                   style: GoogleFonts.playfairDisplay(
                     fontSize: 28,
                     fontWeight: FontWeight.w600,
@@ -555,7 +665,7 @@ class _DualPriceRows extends StatelessWidget {
                       ),
                     ),
                     Text(
-                      '31,99 €',
+                      yearlyPriceString,
                       style: GoogleFonts.playfairDisplay(
                         fontSize: 30,
                         fontWeight: FontWeight.w600,
@@ -580,7 +690,7 @@ class _DualPriceRows extends StatelessWidget {
                 ),
                 const SizedBox(height: 6),
                 Text(
-                  'entspricht nur 2,66 € / Monat',
+                  yearlyPerMonthLabel,
                   textAlign: TextAlign.right,
                   style: GoogleFonts.inter(
                     fontSize: 12.5,

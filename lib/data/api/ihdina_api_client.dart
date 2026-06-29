@@ -193,6 +193,29 @@ class IhdinaApiClient {
     return _parseJsonObjectResponse(res, context: 'postTakeaway');
   }
 
+  /// Kurzer Nachdenk-Impuls (Gebet-Tab). [kind]: `friday` | `daily`.
+  Future<Map<String, dynamic>> postReflectionMoment({
+    required String installId,
+    required String kind,
+    String language = 'de',
+  }) async {
+    final res = await http
+        .post(
+          _uri('/api/v1/reflection-moment'),
+          headers: const {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          body: jsonEncode({
+            'installId': installId,
+            'kind': kind,
+            'language': language,
+          }),
+        )
+        .timeout(_timeout);
+    return _parseJsonObjectResponse(res, context: 'postReflectionMoment');
+  }
+
   Map<String, dynamic> _parseJsonObjectResponse(
     http.Response res, {
     String context = 'api',

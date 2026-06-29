@@ -5,4 +5,4 @@
  * Bei Änderung: Entitlement-Response und ggf. App-Fehlermeldung anpassen
  * (Flutter: `explanation_bottom_sheet.dart` Textkonstante).
  */
-export const MAX_FREE_EXTRA_EXPLANATIONS_PER_DAY = 10;
+export const MAX_FREE_EXTRA_EXPLANATIONS_PER_DAY = 25;

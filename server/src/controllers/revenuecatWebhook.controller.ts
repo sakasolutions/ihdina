@@ -9,7 +9,7 @@ export async function revenueCatWebhookHandler(
   // 1. Verify Authorization header
   const authHeader = req.headers["authorization"];
   if (!env.revenueCatWebhookAuth || authHeader !== env.revenueCatWebhookAuth) {
-    req.log.warn({ authHeader }, "RevenueCat webhook: unauthorized request");
+    req.log.warn("RevenueCat webhook: unauthorized request");
     return reply.status(401).send({ error: "Unauthorized" });
   }
 

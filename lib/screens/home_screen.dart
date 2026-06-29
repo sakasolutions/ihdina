@@ -41,6 +41,9 @@ const Duration _karahatSunsetDuration = Duration(minutes: 20);
 /// Obere Rundung wie KI-Erklärungs-Sheet (`explanation_bottom_sheet.dart`).
 const double _prayerSheetTopRadius = 24;
 
+bool _prayerBlockedByKarahat(DateTime nextPrayerTime, DateTime karahatEnd) =>
+    nextPrayerTime.isBefore(karahatEnd);
+
 class _KarahatInlineInfo {
   const _KarahatInlineInfo({
     required this.label,
@@ -51,6 +54,20 @@ class _KarahatInlineInfo {
   final String label;
   final String timeRange;
   final bool isActive;
+
+  /// Endzeit aus [timeRange] (Format „HH:mm–HH:mm“); null wenn nicht parsebar.
+  DateTime? karahatEndOn(DateTime day) {
+    if (timeRange == 'Heute beendet') return null;
+    final dash = timeRange.indexOf('–');
+    if (dash < 0) return null;
+    final endStr = timeRange.substring(dash + 1).trim();
+    final parts = endStr.split(':');
+    if (parts.length != 2) return null;
+    final h = int.tryParse(parts[0]);
+    final m = int.tryParse(parts[1]);
+    if (h == null || m == null) return null;
+    return DateTime(day.year, day.month, day.day, h, m);
+  }
 }
 
 /// Premium champagne-gold accent (e.g. next prayer, AI CTA).
@@ -602,6 +619,15 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
         ? PrayerTimesRepository.formatCountdown(_prayerResult!.timeUntilNextPrayer)
         : '—:——';
     final karahat = _buildKarahatInlineInfo(_prayerResult);
+    final nextPrayerTime = _prayerResult?.nextPrayerTime;
+    final karahatEnd = karahat?.karahatEndOn(now);
+    final prayerBlockedByKarahat = nextPrayerTime != null &&
+        karahatEnd != null &&
+        _prayerResult!.timeUntilNextPrayer > Duration.zero &&
+        _prayerBlockedByKarahat(nextPrayerTime, karahatEnd);
+    final nextPrayerLine = prayerBlockedByKarahat
+        ? 'Beten ab ${PrayerTimesRepository.instance.formatTime(karahatEnd)} möglich'
+        : '$nextLabel in $countdownStr';
 
     final chevron = Icon(
       chevronOpen ? Icons.expand_less_rounded : Icons.expand_more_rounded,
@@ -652,7 +678,7 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
               ),
               const SizedBox(height: 3),
               Text(
-                '$nextLabel in $countdownStr',
+                nextPrayerLine,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
                 style: GoogleFonts.inter(

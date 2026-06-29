@@ -1,7 +1,7 @@
 name: ihdina
 description: Ihdina - Premium Islamic app
 publish_to: 'none'
-version: 1.0.0+1
+version: 1.0.0+8
 
 environment:
   sdk: '>=3.0.0 <4.0.0'
@@ -32,6 +32,7 @@ dependencies:
   just_audio: ^0.9.40
   flutter_dotenv: ^5.2.1
   speech_to_text: ^7.3.0
+  flutter_tts: ^4.2.0
 
 dev_dependencies:
   flutter_test:

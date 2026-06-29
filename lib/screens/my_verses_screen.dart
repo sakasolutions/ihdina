@@ -8,6 +8,7 @@ import '../data/quran/translation_service.dart';
 import '../data/reading/reading_progress_repository.dart';
 import '../models/surah.dart';
 import '../services/audio_service.dart';
+import '../services/media_playback_coordinator.dart';
 import '../theme/app_theme.dart';
 import '../theme/hero_theme.dart';
 import '../widgets/bookmark_note_sheet.dart';
@@ -174,7 +175,8 @@ class _MyVersesScreenState extends State<MyVersesScreen> {
         (s.isPlaying || s.isLoading)) {
       AudioService.instance.stop();
     } else {
-      AudioService.instance.playVerse(item.surahId, item.ayahNumber);
+      MediaPlaybackCoordinator.instance
+          .playVerseRecitation(item.surahId, item.ayahNumber);
     }
   }
 

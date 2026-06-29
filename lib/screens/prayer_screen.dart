@@ -10,6 +10,7 @@ import '../prayer/prayer_type.dart';
 import '../theme/app_theme.dart';
 import '../theme/hero_theme.dart';
 import '../widgets/glass_card.dart';
+import '../widgets/prayer_reflection_moment_card.dart';
 import 'qibla_screen.dart';
 import 'tasbih_screen.dart';
 import 'settings_screen.dart';
@@ -23,6 +24,9 @@ const Duration _karahatSunriseDuration = Duration(minutes: 20);
 const Duration _karahatZenithBefore = Duration(minutes: 5);
 const Duration _karahatZenithAfter = Duration(minutes: 5);
 const Duration _karahatSunsetDuration = Duration(minutes: 20);
+
+/// Nachdenk-Impuls unter „Nächstes Gebet“ (KI über Server, Offline-Fallback).
+const bool kShowReflectionMomentOnPrayer = true;
 
 enum _PrayerRowStatus { past, current, upcoming }
 
@@ -141,6 +145,13 @@ class _PrayerScreenState extends State<PrayerScreen> {
                     child: _buildNextPrayerSection(),
                   ),
                 ),
+                if (kShowReflectionMomentOnPrayer)
+                  const SliverToBoxAdapter(
+                    child: Padding(
+                      padding: EdgeInsets.fromLTRB(_outerPadding, _sectionGap, _outerPadding, 0),
+                      child: PrayerReflectionMomentSection(),
+                    ),
+                  ),
                 SliverToBoxAdapter(
                   child: Padding(
                     padding: const EdgeInsets.fromLTRB(_outerPadding, _sectionGap, _outerPadding, 0),

@@ -16,7 +16,10 @@ import '../models/surah.dart';
 import '../services/app_feedback_service.dart';
 import '../services/install_id_service.dart';
 import '../services/revenuecat_service.dart';
+import '../data/tts/tts_pronunciation_repository.dart';
+import '../services/tts_service.dart';
 import '../widgets/local_dictation_icon_button.dart';
+import '../widgets/local_tts_play_control.dart';
 import '../widgets/local_speech_privacy_caption.dart';
 import 'paywall_screen.dart';
 import 'quran_reader_screen.dart';
@@ -24,14 +27,21 @@ import 'quran_reader_screen.dart';
 const Color _accentChampagneGold = Color(0xFFE5C07B);
 /// Vor Store-Launch `true`: Eingabefeld immer, unabhängig von `--dart-define`.
 /// Vor Release auf `false`; dann wie Server über [_kAllowFreeFollowups].
-const bool _followUpsFreeBeta = true;
+const bool _followUpsFreeBeta = false;
 
 /// Wenn [_followUpsFreeBeta] false: Folgefragen ohne Pro (default an).
 /// Production: `--dart-define=ALLOW_FREE_FOLLOWUPS=false`.
 const bool _kAllowFreeFollowups = bool.fromEnvironment(
   'ALLOW_FREE_FOLLOWUPS',
-  defaultValue: true,
+  defaultValue: false,
 );
+
+/// `true`: Phasen Lesen → Verstehen (Labels), Segment-Tabs, flache Erklärung; Fragen-Footer einklappbar; Schnellfragen volle Breite.
+/// Auf `false` setzen für das komplette vorherige Layout — nur UI, keine Logikänderung.
+const bool _kExplanationSheetRefinedUi = true;
+
+/// Nur mit [_kExplanationSheetRefinedUi]: `0` = Verstehen einklappbar, `1` = Lesen | Verstehen zwei Schritte (aktueller Standard).
+const int _kVerstehenUxVariant = 1;
 
 /// Strukturierte Vers-Erklärung (JSON vom Backend im Feld `text`).
 class VerseCards {
@@ -260,6 +270,13 @@ class _ExplanationBottomSheetContentState
   int? _remainingFollowUps;
   String? _installId;
   bool _verseExplanationFeedbackSent = false;
+  /// Nur UI: Verstehen-Bereich bei Variante 0 einklappbar.
+  bool _verstehenExpanded = false;
+  /// Nur UI: Variante 1 — 0 = Lesen, 1 = Verstehen.
+  int _verstehenReadStep = 0;
+
+  /// Nur UI: Fragen-Footer bei [_kExplanationSheetRefinedUi] standardmäßig zu; siehe [_fragenComposerMustStayOpen].
+  bool _fragenComposerExpanded = false;
 
   bool get isProUser => RevenueCatService.isPro;
 
@@ -282,6 +299,61 @@ class _ExplanationBottomSheetContentState
   void _onProStatusChanged() {
     if (!mounted) return;
     setState(() {});
+  }
+
+  void _onTtsStateChanged() {
+    if (!mounted) return;
+    setState(() {});
+  }
+
+  String get _lesenDeTtsSourceKey =>
+      'lesen_de_${widget.params.surahName ?? ''}_${widget.params.ayahNumber ?? 0}';
+
+  String _verstehenTabTtsSourceKey(int tabIndex) => 'verstehen_tab_$tabIndex';
+
+  String _verstehenTabBody(VerseCards c, int tabIndex) {
+    return switch (tabIndex) {
+      0 => c.bedeutung,
+      1 => c.kontext,
+      _ => c.heute,
+    };
+  }
+
+  Future<void> _speakLesenGerman() {
+    return TtsService.instance.speak(
+      text: widget.params.textDe ?? '',
+      sourceKey: _lesenDeTtsSourceKey,
+      kind: TtsContentKind.verseGerman,
+    );
+  }
+
+  Future<void> _speakVerstehenTab(VerseCards c) {
+    return TtsService.instance.speak(
+      text: _verstehenTabBody(c, _explanationTabIndex),
+      sourceKey: _verstehenTabTtsSourceKey(_explanationTabIndex),
+      kind: TtsContentKind.explanationTab,
+    );
+  }
+
+  Widget _buildLocalTtsRow({
+    required String label,
+    required String sourceKey,
+    required TtsContentKind kind,
+    required String text,
+    required Future<void> Function() onSpeak,
+    String? caption,
+  }) {
+    if (text.trim().isEmpty) return const SizedBox.shrink();
+    return LocalTtsPlayControl(
+      label: label,
+      sourceKey: sourceKey,
+      kind: kind,
+      text: text,
+      ttsState: TtsService.instance.state.value,
+      caption: caption ?? 'System-Sprachausgabe auf dem Gerät',
+      onSpeak: () => onSpeak(),
+      onStop: () => TtsService.instance.stop(),
+    );
   }
 
   static const List<String> _quickQuestions = [
@@ -574,6 +646,11 @@ class _ExplanationBottomSheetContentState
   @override
   void initState() {
     super.initState();
+    TtsService.instance.state.addListener(_onTtsStateChanged);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      TtsService.instance.ensureInitialized();
+      TtsPronunciationRepository.instance.ensureLoaded();
+    });
     RevenueCatService.isProNotifier.addListener(_onProStatusChanged);
     RevenueCatService.updateCustomerStatus();
     _loadSurahNameLookup();
@@ -638,6 +715,8 @@ class _ExplanationBottomSheetContentState
 
   @override
   void dispose() {
+    TtsService.instance.state.removeListener(_onTtsStateChanged);
+    TtsService.instance.stop();
     RevenueCatService.isProNotifier.removeListener(_onProStatusChanged);
     _inputController.dispose();
     _scrollController.dispose();
@@ -691,6 +770,7 @@ class _ExplanationBottomSheetContentState
     setState(() {
       _messages.add(ChatMessage(isUser: true, text: question.trim()));
       _isLoadingFollowUp = true;
+      if (_kVerstehenUxVariant == 1) _verstehenReadStep = 1;
     });
     _scrollToBottom();
 
@@ -814,7 +894,15 @@ class _ExplanationBottomSheetContentState
                     ),
                   ),
                 ),
-                const SizedBox(height: 12),
+                SizedBox(height: _kExplanationSheetRefinedUi ? 18 : 12),
+                if (_kExplanationSheetRefinedUi &&
+                    _kVerstehenUxVariant == 1 &&
+                    widget.params.showVerseHeader &&
+                    _cards != null) ...[
+                  const SizedBox(height: 4),
+                  _buildLesenVerstehenStepRow(),
+                  const SizedBox(height: 16),
+                ],
                 Expanded(
                   child: _buildContent(),
                 ),
@@ -823,6 +911,478 @@ class _ExplanationBottomSheetContentState
             ),
           ),
         ),
+      ),
+    );
+  }
+
+  /// Phasen-Lesarten: Lesen → Verstehen → Fragen (nur bei [_kExplanationSheetRefinedUi]).
+  Widget _buildPhaseHeading(String title) {
+    return Text(
+      title,
+      style: GoogleFonts.inter(
+        fontSize: 10,
+        fontWeight: FontWeight.w700,
+        letterSpacing: 1.25,
+        color: _accentChampagneGold.withOpacity(0.68),
+      ),
+    );
+  }
+
+  EdgeInsets _explanationScrollPadding() {
+    return EdgeInsets.fromLTRB(
+      16,
+      0,
+      16,
+      _kExplanationSheetRefinedUi ? 24 : 8,
+    );
+  }
+
+  int get _effectiveVerstehenStep {
+    if (_kVerstehenUxVariant != 1) return 0;
+    return _verstehenReadStep;
+  }
+
+  bool get _verstehenSectionMustStayOpen =>
+      _messages.isNotEmpty || _isLoadingFollowUp;
+
+  bool get _verstehenFoldableOpen =>
+      _verstehenSectionMustStayOpen || _verstehenExpanded;
+
+  List<Widget> _readingBlockWidgets({bool omitLesenPhaseLabel = false}) {
+    if (!widget.params.showVerseHeader) return [];
+    return [
+      if (omitLesenPhaseLabel) const SizedBox(height: 4),
+      if (_kExplanationSheetRefinedUi && !omitLesenPhaseLabel) ...[
+        Align(
+          alignment: Alignment.centerLeft,
+          child: _buildPhaseHeading('Lesen'),
+        ),
+        const SizedBox(height: 8),
+      ],
+      Padding(
+        padding: const EdgeInsets.only(bottom: 12),
+        child: Text(
+          widget.params.textAr ?? '',
+          textDirection: TextDirection.rtl,
+          textAlign: TextAlign.center,
+          style: GoogleFonts.amiri(
+            fontSize: 26,
+            fontWeight: FontWeight.w500,
+            color: Colors.white,
+            height: 1.68,
+          ),
+        ),
+      ),
+      Padding(
+        padding: const EdgeInsets.only(bottom: 14),
+        child: Text(
+          widget.params.textDe ?? '',
+          textAlign: TextAlign.center,
+          style: TextStyle(
+            fontSize: 15,
+            color: Colors.white.withOpacity(0.75),
+            height: 1.5,
+          ),
+        ),
+      ),
+      Padding(
+        padding: const EdgeInsets.only(bottom: 16),
+        child: _buildLocalTtsRow(
+          label: 'Deutsch vorlesen',
+          sourceKey: _lesenDeTtsSourceKey,
+          kind: TtsContentKind.verseGerman,
+          text: widget.params.textDe ?? '',
+          onSpeak: _speakLesenGerman,
+        ),
+      ),
+      Padding(
+        padding: const EdgeInsets.only(bottom: 20),
+        child: Container(
+          height: 1,
+          color: Colors.white.withOpacity(0.1),
+        ),
+      ),
+    ];
+  }
+
+  List<Widget> _verstehenCoreWidgets(VerseCards c) {
+    return [
+      _buildExplanationTabPills(),
+      const SizedBox(height: 10),
+      _buildLocalTtsRow(
+        label: 'Abschnitt vorlesen',
+        sourceKey: _verstehenTabTtsSourceKey(_explanationTabIndex),
+        kind: TtsContentKind.explanationTab,
+        text: _verstehenTabBody(c, _explanationTabIndex),
+        onSpeak: () => _speakVerstehenTab(c),
+        caption: _explanationTabLabels[_explanationTabIndex],
+      ),
+      SizedBox(height: _kExplanationSheetRefinedUi ? 14 : 12),
+      AnimatedSwitcher(
+        duration: const Duration(milliseconds: 150),
+        layoutBuilder: (Widget? currentChild, List<Widget> previousChildren) {
+          return Stack(
+            alignment: Alignment.topCenter,
+            children: <Widget>[
+              ...previousChildren,
+              if (currentChild != null) currentChild,
+            ],
+          );
+        },
+        transitionBuilder: (Widget child, Animation<double> animation) {
+          return FadeTransition(
+            opacity: animation,
+            child: child,
+          );
+        },
+        child: KeyedSubtree(
+          key: ValueKey<int>(_explanationTabIndex),
+          child: _buildVerseExplainCardForIndex(c),
+        ),
+      ),
+      if (c.relatedAyahs.isNotEmpty)
+        Builder(
+          builder: (context) {
+            final vis = _filterRelatedAyahs(c.relatedAyahs);
+            if (vis.isEmpty) return const SizedBox.shrink();
+            return Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.stretch,
+              children: [
+                const SizedBox(height: 14),
+                _buildRelatedAyahsSection(vis),
+              ],
+            );
+          },
+        ),
+    ];
+  }
+
+  List<Widget> _chatTrailWidgets() {
+    return [
+      if (_kExplanationSheetRefinedUi &&
+          (_messages.isNotEmpty || _isLoadingFollowUp)) ...[
+        const SizedBox(height: 22),
+        Container(
+          height: 1,
+          color: Colors.white.withOpacity(0.1),
+        ),
+        const SizedBox(height: 16),
+      ],
+      const SizedBox(height: 8),
+      for (final m in _messages) ...[
+        _MessageBubble(
+          message: m,
+          onTapLink: _openAyahFromHref,
+          linkifyAyahReferences: _linkifyAyahReferences,
+        ),
+        if (!m.isUser && (m.relatedAyahs?.isNotEmpty ?? false))
+          Builder(
+            builder: (context) {
+              final vis = _filterRelatedAyahs(m.relatedAyahs!);
+              if (vis.isEmpty) return const SizedBox.shrink();
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                children: [
+                  const SizedBox(height: 8),
+                  _buildRelatedAyahsSection(vis),
+                ],
+              );
+            },
+          ),
+      ],
+      if (_isLoadingFollowUp)
+        const Padding(
+          padding: EdgeInsets.symmetric(vertical: 16),
+          child: Row(
+            children: [
+              SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  color: Colors.white70,
+                  strokeWidth: 2,
+                ),
+              ),
+              SizedBox(width: 12),
+              Text(
+                'KI tippt...',
+                style: TextStyle(
+                  fontSize: 14,
+                  color: Colors.white70,
+                ),
+              ),
+            ],
+          ),
+        ),
+    ];
+  }
+
+  Widget _buildVerstehenCollapsedRow() {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => setState(() => _verstehenExpanded = true),
+        borderRadius: BorderRadius.circular(12),
+        splashColor: Colors.white.withOpacity(0.06),
+        highlightColor: Colors.white.withOpacity(0.04),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 12),
+          child: Row(
+            children: [
+              Icon(
+                Icons.menu_book_outlined,
+                size: 20,
+                color: _accentChampagneGold.withOpacity(0.75),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Verstehen',
+                      style: GoogleFonts.inter(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1.1,
+                        color: _accentChampagneGold.withOpacity(0.72),
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      'Bedeutung · Kontext · Heute',
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        height: 1.25,
+                        color: Colors.white.withOpacity(0.52),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.keyboard_arrow_down_rounded,
+                size: 26,
+                color: Colors.white.withOpacity(0.45),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildLesenVerstehenStepRow() {
+    final step = _effectiveVerstehenStep;
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 6),
+      child: Row(
+        children: [
+          Expanded(
+            child: _buildReadUnderstandStepChip(
+              label: 'Lesen',
+              selected: step == 0,
+              enabled: true,
+              onTap: () {
+                TtsService.instance.stop();
+                setState(() => _verstehenReadStep = 0);
+              },
+            ),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: _buildReadUnderstandStepChip(
+              label: 'Verstehen',
+              selected: step == 1,
+              enabled: true,
+              onTap: () {
+                TtsService.instance.stop();
+                setState(() => _verstehenReadStep = 1);
+              },
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildReadUnderstandStepChip({
+    required String label,
+    required bool selected,
+    required bool enabled,
+    required VoidCallback onTap,
+  }) {
+    const radius = 14.0;
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: enabled ? onTap : null,
+        borderRadius: BorderRadius.circular(radius),
+        splashColor: Colors.white.withOpacity(0.06),
+        highlightColor: Colors.white.withOpacity(0.03),
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 220),
+          curve: Curves.easeOutCubic,
+          alignment: Alignment.center,
+          padding: const EdgeInsets.symmetric(vertical: 11, horizontal: 10),
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(radius),
+            gradient: selected
+                ? LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Colors.white.withOpacity(0.1),
+                      Colors.white.withOpacity(0.04),
+                    ],
+                  )
+                : null,
+            color: selected ? null : Colors.white.withOpacity(0.045),
+            border: Border.all(
+              color: !enabled && !selected
+                  ? Colors.white.withOpacity(0.06)
+                  : selected
+                      ? _accentChampagneGold.withOpacity(0.48)
+                      : Colors.white.withOpacity(0.12),
+              width: selected ? 1.15 : 1,
+            ),
+            boxShadow: selected
+                ? [
+                    BoxShadow(
+                      color: _accentChampagneGold.withOpacity(0.14),
+                      blurRadius: 14,
+                      spreadRadius: 0,
+                      offset: Offset.zero,
+                    ),
+                  ]
+                : const [],
+          ),
+          child: Text(
+            label,
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: GoogleFonts.inter(
+              fontSize: 13,
+              fontWeight: selected ? FontWeight.w700 : FontWeight.w600,
+              letterSpacing: selected ? 0.15 : 0.05,
+              color: !enabled && !selected
+                  ? Colors.white.withOpacity(0.35)
+                  : selected
+                      ? const Color(0xFFEFD9A7)
+                      : Colors.white.withOpacity(0.68),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildExplanationScrollClassic(VerseCards c) {
+    return SingleChildScrollView(
+      controller: _scrollController,
+      padding: _explanationScrollPadding(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ..._readingBlockWidgets(),
+          if (_kExplanationSheetRefinedUi) ...[
+            SizedBox(height: widget.params.showVerseHeader ? 8 : 4),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: _buildPhaseHeading('Verstehen'),
+            ),
+            const SizedBox(height: 10),
+          ],
+          ..._verstehenCoreWidgets(c),
+          ..._chatTrailWidgets(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildExplanationScrollVariantVerstehenFoldable(VerseCards c) {
+    final open = _verstehenFoldableOpen;
+    return SingleChildScrollView(
+      controller: _scrollController,
+      padding: _explanationScrollPadding(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          ..._readingBlockWidgets(),
+          if (!open)
+            _buildVerstehenCollapsedRow()
+          else ...[
+            if (!_verstehenSectionMustStayOpen)
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  style: TextButton.styleFrom(
+                    foregroundColor: Colors.white54,
+                    visualDensity: VisualDensity.compact,
+                  ),
+                  onPressed: () => setState(() => _verstehenExpanded = false),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Einklappen',
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white54,
+                        ),
+                      ),
+                      const SizedBox(width: 2),
+                      Icon(Icons.expand_more_rounded, size: 22, color: Colors.white54),
+                    ],
+                  ),
+                ),
+              ),
+            const SizedBox(height: 4),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: _buildPhaseHeading('Verstehen'),
+            ),
+            const SizedBox(height: 10),
+            ..._verstehenCoreWidgets(c),
+          ],
+          ..._chatTrailWidgets(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildExplanationScrollVariantStepper(VerseCards c) {
+    final step = _effectiveVerstehenStep;
+    return SingleChildScrollView(
+      controller: _scrollController,
+      padding: _explanationScrollPadding(),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          if (step == 0)
+            ..._readingBlockWidgets(omitLesenPhaseLabel: true)
+          else ...[
+            const SizedBox(height: 4),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: _buildPhaseHeading('Verstehen'),
+            ),
+            const SizedBox(height: 10),
+            ..._verstehenCoreWidgets(c),
+          ],
+          if (step == 1) ..._chatTrailWidgets(),
+        ],
       ),
     );
   }
@@ -895,141 +1455,15 @@ class _ExplanationBottomSheetContentState
         }
         if (_cards == null) return const SizedBox.shrink();
         final c = _cards!;
-        return SingleChildScrollView(
-          controller: _scrollController,
-          padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              if (widget.params.showVerseHeader) ...[
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 12),
-                  child: Text(
-                    widget.params.textAr ?? '',
-                    textDirection: TextDirection.rtl,
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.amiri(
-                      fontSize: 26,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.white,
-                      height: 1.68,
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 24),
-                  child: Text(
-                    widget.params.textDe ?? '',
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 15,
-                      color: Colors.white.withOpacity(0.75),
-                      height: 1.5,
-                    ),
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.only(bottom: 20),
-                  child: Container(
-                    height: 1,
-                    color: Colors.white.withOpacity(0.1),
-                  ),
-                ),
-              ],
-              _buildExplanationTabPills(),
-              const SizedBox(height: 12),
-              AnimatedSwitcher(
-                duration: const Duration(milliseconds: 150),
-                layoutBuilder:
-                    (Widget? currentChild, List<Widget> previousChildren) {
-                  return Stack(
-                    alignment: Alignment.topCenter,
-                    children: <Widget>[
-                      ...previousChildren,
-                      if (currentChild != null) currentChild,
-                    ],
-                  );
-                },
-                transitionBuilder:
-                    (Widget child, Animation<double> animation) {
-                  return FadeTransition(
-                    opacity: animation,
-                    child: child,
-                  );
-                },
-                child: KeyedSubtree(
-                  key: ValueKey<int>(_explanationTabIndex),
-                  child: _buildVerseExplainCardForIndex(c),
-                ),
-              ),
-              if (c.relatedAyahs.isNotEmpty) ...[
-                Builder(
-                  builder: (context) {
-                    final vis = _filterRelatedAyahs(c.relatedAyahs);
-                    if (vis.isEmpty) return const SizedBox.shrink();
-                    return Column(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.stretch,
-                      children: [
-                        const SizedBox(height: 14),
-                        _buildRelatedAyahsSection(vis),
-                      ],
-                    );
-                  },
-                ),
-              ],
-              const SizedBox(height: 8),
-              for (final m in _messages) ...[
-                _MessageBubble(
-                  message: m,
-                  onTapLink: _openAyahFromHref,
-                  linkifyAyahReferences: _linkifyAyahReferences,
-                ),
-                if (!m.isUser && (m.relatedAyahs?.isNotEmpty ?? false)) ...[
-                  Builder(
-                    builder: (context) {
-                      final vis = _filterRelatedAyahs(m.relatedAyahs!);
-                      if (vis.isEmpty) return const SizedBox.shrink();
-                      return Column(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.stretch,
-                        children: [
-                          const SizedBox(height: 8),
-                          _buildRelatedAyahsSection(vis),
-                        ],
-                      );
-                    },
-                  ),
-                ],
-              ],
-              if (_isLoadingFollowUp)
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 16),
-                  child: Row(
-                    children: [
-                      SizedBox(
-                        width: 20,
-                        height: 20,
-                        child: CircularProgressIndicator(
-                          color: Colors.white70,
-                          strokeWidth: 2,
-                        ),
-                      ),
-                      SizedBox(width: 12),
-                      Text(
-                        'KI tippt...',
-                        style: TextStyle(
-                          fontSize: 14,
-                          color: Colors.white70,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-            ],
-          ),
-        );
+        if (_kExplanationSheetRefinedUi &&
+            _kVerstehenUxVariant == 1 &&
+            widget.params.showVerseHeader) {
+          return _buildExplanationScrollVariantStepper(c);
+        }
+        if (_kExplanationSheetRefinedUi && _kVerstehenUxVariant == 0) {
+          return _buildExplanationScrollVariantVerstehenFoldable(c);
+        }
+        return _buildExplanationScrollClassic(c);
       },
     );
   }
@@ -1051,6 +1485,12 @@ class _ExplanationBottomSheetContentState
   }
 
   Widget _buildExplanationTabPills() {
+    return _kExplanationSheetRefinedUi
+        ? _buildExplanationTabPillsRefined()
+        : _buildExplanationTabPillsLegacy();
+  }
+
+  Widget _buildExplanationTabPillsLegacy() {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: List.generate(3, (i) {
@@ -1061,7 +1501,10 @@ class _ExplanationBottomSheetContentState
             color: Colors.transparent,
             borderRadius: BorderRadius.circular(20),
             child: InkWell(
-              onTap: () => setState(() => _explanationTabIndex = i),
+              onTap: () {
+                TtsService.instance.stop();
+                setState(() => _explanationTabIndex = i);
+              },
               borderRadius: BorderRadius.circular(20),
               child: AnimatedContainer(
                 duration: const Duration(milliseconds: 200),
@@ -1103,7 +1546,81 @@ class _ExplanationBottomSheetContentState
     );
   }
 
+  Widget _buildExplanationTabPillsRefined() {
+    return DecoratedBox(
+      decoration: BoxDecoration(
+        color: Colors.white.withOpacity(0.08),
+        borderRadius: BorderRadius.circular(12),
+        border: Border.all(color: Colors.white.withOpacity(0.06)),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(3),
+        child: Row(
+          children: List.generate(3, (i) {
+            final selected = _explanationTabIndex == i;
+            return Expanded(
+              child: Material(
+                color: Colors.transparent,
+                child: InkWell(
+                  onTap: () {
+                    TtsService.instance.stop();
+                    setState(() => _explanationTabIndex = i);
+                  },
+                  borderRadius: BorderRadius.circular(9),
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 200),
+                    alignment: Alignment.center,
+                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 2),
+                    decoration: BoxDecoration(
+                      color: selected ? _accentChampagneGold : Colors.transparent,
+                      borderRadius: BorderRadius.circular(9),
+                      boxShadow: selected
+                          ? [
+                              BoxShadow(
+                                color: _accentChampagneGold.withOpacity(0.22),
+                                blurRadius: 8,
+                                spreadRadius: 0,
+                                offset: Offset.zero,
+                              ),
+                            ]
+                          : const [],
+                    ),
+                    child: Text(
+                      _explanationTabLabels[i],
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        fontSize: 12.5,
+                        fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+                        letterSpacing: selected ? -0.1 : 0,
+                        color: selected
+                            ? const Color(0xFF1A1A1A)
+                            : Colors.white.withOpacity(0.72),
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+            );
+          }),
+        ),
+      ),
+    );
+  }
+
   Widget _buildVerseExplainCard(String body) {
+    final markdown = _MarkdownSection(
+      text: _linkifyAyahReferences(body),
+      textColor: Colors.white,
+      onTapLink: _openAyahFromHref,
+    );
+    if (_kExplanationSheetRefinedUi) {
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(4, 2, 4, 0),
+        child: markdown,
+      );
+    }
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 2),
       child: DecoratedBox(
@@ -1113,11 +1630,7 @@ class _ExplanationBottomSheetContentState
         ),
         child: Padding(
           padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
-          child: _MarkdownSection(
-            text: _linkifyAyahReferences(body),
-            textColor: Colors.white,
-            onTapLink: _openAyahFromHref,
-          ),
+          child: markdown,
         ),
       ),
     );
@@ -1126,6 +1639,12 @@ class _ExplanationBottomSheetContentState
   Widget _buildQuickChips() {
     final qs = _visibleQuickQuestions();
     if (qs.isEmpty) return const SizedBox.shrink();
+    return _kExplanationSheetRefinedUi
+        ? _buildQuickChipsRefined(qs)
+        : _buildQuickChipsLegacy(qs);
+  }
+
+  Widget _buildQuickChipsLegacy(List<String> qs) {
     return SizedBox(
       height: 46,
       child: ListView.separated(
@@ -1167,6 +1686,50 @@ class _ExplanationBottomSheetContentState
           );
         },
       ),
+    );
+  }
+
+  Widget _buildQuickChipsRefined(List<String> qs) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        for (var i = 0; i < qs.length; i++) ...[
+          if (i > 0) const SizedBox(height: 6),
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: _isLoadingFollowUp ? null : () => _sendFollowUp(qs[i]),
+              borderRadius: BorderRadius.circular(12),
+              splashColor: Colors.white.withOpacity(0.06),
+              highlightColor: Colors.white.withOpacity(0.04),
+              child: Ink(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+                decoration: BoxDecoration(
+                  color: Colors.white.withOpacity(0.045),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.white.withOpacity(0.06)),
+                ),
+                child: Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    qs[i],
+                    maxLines: 3,
+                    overflow: TextOverflow.ellipsis,
+                    textAlign: TextAlign.start,
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      height: 1.32,
+                      fontWeight: FontWeight.w500,
+                      color: _isLoadingFollowUp ? Colors.white38 : Colors.white.withOpacity(0.88),
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ],
     );
   }
 
@@ -1399,6 +1962,94 @@ class _ExplanationBottomSheetContentState
     }
   }
 
+  /// Tastatur, laufende Antwort oder bestehender Chat: Footer nicht zuklappen (Eingabe muss erreichbar bleiben).
+  bool _fragenComposerMustStayOpen(MediaQueryData media) {
+    return _messages.isNotEmpty ||
+        _isLoadingFollowUp ||
+        media.viewInsets.bottom > 0;
+  }
+
+  bool _fragenComposerIsOpen(MediaQueryData media) {
+    if (!_kExplanationSheetRefinedUi) return true;
+    return _fragenComposerMustStayOpen(media) || _fragenComposerExpanded;
+  }
+
+  String _fragenCollapsedSubtitle({
+    required bool showFeedback,
+    required bool showQuickChips,
+  }) {
+    final parts = <String>[];
+    if (showFeedback) parts.add('Feedback');
+    if (showQuickChips) parts.add('Schnellfragen');
+    parts.add('Eigene Frage');
+    return parts.join(' · ');
+  }
+
+  Widget _buildFragenCollapsedRow({
+    required bool showFeedback,
+    required bool showQuickChips,
+  }) {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () => setState(() => _fragenComposerExpanded = true),
+        borderRadius: BorderRadius.circular(12),
+        splashColor: Colors.white.withOpacity(0.06),
+        highlightColor: Colors.white.withOpacity(0.04),
+        child: Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 12),
+          child: Row(
+            children: [
+              Icon(
+                Icons.forum_outlined,
+                size: 20,
+                color: _accentChampagneGold.withOpacity(0.75),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      'Fragen',
+                      style: GoogleFonts.inter(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        letterSpacing: 1.1,
+                        color: _accentChampagneGold.withOpacity(0.72),
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      _fragenCollapsedSubtitle(
+                        showFeedback: showFeedback,
+                        showQuickChips: showQuickChips,
+                      ),
+                      maxLines: 2,
+                      overflow: TextOverflow.ellipsis,
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w500,
+                        height: 1.25,
+                        color: Colors.white.withOpacity(0.52),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.keyboard_arrow_down_rounded,
+                size: 26,
+                color: Colors.white.withOpacity(0.45),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   Widget _buildBottomComposer(MediaQueryData media) {
     final showComposer = (_cards != null || _messages.isNotEmpty) && _errorMessage == null;
     if (!showComposer) {
@@ -1413,56 +2064,139 @@ class _ExplanationBottomSheetContentState
     final showInlineAiFeedback =
         _cards != null && !_verseExplanationFeedbackSent && !keyboardOpen;
 
+    final expandedChildren = <Widget>[
+      if (showInlineAiFeedback) ...[
+        Padding(
+          padding: EdgeInsets.fromLTRB(
+            8,
+            _kExplanationSheetRefinedUi ? 12 : 10,
+            8,
+            0,
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'War die Erklärung hilfreich?',
+                  style: GoogleFonts.inter(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.white.withOpacity(0.72),
+                  ),
+                ),
+              ),
+              IconButton(
+                tooltip: 'Ja',
+                onPressed: () => _submitVerseExplanationFeedback(1),
+                icon: Icon(
+                  Icons.thumb_up_outlined,
+                  color: _accentChampagneGold,
+                  size: 22,
+                ),
+              ),
+              IconButton(
+                tooltip: 'Nein',
+                onPressed: () => _submitVerseExplanationFeedback(-1),
+                icon: Icon(
+                  Icons.thumb_down_outlined,
+                  color: Colors.white54,
+                  size: 22,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
+      SizedBox(
+        height: showQuickChips
+            ? (_kExplanationSheetRefinedUi ? 12 : 10)
+            : 8,
+      ),
+      if (showQuickChips) ...[
+        _buildQuickChips(),
+        SizedBox(height: _kExplanationSheetRefinedUi ? 12 : 10),
+      ],
+      _buildChatInput(),
+    ];
+
+    if (!_kExplanationSheetRefinedUi) {
+      return Padding(
+        padding: const EdgeInsets.fromLTRB(10, 6, 10, 8),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Divider(height: 1, thickness: 1, color: Colors.white.withOpacity(0.08)),
+            ...expandedChildren,
+          ],
+        ),
+      );
+    }
+
+    final open = _fragenComposerIsOpen(media);
+    final mustStay = _fragenComposerMustStayOpen(media);
+
     return Padding(
-      padding: const EdgeInsets.fromLTRB(10, 6, 10, 8),
+      padding: const EdgeInsets.fromLTRB(10, 10, 10, 8),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
-          Divider(height: 1, thickness: 1, color: Colors.white.withOpacity(0.08)),
-          if (showInlineAiFeedback) ...[
-            Padding(
-              padding: const EdgeInsets.fromLTRB(8, 10, 8, 0),
-              child: Row(
-                children: [
-                  Expanded(
-                    child: Text(
-                      'War die Erklärung hilfreich?',
-                      style: GoogleFonts.inter(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.white.withOpacity(0.72),
+          SizedBox(height: open ? 4 : 0),
+          Divider(
+            height: 1,
+            thickness: open ? 0.5 : 1,
+            color: Colors.white.withOpacity(open ? 0.055 : 0.08),
+          ),
+          if (!open)
+            _buildFragenCollapsedRow(
+              showFeedback: showInlineAiFeedback,
+              showQuickChips: showQuickChips,
+            )
+          else ...[
+            if (!mustStay)
+              Align(
+                alignment: Alignment.centerRight,
+                child: TextButton(
+                  style: TextButton.styleFrom(
+                    foregroundColor: Colors.white54,
+                    visualDensity: VisualDensity.compact,
+                  ),
+                  onPressed: () => setState(() => _fragenComposerExpanded = false),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Einklappen',
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white54,
+                        ),
                       ),
-                    ),
+                      const SizedBox(width: 2),
+                      Icon(Icons.expand_more_rounded, size: 22, color: Colors.white54),
+                    ],
                   ),
-                  IconButton(
-                    tooltip: 'Ja',
-                    onPressed: () => _submitVerseExplanationFeedback(1),
-                    icon: Icon(
-                      Icons.thumb_up_outlined,
-                      color: _accentChampagneGold,
-                      size: 22,
-                    ),
-                  ),
-                  IconButton(
-                    tooltip: 'Nein',
-                    onPressed: () => _submitVerseExplanationFeedback(-1),
-                    icon: Icon(
-                      Icons.thumb_down_outlined,
-                      color: Colors.white54,
-                      size: 22,
-                    ),
-                  ),
-                ],
+                ),
+              ),
+            const SizedBox(height: 8),
+            DecoratedBox(
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.022),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: Colors.white.withOpacity(0.05)),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(8, 10, 8, 6),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  mainAxisSize: MainAxisSize.min,
+                  children: expandedChildren,
+                ),
               ),
             ),
           ],
-          SizedBox(height: showQuickChips ? 10 : 8),
-          if (showQuickChips) ...[
-            _buildQuickChips(),
-            const SizedBox(height: 10),
-          ],
-          _buildChatInput(),
         ],
       ),
     );

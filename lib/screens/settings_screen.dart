@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_fonts/google_fonts.dart';
+import '../main.dart' show appRestartNotifier;
 import '../app_keys.dart';
 import '../data/prayer/notification_service.dart';
 import '../data/prayer/prayer_models.dart';
@@ -117,6 +118,35 @@ class _SettingsScreenState extends State<SettingsScreen> {
         child: InkWell(
           borderRadius: BorderRadius.circular(20),
           onTap: () async {
+            if (isPro) {
+              showDialog<void>(
+                context: context,
+                builder: (ctx) => AlertDialog(
+                  backgroundColor: AppColors.emeraldDark,
+                  title: Text(
+                    'Ihdina Pro aktiv',
+                    style: GoogleFonts.playfairDisplay(color: Colors.white),
+                  ),
+                  content: Text(
+                    'Dein Pro-Abo ist aktiv. Du kannst es jederzeit über die Einstellungen deines Store-Accounts verwalten.',
+                    style: GoogleFonts.inter(
+                      color: Colors.white70,
+                      fontSize: 14,
+                    ),
+                  ),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.pop(ctx),
+                      child: Text(
+                        'OK',
+                        style: TextStyle(color: _accentChampagneGold),
+                      ),
+                    ),
+                  ],
+                ),
+              );
+              return;
+            }
             await Navigator.push<void>(
               context,
               MaterialPageRoute<void>(builder: (_) => const PaywallScreen()),
@@ -187,6 +217,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
           final updated = _prayerSettings!.copyWith(method: PrayerMethodOption.turkiye);
           await SettingsRepository.instance.setPrayerSettings(updated);
           if (mounted) setState(() => _prayerSettings = updated);
+          if (mounted) await _loadPrayerTimes();
+          appRestartNotifier.value++;
         },
         child: Container(
           padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
@@ -280,6 +312,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           _locationLoading = false;
         });
         await _loadPrayerTimes();
+        appRestartNotifier.value++;
         if (mounted && _notificationsEnabled && _prayerResult != null) {
           await NotificationService.instance.schedulePrayerNotifications(_prayerResult!, updated);
         }
@@ -818,6 +851,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                       if (result == true && mounted) {
                                         await _load();
                                         await _loadPrayerTimes();
+                                        appRestartNotifier.value++;
                                         if (mounted &&
                                             _notificationsEnabled &&
                                             _prayerResult != null &&
@@ -966,6 +1000,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                               final updated = _prayerSettings!.copyWith(method: v);
                               await SettingsRepository.instance.setPrayerSettings(updated);
                               if (mounted) setState(() => _prayerSettings = updated);
+                              if (mounted) await _loadPrayerTimes();
+                              appRestartNotifier.value++;
                             },
                           ),
                           const SizedBox(height: 18),

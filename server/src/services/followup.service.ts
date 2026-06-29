@@ -14,7 +14,7 @@ const allowedRoles = new Set(["system", "user", "assistant"]);
  * auch wenn auf dem Server `ALLOW_FREE_FOLLOWUPS=false` steht.
  * Vor Release auf `false` setzen; dann steuert nur noch die Env-Variable.
  */
-const FOLLOWUPS_FREE_BETA = true;
+const FOLLOWUPS_FREE_BETA = false;
 
 /**
  * Wenn {@link FOLLOWUPS_FREE_BETA} false ist: Folgefragen ohne Pro erlauben,
