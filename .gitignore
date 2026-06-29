@@ -53,4 +53,7 @@ app.*.map.json
 
 # Node
 node_modules/
+# Build artifacts
+ios/build/
+server/dist/
 server/node_modules/
