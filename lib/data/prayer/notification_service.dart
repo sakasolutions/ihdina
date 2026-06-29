@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:timezone/timezone.dart' as tz;
@@ -11,6 +12,12 @@ import '../../prayer/prayer_type.dart';
 import '../settings/settings_repository.dart';
 import 'prayer_models.dart';
 import 'prayer_times_repository.dart';
+
+void _notifDebug(String message) {
+  if (kDebugMode) {
+    debugPrint(message);
+  }
+}
 
 /// Base notification ID for prayer reminders. One ID pro Gebetszeit (Fajr=1, Sonnenaufgang=2, …).
 const int _prayerNotificationIdBase = 1000;
@@ -126,7 +133,7 @@ class NotificationService {
   ///
   /// Fehler werden geloggt und fressen keinen Start; doppelte Aufrufe mit Screen-Logik sind unkritisch.
   Future<void> reschedulePrayerNotificationsOnAppStartup() async {
-    debugPrint('[NOTIF][startup] reschedulePrayerNotificationsOnAppStartup: Start');
+    _notifDebug('[NOTIF][startup] reschedulePrayerNotificationsOnAppStartup: Start');
     try {
       final settingsRepo = SettingsRepository.instance;
       final notificationsOn = await settingsRepo.getNotificationsEnabled();
@@ -135,12 +142,12 @@ class NotificationService {
         final lat = settings.latitude;
         final lng = settings.longitude;
         if (lat.isNaN || lng.isNaN || !lat.isFinite || !lng.isFinite) {
-          debugPrint(
+          _notifDebug(
             '[NOTIF][startup] Gebets-Slots übersprungen: ungültige Koordinaten (lat=$lat, lng=$lng)',
           );
         } else {
           if (settings.locationLabel == 'Default') {
-            debugPrint(
+            _notifDebug(
               '[NOTIF][startup] Hinweis: Standort-Label noch „Default“ — Berechnung mit gespeicherten/Fallback-Koordinaten',
             );
           }
@@ -148,13 +155,13 @@ class NotificationService {
           final now = DateTime.now();
           final result = PrayerTimesRepository.instance.computeToday(settings, now);
           final scheduled = await schedulePrayerNotifications(result, settings);
-          debugPrint(
+          _notifDebug(
             '[NOTIF][startup] abgeschlossen: $scheduled Gebets-Slot(s) geplant '
             '(location=${settings.locationLabel})',
           );
         }
       } else {
-        debugPrint(
+        _notifDebug(
           '[NOTIF][startup] Gebets-Erinnerungen in den Einstellungen deaktiviert — keine Gebets-Slots',
         );
       }
@@ -162,13 +169,13 @@ class NotificationService {
       final dailyAyahOn = await settingsRepo.getDailyAyahReminderEnabled();
       if (dailyAyahOn) {
         await scheduleDailyAyahReminder();
-        debugPrint(
+        _notifDebug(
           '[NOTIF][startup] Tagesvers-Erinnerung neu geplant (gleiche Berechtigungs-/Schedule-Logik)',
         );
       }
     } catch (e, st) {
-      debugPrint('[NOTIF][startup] Fehler beim Neuplanen (App läuft weiter): $e');
-      debugPrint('[NOTIF][startup] $st');
+      _notifDebug('[NOTIF][startup] Fehler beim Neuplanen (App läuft weiter): $e');
+      _notifDebug('[NOTIF][startup] $st');
     } finally {
       _lastPrayerRescheduleRunAt = DateTime.now();
     }
@@ -183,14 +190,14 @@ class NotificationService {
     final last = _lastPrayerRescheduleRunAt;
     final now = DateTime.now();
     if (last != null && now.difference(last) < resumeRescheduleMinGap) {
-      debugPrint(
+      _notifDebug(
         '[NOTIF][lifecycle] AppLifecycle.resumed: Neuplanung übersprungen '
         '(${now.difference(last).inMinutes} min seit letztem Startup/Resume-Lauf; '
         'Mindestabstand ${resumeRescheduleMinGap.inMinutes} min)',
       );
       return;
     }
-    debugPrint(
+    _notifDebug(
       '[NOTIF][lifecycle] AppLifecycle.resumed → Gebets-Neuplanung (warm resume / nach Pause)',
     );
     await reschedulePrayerNotificationsOnAppStartup();
@@ -204,7 +211,7 @@ class NotificationService {
           IOSFlutterLocalNotificationsPlugin>();
       final result = await impl?.requestPermissions(alert: true, badge: false);
       if (logPrayerDebug) {
-        debugPrint('[NOTIF][perm] iOS requestPermissions(alert:true) → $result (null = kein Plugin)');
+        _notifDebug('[NOTIF][perm] iOS requestPermissions(alert:true) → $result (null = kein Plugin)');
       }
       return result == true;
     }
@@ -213,7 +220,7 @@ class NotificationService {
           AndroidFlutterLocalNotificationsPlugin>();
       final notifResult = await impl?.requestNotificationsPermission();
       if (logPrayerDebug) {
-        debugPrint(
+        _notifDebug(
           '[NOTIF][perm] Android requestNotificationsPermission → $notifResult '
           '(true=gewährt, false=verweigert, null=unbekannt/nicht unterstützt)',
         );
@@ -221,7 +228,7 @@ class NotificationService {
       if (impl != null) {
         if (logPrayerDebug) {
           final exactResult = await impl.requestExactAlarmsPermission();
-          debugPrint(
+          _notifDebug(
             '[NOTIF][perm] Android requestExactAlarmsPermission → $exactResult '
             '(Plugin-Rückgabe; kann null sein)',
           );
@@ -229,30 +236,30 @@ class NotificationService {
           await impl.requestExactAlarmsPermission();
         }
       } else if (logPrayerDebug) {
-        debugPrint('[NOTIF][perm] Android implementation null – keine Request-Calls');
+        _notifDebug('[NOTIF][perm] Android implementation null – keine Request-Calls');
       }
       if (logPrayerDebug && impl != null) {
         try {
           final enabled = await impl.areNotificationsEnabled();
           final canExact = await impl.canScheduleExactNotifications();
-          debugPrint(
+          _notifDebug(
             '[NOTIF][perm] Android areNotificationsEnabled → $enabled '
             '(Zustand nach Request, kein zweiter Dialog)',
           );
-          debugPrint(
+          _notifDebug(
             '[NOTIF][perm] Android canScheduleExactNotifications → $canExact '
             '(false oft: „Alarms & reminders“ / Akku – exakte Alarme eingeschränkt)',
           );
         } catch (e, st) {
-          debugPrint('[NOTIF][perm] Android Zusatz-Abfrage fehlgeschlagen: $e');
-          debugPrint('[NOTIF][perm] $st');
+          _notifDebug('[NOTIF][perm] Android Zusatz-Abfrage fehlgeschlagen: $e');
+          _notifDebug('[NOTIF][perm] $st');
         }
       }
       // false = explizit verweigert; true/null = gewährt oder ältere APIs / unbekannt (nicht blockieren).
       return notifResult != false;
     }
     if (logPrayerDebug) {
-      debugPrint('[NOTIF][perm] Plattform weder iOS noch Android – übersprungen');
+      _notifDebug('[NOTIF][perm] Plattform weder iOS noch Android – übersprungen');
     }
     return true;
   }
@@ -264,7 +271,7 @@ class NotificationService {
       final impl = _plugin.resolvePlatformSpecificImplementation<
           AndroidFlutterLocalNotificationsPlugin>();
       if (impl == null) {
-        debugPrint(
+        _notifDebug(
           '[NOTIF][perm] _notificationsPermittedForPrayerScheduling: Android-Implementation null → false',
         );
         return false;
@@ -272,23 +279,23 @@ class NotificationService {
       try {
         final enabled = await impl.areNotificationsEnabled();
         if (enabled == false) {
-          debugPrint(
+          _notifDebug(
             '[NOTIF][perm] Android areNotificationsEnabled() == false → Gebets-Scheduling nicht sinnvoll',
           );
           return false;
         }
         if (enabled == null) {
-          debugPrint(
+          _notifDebug(
             '[NOTIF][perm] Android areNotificationsEnabled() == null → true angenommen (API unklar)',
           );
           return true;
         }
         return true;
       } catch (e, st) {
-        debugPrint(
+        _notifDebug(
           '[NOTIF][perm] Android areNotificationsEnabled Fehler – Scheduling abgebrochen: $e',
         );
-        debugPrint('[NOTIF][perm] $st');
+        _notifDebug('[NOTIF][perm] $st');
         return false;
       }
     }
@@ -296,7 +303,7 @@ class NotificationService {
       final impl = _plugin.resolvePlatformSpecificImplementation<
           IOSFlutterLocalNotificationsPlugin>();
       if (impl == null) {
-        debugPrint(
+        _notifDebug(
           '[NOTIF][perm] _notificationsPermittedForPrayerScheduling: iOS-Implementation null → false',
         );
         return false;
@@ -304,31 +311,31 @@ class NotificationService {
       try {
         final opts = await impl.checkPermissions();
         if (opts == null) {
-          debugPrint(
+          _notifDebug(
             '[NOTIF][perm] iOS checkPermissions() == null → true angenommen (unklar)',
           );
           return true;
         }
         final appAllows = opts.isEnabled || opts.isProvisionalEnabled;
         if (!appAllows) {
-          debugPrint(
+          _notifDebug(
             '[NOTIF][perm] iOS: weder isEnabled noch isProvisionalEnabled → kein Gebets-Scheduling '
             '(isEnabled=${opts.isEnabled}, isProvisionalEnabled=${opts.isProvisionalEnabled})',
           );
           return false;
         }
         if (!opts.isAlertEnabled && !opts.isProvisionalEnabled) {
-          debugPrint(
+          _notifDebug(
             '[NOTIF][perm] iOS: Alerts aus (isAlertEnabled=false, kein Provisional) → kein sichtbares Scheduling',
           );
           return false;
         }
         return true;
       } catch (e, st) {
-        debugPrint(
+        _notifDebug(
           '[NOTIF][perm] iOS checkPermissions Fehler – Scheduling abgebrochen: $e',
         );
-        debugPrint('[NOTIF][perm] $st');
+        _notifDebug('[NOTIF][perm] $st');
         return false;
       }
     }
@@ -352,26 +359,26 @@ class NotificationService {
   ) async {
     if (!_initialized) await initialize();
 
-    debugPrint('[NOTIF][prayer] ========== schedulePrayerNotifications START ==========');
-    debugPrint('[NOTIF][prayer] tz.local=${tz.local.name}');
+    _notifDebug('[NOTIF][prayer] ========== schedulePrayerNotifications START ==========');
+    _notifDebug('[NOTIF][prayer] tz.local=${tz.local.name}');
     final aggregateGranted = await requestPermissions(logPrayerDebug: true);
-    debugPrint(
+    _notifDebug(
       '[NOTIF][prayer] requestPermissions() aggregiert (false = explizit verweigert / iOS ohne Alert): '
       'mayProceed=$aggregateGranted',
     );
 
     try {
       await cancelAllPrayerNotifications();
-      debugPrint('[NOTIF][prayer] cancelAllPrayerNotifications: OK');
+      _notifDebug('[NOTIF][prayer] cancelAllPrayerNotifications: OK');
     } catch (e, st) {
-      debugPrint(
+      _notifDebug(
         '[NOTIF][prayer] cancelAllPrayerNotifications: FEHLER (Planung geht trotzdem weiter): $e',
       );
-      debugPrint('[NOTIF][prayer] $st');
+      _notifDebug('[NOTIF][prayer] $st');
     }
 
     if (!aggregateGranted) {
-      debugPrint(
+      _notifDebug(
         '[NOTIF][prayer] ABORT: Kein Gebets-Scheduling – requestPermissions() meldet keine Zustimmung '
         '(Android: POST_NOTIFICATIONS verweigert; iOS: alert-Berechtigung nicht erteilt).',
       );
@@ -380,7 +387,7 @@ class NotificationService {
 
     final displayPermitted = await _notificationsPermittedForPrayerScheduling();
     if (!displayPermitted) {
-      debugPrint(
+      _notifDebug(
         '[NOTIF][prayer] ABORT: Kein Gebets-Scheduling – System meldet, dass Benachrichtigungen '
         'nicht angezeigt werden dürfen (s. [NOTIF][perm] Logs oben).',
       );
@@ -394,22 +401,22 @@ class NotificationService {
       try {
         final canExact = await impl?.canScheduleExactNotifications();
         if (canExact == false) {
-          debugPrint(
+          _notifDebug(
             '[NOTIF][prayer] HINWEIS: canScheduleExactNotifications == false – geplante Zeiten können '
             'verspätet erscheinen (Akku / „Alarms & reminders“). Scheduling wird trotzdem versucht.',
           );
         }
       } catch (e) {
-        debugPrint('[NOTIF][prayer] canScheduleExactNotifications Abfrage übersprungen: $e');
+        _notifDebug('[NOTIF][prayer] canScheduleExactNotifications Abfrage übersprungen: $e');
       }
     }
 
-    debugPrint('[NOTIF][prayer] Berechtigungen OK – Planung wird fortgesetzt.');
+    _notifDebug('[NOTIF][prayer] Berechtigungen OK – Planung wird fortgesetzt.');
 
     final now = result.now;
     final nowTz = tz.TZDateTime.from(now, tz.local);
-    debugPrint('[NOTIF][prayer] result.now (local DateTime)=$now');
-    debugPrint('[NOTIF][prayer] now as TZDateTime=$nowTz');
+    _notifDebug('[NOTIF][prayer] result.now (local DateTime)=$now');
+    _notifDebug('[NOTIF][prayer] now as TZDateTime=$nowTz');
 
     final todayMap = result.times;
     final todayCalendar = DateTime(now.year, now.month, now.day);
@@ -418,7 +425,7 @@ class NotificationService {
       settings,
       tomorrowCalendar,
     );
-    debugPrint(
+    _notifDebug(
       '[NOTIF][prayer] Fenster: heute=$todayCalendar morgen=$tomorrowCalendar (lokaler Kalender); '
       'morgige Zeiten aus computePrayerTimesMapForDate',
     );
@@ -436,7 +443,7 @@ class NotificationService {
       final tTomorrow = tomorrowMap[type];
 
       if (tToday == null || tTomorrow == null) {
-        debugPrint(
+        _notifDebug(
           '[NOTIF][prayer] ${type.label} id=$id SKIPPED reason=fehlende Zeit in heute/morgen-Map',
         );
         continue;
@@ -464,14 +471,14 @@ class NotificationService {
             daySource = 'morgen';
             wallSunriseForLog = tTomorrow;
           } else {
-            debugPrint(
+            _notifDebug(
               '[NOTIF][prayer] ${type.label} id=$id SKIPPED reason=Sunrise−10 min weder heute noch morgen '
               'strikt nach now (heute shift=$shiftToday, morgen shift=$shiftTomorrow, nowTz=$nowTz)',
             );
             continue;
           }
         }
-        debugPrint(
+        _notifDebug(
           '[NOTIF][prayer][sunrise] ${type.label} id=$id Quelle=$daySource '
           'sunriseWallLocal=$wallSunriseForLog → triggerTz=$scheduledTz (minus 10 min)',
         );
@@ -483,7 +490,7 @@ class NotificationService {
           scheduledTz = tz.TZDateTime.from(tTomorrow, tz.local);
           daySource = 'morgen';
         } else {
-          debugPrint(
+          _notifDebug(
             '[NOTIF][prayer] ${type.label} id=$id SKIPPED reason=heute und morgen nicht ≥ now '
             '(heute=$tToday, morgen=$tTomorrow, now=$now)',
           );
@@ -492,14 +499,14 @@ class NotificationService {
 
         final chosen = scheduledTz;
         if (!chosen.isAfter(nowTz)) {
-          debugPrint(
+          _notifDebug(
             '[NOTIF][prayer] ${type.label} id=$id SKIPPED reason=nach Auswahl nicht strikt nach nowTz '
             '(Quelle=$daySource, scheduledTz=$chosen, nowTz=$nowTz)',
           );
           continue;
         }
         scheduledTz = chosen;
-        debugPrint(
+        _notifDebug(
           '[NOTIF][prayer] ${type.label} id=$id Quelle=$daySource wallLocal='
           '${daySource == 'heute' ? tToday : tTomorrow} → tz=$chosen',
         );
@@ -526,26 +533,26 @@ class NotificationService {
           androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
         );
         count++;
-        debugPrint(
+        _notifDebug(
           '[NOTIF][prayer] ${type.label} id=$id SCHEDULED Quelle=$daySource finalTz=$scheduledTime',
         );
       } catch (e, st) {
-        debugPrint(
+        _notifDebug(
           '[NOTIF][prayer] ${type.label} id=$id SCHEDULE_ERROR zonedSchedule fehlgeschlagen: $e',
         );
-        debugPrint('[NOTIF][prayer] $st');
+        _notifDebug('[NOTIF][prayer] $st');
         rethrow;
       }
     }
 
     if (count == 0) {
-      debugPrint(
+      _notifDebug(
         '[NOTIF][prayer] scheduledCount=0: Kein Slot aus heute/morgen konnte geplant werden '
         '(s. SKIPPED-Logs oben; ggf. Uhrzeit/Sync prüfen).',
       );
     }
 
-    debugPrint(
+    _notifDebug(
       '[NOTIF][prayer] ========== schedulePrayerNotifications ENDE: '
       'scheduledCount=$count (max ${prayerTypeOrderForDisplay.length} Slots, heute+morgen) ==========',
     );
@@ -567,10 +574,10 @@ class NotificationService {
   Future<void> scheduleDailyAyahReminder({int hour = 10, int minute = 0}) async {
     if (!_initialized) await initialize();
 
-    debugPrint('[NOTIF][dailyAyah] ========== scheduleDailyAyahReminder START ==========');
+    _notifDebug('[NOTIF][dailyAyah] ========== scheduleDailyAyahReminder START ==========');
     final aggregateGranted = await requestPermissions(logPrayerDebug: true);
     if (!aggregateGranted) {
-      debugPrint(
+      _notifDebug(
         '[NOTIF][dailyAyah] ABORT: Kein Scheduling – requestPermissions() meldet keine Zustimmung.',
       );
       return;
@@ -578,7 +585,7 @@ class NotificationService {
 
     final displayPermitted = await _notificationsPermittedForPrayerScheduling();
     if (!displayPermitted) {
-      debugPrint(
+      _notifDebug(
         '[NOTIF][dailyAyah] ABORT: System meldet, dass Benachrichtigungen nicht angezeigt werden dürfen.',
       );
       return;
@@ -590,12 +597,12 @@ class NotificationService {
       try {
         final canExact = await impl?.canScheduleExactNotifications();
         if (canExact == false) {
-          debugPrint(
+          _notifDebug(
             '[NOTIF][dailyAyah] HINWEIS: canScheduleExactNotifications == false – wie bei Gebetszeiten.',
           );
         }
       } catch (e) {
-        debugPrint('[NOTIF][dailyAyah] canScheduleExactNotifications: $e');
+        _notifDebug('[NOTIF][dailyAyah] canScheduleExactNotifications: $e');
       }
     }
 
@@ -623,10 +630,10 @@ class NotificationService {
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
       matchDateTimeComponents: DateTimeComponents.time,
     );
-    debugPrint(
+    _notifDebug(
       '[NOTIF][dailyAyah] SCHEDULED firstTz=$scheduled (täglich $hour:${minute.toString().padLeft(2, '0')}, exactAllowWhileIdle)',
     );
-    debugPrint('[NOTIF][dailyAyah] ========== scheduleDailyAyahReminder ENDE ==========');
+    _notifDebug('[NOTIF][dailyAyah] ========== scheduleDailyAyahReminder ENDE ==========');
   }
 
   /// Cancels the daily Tagesvers reminder (ID 8888).
@@ -656,7 +663,7 @@ class NotificationService {
           UILocalNotificationDateInterpretation.absoluteTime,
       androidScheduleMode: AndroidScheduleMode.exactAllowWhileIdle,
     );
-    debugPrint('[NOTIF] zonedSchedule-Test geplant für $when');
+    _notifDebug('[NOTIF] zonedSchedule-Test geplant für $when');
   }
 
   /// Nur Diagnose: nach 1 Minute **`show()`** aus dem Flutter-Prozess – **kein** AlarmManager.
@@ -664,7 +671,7 @@ class NotificationService {
   Future<void> showTestNotificationInOneMinuteViaTimer() async {
     if (!_initialized) await initialize();
     await requestPermissions();
-    debugPrint('[NOTIF] Timer gestartet – in 1 Min erscheint Benachrichtigung (App offen lassen).');
+    _notifDebug('[NOTIF] Timer gestartet – in 1 Min erscheint Benachrichtigung (App offen lassen).');
     Future.delayed(const Duration(minutes: 1), () async {
       await _plugin.cancel(_testInOneMinuteId);
       await _plugin.show(
@@ -673,7 +680,7 @@ class NotificationService {
         'App war noch aktiv – wenn du das siehst, funktioniert show() nach Verzögerung.',
         _testDetails,
       );
-      debugPrint('[NOTIF] Timer abgelaufen – show() ausgeführt.');
+      _notifDebug('[NOTIF] Timer abgelaufen – show() ausgeführt.');
     });
   }
 
@@ -724,19 +731,19 @@ class NotificationService {
   /// Debug: sofortige Benachrichtigung per **`show()`** (z. B. Emulator) – gleiche Kategorie wie [showTestNotificationNow].
   Future<void> showTestNotification(BuildContext context) async {
     // ignore: avoid_print
-    print('[NOTIF_TEST] showTestNotification called');
+    _notifDebug('[NOTIF_TEST] showTestNotification called');
     if (!_initialized) {
       // ignore: avoid_print
-      print('[NOTIF_TEST] initializing...');
+      _notifDebug('[NOTIF_TEST] initializing...');
       await initialize();
       // ignore: avoid_print
-      print('[NOTIF_TEST] initialized');
+      _notifDebug('[NOTIF_TEST] initialized');
     }
     // ignore: avoid_print
-    print('[NOTIF_TEST] requesting permissions...');
+    _notifDebug('[NOTIF_TEST] requesting permissions...');
     final granted = await requestPermissions();
     // ignore: avoid_print
-    print('[NOTIF_TEST] requestPermissions result: $granted');
+    _notifDebug('[NOTIF_TEST] requestPermissions result: $granted');
 
     try {
       const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
@@ -750,7 +757,7 @@ class NotificationService {
       const NotificationDetails platformDetails = NotificationDetails(android: androidDetails);
 
       // ignore: avoid_print
-      print('[NOTIF_TEST] calling _plugin.show(999)...');
+      _notifDebug('[NOTIF_TEST] calling _plugin.show(999)...');
       await _plugin.show(
         999,
         'Sofort-Test',
@@ -758,7 +765,7 @@ class NotificationService {
         platformDetails,
       );
       // ignore: avoid_print
-      print('[NOTIF_TEST] show() returned OK');
+      _notifDebug('[NOTIF_TEST] show() returned OK');
 
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -770,9 +777,9 @@ class NotificationService {
       }
     } catch (e, st) {
       // ignore: avoid_print
-      print('🚨 NOTIFICATION ERROR: $e');
+      _notifDebug('🚨 NOTIFICATION ERROR: $e');
       // ignore: avoid_print
-      print('🚨 STACK: $st');
+      _notifDebug('🚨 STACK: $st');
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
