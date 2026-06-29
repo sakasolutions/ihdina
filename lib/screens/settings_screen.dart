@@ -9,6 +9,7 @@ import '../data/prayer/notification_service.dart';
 import '../data/prayer/prayer_models.dart';
 import '../data/prayer/prayer_times_repository.dart';
 import '../data/settings/settings_repository.dart';
+import '../services/install_id_service.dart';
 import '../services/revenuecat_service.dart';
 import '../theme/app_theme.dart';
 import '../theme/hero_theme.dart';
@@ -98,6 +99,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _dailyAyahReminderEnabled = false;
   bool _surahIntroAutoShow = true;
   bool _locationLoading = false;
+  String? _installId;
 
   @override
   void initState() {
@@ -107,6 +109,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
     });
     _load();
     _loadPrayerTimes();
+    _loadInstallId();
+  }
+
+  Future<void> _loadInstallId() async {
+    final id = await InstallIdService.instance.getOrCreate();
+    if (mounted) setState(() => _installId = id);
   }
 
   Widget _buildProSettingsCard() {
@@ -191,6 +199,86 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   ),
                 ),
                 Icon(Icons.chevron_right_rounded, color: Colors.white38, size: 24),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSupportSection() {
+    return GlassCard(
+      borderRadius: 20,
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(20),
+          onTap: _installId == null
+              ? null
+              : () {
+                  Clipboard.setData(ClipboardData(text: _installId!));
+                  rootScaffoldMessengerKey.currentState?.showSnackBar(
+                    const SnackBar(
+                      content: Text('ID kopiert'),
+                      behavior: SnackBarBehavior.floating,
+                      duration: Duration(seconds: 2),
+                    ),
+                  );
+                },
+          child: Padding(
+            padding: const EdgeInsets.all(20),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Support',
+                  style: GoogleFonts.playfairDisplay(
+                    fontSize: 18,
+                    fontWeight: FontWeight.w600,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Text(
+                  'Geräte-ID',
+                  style: GoogleFonts.inter(
+                    fontSize: 13,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.white.withOpacity(0.72),
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Text(
+                        _installId ?? '…',
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          height: 1.4,
+                          color: Colors.white,
+                          letterSpacing: 0.2,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Icon(
+                      Icons.copy_outlined,
+                      size: 18,
+                      color: Colors.white.withOpacity(0.45),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Nur für Support-Anfragen',
+                  style: GoogleFonts.inter(
+                    fontSize: 12,
+                    color: Colors.white.withOpacity(0.58),
+                  ),
+                ),
               ],
             ),
           ),
@@ -1231,6 +1319,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ),
                   ),
                 ),
+                const SizedBox(height: 12),
+                _buildSupportSection(),
                 const SizedBox(height: 24),
                 Center(
                   child: Column(
