@@ -1,6 +1,54 @@
 import { Prisma } from "@prisma/client";
 import { prisma } from "../db/client.js";
 
+export type DailyUsageColumn =
+  | "extraCount"
+  | "dailyVerseCount"
+  | "takeawayCount"
+  | "reflectionCount";
+
+const USAGE_COLUMNS: readonly DailyUsageColumn[] = [
+  "extraCount",
+  "dailyVerseCount",
+  "takeawayCount",
+  "reflectionCount",
+] as const;
+
+function assertUsageColumn(column: DailyUsageColumn): DailyUsageColumn {
+  if (!USAGE_COLUMNS.includes(column)) {
+    throw new Error(`Invalid daily usage column: ${column}`);
+  }
+  return column;
+}
+
+function columnSql(column: DailyUsageColumn): Prisma.Sql {
+  assertUsageColumn(column);
+  switch (column) {
+    case "extraCount":
+      return Prisma.raw(`"extraCount"`);
+    case "dailyVerseCount":
+      return Prisma.raw(`"dailyVerseCount"`);
+    case "takeawayCount":
+      return Prisma.raw(`"takeawayCount"`);
+    case "reflectionCount":
+      return Prisma.raw(`"reflectionCount"`);
+  }
+}
+
+function insertCounts(column: DailyUsageColumn): {
+  extraCount: number;
+  dailyVerseCount: number;
+  takeawayCount: number;
+  reflectionCount: number;
+} {
+  return {
+    extraCount: column === "extraCount" ? 1 : 0,
+    dailyVerseCount: column === "dailyVerseCount" ? 1 : 0,
+    takeawayCount: column === "takeawayCount" ? 1 : 0,
+    reflectionCount: column === "reflectionCount" ? 1 : 0,
+  };
+}
+
 function toInt(v: unknown): number {
   if (typeof v === "bigint") return Number(v);
   if (typeof v === "number") return v;
@@ -23,20 +71,78 @@ function isUniqueOrDuplicateKey(e: unknown): boolean {
   );
 }
 
-/** Liest extraCount trotz Legacy-Spaltentypen (CAST auf DB-Seite, vermeidet 22P03 bei findUnique). */
-export async function getDailyExplanationExtraCount(
+/** Liest einen UTC-Tageszähler trotz Legacy-Spaltentypen (CAST auf DB-Seite). */
+export async function getDailyUsageCount(
   userId: string,
-  usageDate: string
+  usageDate: string,
+  column: DailyUsageColumn
 ): Promise<number> {
-  const rows = await prisma.$queryRaw<Array<{ extraCount: unknown }>>(
+  const col = columnSql(column);
+  const rows = await prisma.$queryRaw<Array<Record<string, unknown>>>(
     Prisma.sql`
-      SELECT "extraCount" FROM "DailyExplanationUsage"
+      SELECT ${col} AS "count"
+      FROM "DailyExplanationUsage"
       WHERE CAST("userId" AS TEXT) = ${userId}
         AND CAST("usageDate" AS TEXT) = ${usageDate}
       LIMIT 1
     `
   );
-  return toInt(rows[0]?.extraCount);
+  return toInt(rows[0]?.count);
+}
+
+/**
+ * Zählt einen UTC-Tageszähler hoch. Ohne Prisma-upsert (Legacy-Spalten / 22P03):
+ * erst UPDATE mit CAST in WHERE, sonst INSERT; bei Race Duplicate → nochmal UPDATE.
+ */
+export async function bumpDailyUsageCount(
+  userId: string,
+  usageDate: string,
+  column: DailyUsageColumn
+): Promise<void> {
+  const col = columnSql(column);
+  const n = rowCount(
+    await prisma.$executeRaw(
+      Prisma.sql`UPDATE "DailyExplanationUsage"
+        SET ${col} = ${col} + 1
+        WHERE CAST("userId" AS TEXT) = ${userId}
+          AND CAST("usageDate" AS TEXT) = ${usageDate}`
+    )
+  );
+  if (n >= 1) return;
+
+  const counts = insertCounts(column);
+  try {
+    await prisma.$executeRaw(
+      Prisma.sql`INSERT INTO "DailyExplanationUsage" (
+          "id", "userId", "usageDate",
+          "extraCount", "dailyVerseCount", "takeawayCount", "reflectionCount"
+        )
+        VALUES (
+          gen_random_uuid()::text, ${userId}, ${usageDate},
+          ${counts.extraCount}, ${counts.dailyVerseCount},
+          ${counts.takeawayCount}, ${counts.reflectionCount}
+        )`
+    );
+  } catch (e) {
+    if (!isUniqueOrDuplicateKey(e)) throw e;
+    const n2 = rowCount(
+      await prisma.$executeRaw(
+        Prisma.sql`UPDATE "DailyExplanationUsage"
+          SET ${col} = ${col} + 1
+          WHERE CAST("userId" AS TEXT) = ${userId}
+            AND CAST("usageDate" AS TEXT) = ${usageDate}`
+      )
+    );
+    if (n2 < 1) throw e;
+  }
+}
+
+/** Liest extraCount trotz Legacy-Spaltentypen (CAST auf DB-Seite, vermeidet 22P03 bei findUnique). */
+export async function getDailyExplanationExtraCount(
+  userId: string,
+  usageDate: string
+): Promise<number> {
+  return getDailyUsageCount(userId, usageDate, "extraCount");
 }
 
 /**
@@ -47,32 +153,47 @@ export async function bumpDailyExplanationExtraCount(
   userId: string,
   usageDate: string
 ): Promise<void> {
-  const n = rowCount(
-    await prisma.$executeRaw(
-      Prisma.sql`UPDATE "DailyExplanationUsage"
-        SET "extraCount" = "extraCount" + 1
-        WHERE CAST("userId" AS TEXT) = ${userId}
-          AND CAST("usageDate" AS TEXT) = ${usageDate}`
-    )
-  );
-  if (n >= 1) return;
+  return bumpDailyUsageCount(userId, usageDate, "extraCount");
+}
 
-  try {
-    // Nach Migration: "id" ist TEXT ohne Sequenz — explizit setzen (sonst 23502 bei NOT NULL id).
-    await prisma.$executeRaw(
-      Prisma.sql`INSERT INTO "DailyExplanationUsage" ("id", "userId", "usageDate", "extraCount")
-        VALUES (gen_random_uuid()::text, ${userId}, ${usageDate}, 1)`
-    );
-  } catch (e) {
-    if (!isUniqueOrDuplicateKey(e)) throw e;
-    const n2 = rowCount(
-      await prisma.$executeRaw(
-        Prisma.sql`UPDATE "DailyExplanationUsage"
-          SET "extraCount" = "extraCount" + 1
-          WHERE CAST("userId" AS TEXT) = ${userId}
-            AND CAST("usageDate" AS TEXT) = ${usageDate}`
-      )
-    );
-    if (n2 < 1) throw e;
-  }
+export async function getDailyVerseExplainCount(
+  userId: string,
+  usageDate: string
+): Promise<number> {
+  return getDailyUsageCount(userId, usageDate, "dailyVerseCount");
+}
+
+export async function bumpDailyVerseExplainCount(
+  userId: string,
+  usageDate: string
+): Promise<void> {
+  return bumpDailyUsageCount(userId, usageDate, "dailyVerseCount");
+}
+
+export async function getDailyTakeawayCount(
+  userId: string,
+  usageDate: string
+): Promise<number> {
+  return getDailyUsageCount(userId, usageDate, "takeawayCount");
+}
+
+export async function bumpDailyTakeawayCount(
+  userId: string,
+  usageDate: string
+): Promise<void> {
+  return bumpDailyUsageCount(userId, usageDate, "takeawayCount");
+}
+
+export async function getDailyReflectionCount(
+  userId: string,
+  usageDate: string
+): Promise<number> {
+  return getDailyUsageCount(userId, usageDate, "reflectionCount");
+}
+
+export async function bumpDailyReflectionCount(
+  userId: string,
+  usageDate: string
+): Promise<void> {
+  return bumpDailyUsageCount(userId, usageDate, "reflectionCount");
 }

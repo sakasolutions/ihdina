@@ -42,11 +42,14 @@ model RevenueCatWebhookEvent {
 
 /// Tracks non-daily “extra” explanations per calendar day (UTC) for free users.
 model DailyExplanationUsage {
-  id         String @id @default(cuid())
-  userId     String
-  user       User   @relation(fields: [userId], references: [id], onDelete: Cascade)
-  usageDate  String
-  extraCount Int    @default(0)
+  id              String @id @default(cuid())
+  userId          String
+  user            User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  usageDate       String
+  extraCount      Int    @default(0)
+  dailyVerseCount Int    @default(0)
+  takeawayCount   Int    @default(0)
+  reflectionCount Int    @default(0)
 
   @@unique([userId, usageDate])
   @@index([userId])

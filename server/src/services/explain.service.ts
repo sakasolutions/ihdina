@@ -1,10 +1,15 @@
-import { MAX_FREE_EXTRA_EXPLANATIONS_PER_DAY } from "../config/limits.js";
+import {
+  MAX_DAILY_VERSE_EXPLAINS_PER_DAY,
+  MAX_FREE_EXTRA_EXPLANATIONS_PER_DAY,
+} from "../config/limits.js";
 import { utcDateString } from "../utils/date.js";
 import { AppError, ErrorCodes } from "../utils/errors.js";
 import { extractRelatedAyahsFromText } from "../utils/relatedAyahsFromText.js";
 import {
   bumpDailyExplanationExtraCount,
+  bumpDailyVerseExplainCount,
   getDailyExplanationExtraCount,
+  getDailyVerseExplainCount,
 } from "./dailyExplanationUsageQueries.js";
 import { completeExplanation } from "./openai.service.js";
 import { getOrCreateUser } from "./user.service.js";
@@ -25,7 +30,22 @@ export async function explainVerse(input: ExplainInput) {
   const usageDate = utcDateString();
 
   if (!user.isPro) {
-    if (!input.isDailyVerse) {
+    if (input.isDailyVerse) {
+      const used = await getDailyVerseExplainCount(user.id, usageDate);
+      if (used >= MAX_DAILY_VERSE_EXPLAINS_PER_DAY) {
+        await logAiRequest({
+          userId: user.id,
+          endpoint: "POST /api/v1/explain",
+          status: "error",
+          errorCode: ErrorCodes.FREE_LIMIT_REACHED,
+        });
+        throw new AppError(
+          ErrorCodes.FREE_LIMIT_REACHED,
+          "Your daily limit for daily-verse explanations has been reached.",
+          403
+        );
+      }
+    } else {
       const used = await getDailyExplanationExtraCount(user.id, usageDate);
       if (used >= MAX_FREE_EXTRA_EXPLANATIONS_PER_DAY) {
         await logAiRequest({
@@ -62,8 +82,12 @@ export async function explainVerse(input: ExplainInput) {
   }
   const text = completion.text;
 
-  if (!user.isPro && !input.isDailyVerse) {
-    await bumpDailyExplanationExtraCount(user.id, usageDate);
+  if (!user.isPro) {
+    if (input.isDailyVerse) {
+      await bumpDailyVerseExplainCount(user.id, usageDate);
+    } else {
+      await bumpDailyExplanationExtraCount(user.id, usageDate);
+    }
   }
 
   await logAiRequest({
@@ -91,4 +115,3 @@ export async function explainVerse(input: ExplainInput) {
     relatedAyahs,
   };
 }
-
