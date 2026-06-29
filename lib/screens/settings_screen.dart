@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:geocoding/geocoding.dart';
@@ -208,82 +210,141 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _buildSupportSection() {
-    return GlassCard(
-      borderRadius: 20,
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          borderRadius: BorderRadius.circular(20),
-          onTap: _installId == null
-              ? null
-              : () {
-                  Clipboard.setData(ClipboardData(text: _installId!));
-                  rootScaffoldMessengerKey.currentState?.showSnackBar(
-                    const SnackBar(
-                      content: Text('ID kopiert'),
-                      behavior: SnackBarBehavior.floating,
-                      duration: Duration(seconds: 2),
-                    ),
-                  );
-                },
-          child: Padding(
-            padding: const EdgeInsets.all(20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Support',
-                  style: GoogleFonts.playfairDisplay(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.white,
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Text(
-                  'Geräte-ID',
-                  style: GoogleFonts.inter(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.white.withOpacity(0.72),
-                  ),
-                ),
-                const SizedBox(height: 8),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Expanded(
-                      child: Text(
-                        _installId ?? '…',
-                        style: GoogleFonts.inter(
-                          fontSize: 13,
-                          height: 1.4,
-                          color: Colors.white,
-                          letterSpacing: 0.2,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        if (Platform.isIOS) ...[
+          Material(
+            color: Colors.transparent,
+            child: InkWell(
+              onTap: () => RevenueCatService.presentOfferCodeRedemption(),
+              borderRadius: BorderRadius.circular(20),
+              child: GlassCard(
+                borderRadius: 20,
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+                  child: Row(
+                    children: [
+                      Icon(
+                        Icons.card_giftcard_outlined,
+                        size: 22,
+                        color: const Color(0xFFE5C07B),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Code einlösen',
+                              style: GoogleFonts.playfairDisplay(
+                                fontSize: 17,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              'Promo- oder Angebotscode eingeben',
+                              style: GoogleFonts.inter(
+                                fontSize: 12,
+                                color: Colors.white.withOpacity(0.58),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
+                      Icon(
+                        Icons.chevron_right,
+                        size: 24,
+                        color: Colors.white54,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+          const SizedBox(height: 12),
+        ],
+        GlassCard(
+          borderRadius: 20,
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(20),
+              onTap: _installId == null
+                  ? null
+                  : () {
+                      Clipboard.setData(ClipboardData(text: _installId!));
+                      rootScaffoldMessengerKey.currentState?.showSnackBar(
+                        const SnackBar(
+                          content: Text('ID kopiert'),
+                          behavior: SnackBarBehavior.floating,
+                          duration: Duration(seconds: 2),
+                        ),
+                      );
+                    },
+              child: Padding(
+                padding: const EdgeInsets.all(20),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Support',
+                      style: GoogleFonts.playfairDisplay(
+                        fontSize: 18,
+                        fontWeight: FontWeight.w600,
+                        color: Colors.white,
+                      ),
                     ),
-                    const SizedBox(width: 8),
-                    Icon(
-                      Icons.copy_outlined,
-                      size: 18,
-                      color: Colors.white.withOpacity(0.45),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Geräte-ID',
+                      style: GoogleFonts.inter(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.white.withOpacity(0.72),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            _installId ?? '…',
+                            style: GoogleFonts.inter(
+                              fontSize: 13,
+                              height: 1.4,
+                              color: Colors.white,
+                              letterSpacing: 0.2,
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Icon(
+                          Icons.copy_outlined,
+                          size: 18,
+                          color: Colors.white.withOpacity(0.45),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      'Nur für Support-Anfragen',
+                      style: GoogleFonts.inter(
+                        fontSize: 12,
+                        color: Colors.white.withOpacity(0.58),
+                      ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
-                Text(
-                  'Nur für Support-Anfragen',
-                  style: GoogleFonts.inter(
-                    fontSize: 12,
-                    color: Colors.white.withOpacity(0.58),
-                  ),
-                ),
-              ],
+              ),
             ),
           ),
         ),
-      ),
+      ],
     );
   }
 

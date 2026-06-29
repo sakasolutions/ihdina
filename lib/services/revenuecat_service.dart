@@ -117,4 +117,12 @@ class RevenueCatService {
       return false;
     }
   }
+
+  static Future<void> presentOfferCodeRedemption() async {
+    try {
+      await Purchases.presentCodeRedemptionSheet();
+    } catch (e) {
+      if (kDebugMode) debugPrint('[RevenueCat] presentOfferCodeRedemption failed: $e');
+    }
+  }
 }
