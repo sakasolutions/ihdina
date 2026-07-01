@@ -233,6 +233,31 @@
 
     .chart-wrap { position: relative; height: 260px; margin-top: 8px; }
     .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 12px; }
+    .table-toolbar {
+      justify-content: flex-end;
+      margin-top: 4px;
+      margin-bottom: 8px;
+    }
+    .table-toolbar label {
+      margin: 0;
+      text-transform: none;
+      letter-spacing: 0;
+      font-size: 0.82rem;
+    }
+    .table-toolbar select {
+      width: auto;
+      min-width: 88px;
+      margin: 0;
+    }
+    .pagination-bar {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 12px;
+      margin-top: 12px;
+      flex-wrap: wrap;
+    }
+    .pagination-info { margin: 0; font-size: 0.82rem; }
 
     .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 10px; }
     table { width: 100%; border-collapse: collapse; font-size: 0.8rem; min-width: 640px; }
@@ -343,29 +368,77 @@
 
     <div id="panel-ki" class="panel">
       <section class="card">
-        <h2>Tagesaggregate (14 Tage)</h2>
+        <h2>KI-Einzelereignisse</h2>
         <div class="row">
-          <div style="min-width:200px;flex:1">
-            <label for="epFilter">Endpoint</label>
-            <select id="epFilter"><option value="">Alle Endpoints</option></select>
+          <div style="min-width:140px;flex:1">
+            <label for="kiEpFilter">Endpoint</label>
+            <select id="kiEpFilter">
+              <option value="">Alle</option>
+              <option value="explain">explain</option>
+              <option value="follow-up">follow-up</option>
+              <option value="takeaway">takeaway</option>
+              <option value="reflection-moment">reflection-moment</option>
+            </select>
           </div>
-          <button type="button" class="btn btn-gold" id="btnKi" style="width:auto;align-self:flex-end">Daten laden</button>
+          <div style="min-width:120px;flex:1">
+            <label for="kiStatusFilter">Status</label>
+            <select id="kiStatusFilter">
+              <option value="">Alle</option>
+              <option value="ok">ok</option>
+              <option value="error">error</option>
+            </select>
+          </div>
+          <div style="min-width:120px;flex:1">
+            <label for="kiHoursFilter">Zeitraum</label>
+            <select id="kiHoursFilter">
+              <option value="24">24h</option>
+              <option value="168" selected>7 Tage</option>
+              <option value="720">30 Tage</option>
+            </select>
+          </div>
+          <div style="min-width:180px;flex:2">
+            <label for="kiUserFilter">User</label>
+            <input id="kiUserFilter" type="text" placeholder="Name oder Geräte-ID …" style="margin:0" autocomplete="off" />
+          </div>
+          <button type="button" class="btn btn-gold" id="btnKi" style="width:auto;align-self:flex-end">Anwenden</button>
         </div>
         <div id="kiErr" class="panel-err"></div>
+        <div id="kiSummary" class="kpi-grid"></div>
+        <div class="row table-toolbar">
+          <label for="kiPageSize">Anzeigen:</label>
+          <select id="kiPageSize">
+            <option value="10" selected>10</option>
+            <option value="25">25</option>
+            <option value="100">100</option>
+            <option value="500">500</option>
+            <option value="1000">1000</option>
+          </select>
+        </div>
         <div id="kiTable"></div>
+        <div id="kiPagination"></div>
       </section>
     </div>
 
     <div id="panel-users" class="panel">
       <section class="card">
-        <h2>Nutzer suchen</h2>
-        <p class="hint">Suche nach Geräte-ID (installId).</p>
+        <h2>Nutzer</h2>
+        <p class="hint">Alle Geräte — Suche nach Name oder Geräte-ID.</p>
         <div class="row">
-          <input id="userQ" type="text" placeholder="Geräte-ID oder Teil davon" style="flex:1;min-width:200px;margin:0" />
-          <button type="button" class="btn btn-gold" id="btnUserSearch" style="width:auto">Laden</button>
+          <input id="userQ" type="text" placeholder="Name oder Geräte-ID …" style="flex:1;min-width:200px;margin:0" autocomplete="off" />
         </div>
         <div id="userSearchErr" class="panel-err"></div>
+        <div class="row table-toolbar">
+          <label for="usersPageSize">Anzeigen:</label>
+          <select id="usersPageSize">
+            <option value="10" selected>10</option>
+            <option value="25">25</option>
+            <option value="100">100</option>
+            <option value="500">500</option>
+            <option value="1000">1000</option>
+          </select>
+        </div>
         <div id="userResults"></div>
+        <div id="userPagination"></div>
         <div id="userDetail" class="detail-panel" style="display:none"></div>
       </section>
     </div>
@@ -377,7 +450,18 @@
           <button type="button" class="btn btn-gold" id="btnFeedback" style="width:auto">Daten laden</button>
         </div>
         <div id="fbErr" class="panel-err"></div>
+        <div class="row table-toolbar">
+          <label for="fbPageSize">Anzeigen:</label>
+          <select id="fbPageSize">
+            <option value="10" selected>10</option>
+            <option value="25">25</option>
+            <option value="100">100</option>
+            <option value="500">500</option>
+            <option value="1000">1000</option>
+          </select>
+        </div>
         <div id="fbTable"></div>
+        <div id="fbPagination"></div>
       </section>
     </div>
 
@@ -395,10 +479,16 @@
       let sessionKey = "";
       let authenticated = false;
       let chLineAi = null;
-      let kiRowsRaw = [];
+      const kiUserMeta = {};
       let feedbackItems = [];
       let fbSortAsc = false;
+      let fbPage = 1;
       let selectedInstallId = "";
+      let usersPage = 1;
+      let userSearchTimer = null;
+      let kiItemsAll = [];
+      let kiTruncated = false;
+      let kiPage = 1;
 
       function apiBase() {
         const stored = localStorage.getItem(LS_API);
@@ -550,6 +640,10 @@
         if (!id || id.length <= 16) return id || "—";
         return id.slice(0, 8) + "…" + id.slice(-4);
       }
+      function shortInstallId8(id) {
+        if (!id) return "—";
+        return id.length <= 8 ? id : id.slice(0, 8) + "…";
+      }
       function fmtDate(iso) {
         if (!iso) return "—";
         try { return new Date(iso).toLocaleString("de-DE", { dateStyle: "short", timeStyle: "short" }); }
@@ -564,6 +658,44 @@
       function destroyChart() {
         try { chLineAi && chLineAi.destroy(); } catch (_) {}
         chLineAi = null;
+      }
+
+      function readPageSize(selectId) {
+        const n = Number.parseInt($(selectId).value, 10);
+        return [10, 25, 100, 500, 1000].includes(n) ? n : 10;
+      }
+
+      function totalPagesFor(count, pageSize) {
+        if (!count || count <= 0) return 0;
+        return Math.ceil(count / pageSize);
+      }
+
+      function paginateSlice(items, page, pageSize) {
+        const pages = totalPagesFor(items.length, pageSize);
+        const safePage = pages > 0 ? Math.min(Math.max(1, page), pages) : 1;
+        const start = (safePage - 1) * pageSize;
+        return { slice: items.slice(start, start + pageSize), page: safePage, pages };
+      }
+
+      function renderPagination(containerId, currentPage, totalPages, onPageChange) {
+        const el = $(containerId);
+        if (!el) return;
+        const pages = Math.max(0, totalPages);
+        if (pages <= 0) {
+          el.innerHTML = "";
+          return;
+        }
+        const page = Math.min(Math.max(1, currentPage), pages);
+        el.innerHTML =
+          "<div class='pagination-bar'>" +
+          "<button type='button' class='btn btn-ghost' data-page='prev' style='width:auto'" + (page <= 1 ? " disabled" : "") + ">← Zurück</button>" +
+          "<span class='hint pagination-info'>Seite " + page + " von " + pages + "</span>" +
+          "<button type='button' class='btn btn-ghost' data-page='next' style='width:auto'" + (page >= pages ? " disabled" : "") + ">Weiter →</button>" +
+          "</div>";
+        const prev = el.querySelector("[data-page='prev']");
+        const next = el.querySelector("[data-page='next']");
+        if (prev && page > 1) prev.onclick = () => onPageChange(page - 1);
+        if (next && page < pages) next.onclick = () => onPageChange(page + 1);
       }
 
       function positiveFeedbackPct(fb) {
@@ -675,40 +807,150 @@
         }
       }
 
-      function aggregateKiRows(rows, epFilter) {
-        const map = new Map();
-        for (const r of rows) {
-          if (epFilter && r.endpoint !== epFilter) continue;
-          const key = r.day + "|" + r.endpoint;
-          if (!map.has(key)) map.set(key, { day: r.day, endpoint: r.endpoint, calls: 0, errors: 0, tokens: 0, costUsd: 0 });
-          const agg = map.get(key);
-          agg.calls += r.count;
-          if (r.status === "error") agg.errors += r.count;
-          agg.tokens += r.totalSum;
-          agg.costUsd += r.costUsd || 0;
+      const KI_COST_RATES = {
+        "gpt-4o-mini": { input: 0.15, output: 0.6 },
+        "gpt-4o": { input: 2.5, output: 10 },
+        "gpt-4.1-mini": { input: 0.4, output: 1.6 },
+        "gpt-4.1": { input: 1.0, output: 4.0 },
+        "gpt-5-mini": { input: 0.45, output: 3.6 },
+        "gpt-5": { input: 2.5, output: 20 },
+        "o3-mini": { input: 1.1, output: 4.4 },
+        "o4-mini": { input: 1.1, output: 4.4 },
+      };
+      const KI_COST_FALLBACK = "gpt-4o-mini";
+      const KI_EVENTS_MAX_PAGES = 30;
+
+      function normalizeKiModelKey(model) {
+        const t = String(model || "").trim().toLowerCase();
+        if (!t) return KI_COST_FALLBACK;
+        const keys = Object.keys(KI_COST_RATES).sort((a, b) => b.length - a.length);
+        for (const k of keys) {
+          if (t === k || t.startsWith(k + "-") || t.startsWith(k + "_")) return k;
         }
-        return Array.from(map.values()).sort((a, b) => (a.day < b.day ? 1 : a.day > b.day ? -1 : a.endpoint.localeCompare(b.endpoint)));
+        return KI_COST_FALLBACK;
       }
 
-      function populateEndpointFilter(rows) {
-        const eps = [...new Set(rows.map((r) => r.endpoint))].sort();
-        const sel = $("epFilter");
-        const cur = sel.value;
-        sel.innerHTML = "<option value=''>Alle Endpoints</option>" + eps.map((e) => "<option value='" + escapeHtml(e) + "'>" + escapeHtml(e) + "</option>").join("");
-        if (eps.includes(cur)) sel.value = cur;
+      function estimateKiEventCostUsd(item) {
+        const key = normalizeKiModelKey(item.model);
+        const rates = KI_COST_RATES[key] || KI_COST_RATES[KI_COST_FALLBACK];
+        const p = Math.max(0, Number(item.promptTokens) || 0);
+        const c = Math.max(0, Number(item.completionTokens) || 0);
+        return (p / 1_000_000) * rates.input + (c / 1_000_000) * rates.output;
       }
 
-      function renderKiTable() {
-        const rows = aggregateKiRows(kiRowsRaw, $("epFilter").value);
-        if (!rows.length) { $("kiTable").innerHTML = "<p class='empty'>Keine Daten im Zeitraum.</p>"; return; }
-        let sumCalls = 0, sumErr = 0, sumTok = 0, sumUsd = 0;
-        let html = "<div class='table-wrap'><table><thead><tr><th>Datum</th><th>Endpoint</th><th>Calls</th><th>Fehler</th><th>Tokens</th><th>USD ~</th></tr></thead><tbody>";
-        for (const r of rows) {
-          sumCalls += r.calls; sumErr += r.errors; sumTok += r.tokens; sumUsd += r.costUsd;
-          html += "<tr><td>" + escapeHtml(r.day) + "</td><td class='mono'>" + escapeHtml(r.endpoint) + "</td><td>" + r.calls + "</td><td>" + r.errors + "</td><td>" + fmt(r.tokens) + "</td><td>" + r.costUsd.toFixed(4) + "</td></tr>";
+      function kiEventUserLabel(item) {
+        const iid = item.installId;
+        if (!iid) return "anonym";
+        const name = String(kiUserMeta[iid] || "").trim();
+        if (name) return escapeHtml(name);
+        return escapeHtml(shortInstallId8(iid));
+      }
+
+      async function enrichKiUserMeta(installIds) {
+        const missing = installIds.filter((id) => id && !(id in kiUserMeta));
+        if (!missing.length) return;
+        await Promise.all(
+          missing.map(async (id) => {
+            try {
+              const data = await fetchJson("/api/v1/admin/users/" + encodeURIComponent(id));
+              kiUserMeta[id] = data.user?.displayName || "";
+            } catch (_) {
+              kiUserMeta[id] = "";
+            }
+          })
+        );
+      }
+
+      async function fetchKiEventsPages(params) {
+        const pageSize = 100;
+        let page = 0;
+        let all = [];
+        let truncated = false;
+        while (page < KI_EVENTS_MAX_PAGES) {
+          const qs = new URLSearchParams({
+            page: String(page),
+            pageSize: String(pageSize),
+            hours: String(params.hours),
+          });
+          if (params.endpoint) qs.set("endpoint", params.endpoint);
+          if (params.status) qs.set("status", params.status);
+          if (params.installId) qs.set("installId", params.installId);
+          const data = await fetchJson("/api/v1/admin/usage/events?" + qs.toString());
+          const items = data.items || [];
+          all = all.concat(items);
+          if (!data.hasMore) break;
+          page += 1;
+          if (page >= KI_EVENTS_MAX_PAGES) truncated = true;
         }
-        html += "<tr class='sum-row'><td colspan='2'>Summe</td><td>" + sumCalls + "</td><td>" + sumErr + "</td><td>" + fmt(sumTok) + "</td><td>" + sumUsd.toFixed(4) + "</td></tr></tbody></table></div>";
+        return { items: all, truncated };
+      }
+
+      function filterKiEventsByUser(items, userQ, matchedUsers) {
+        if (!userQ) return items;
+        const qLower = userQ.toLowerCase();
+        const matchedIds = new Set((matchedUsers || []).map((u) => u.installId));
+        return items.filter((item) => {
+          const iid = item.installId || "";
+          if (matchedIds.size && matchedIds.has(iid)) return true;
+          if (iid && iid.toLowerCase().includes(qLower)) return true;
+          const name = String(kiUserMeta[iid] || "").trim().toLowerCase();
+          return name.includes(qLower);
+        });
+      }
+
+      function renderKiSummary(items) {
+        let calls = items.length;
+        let errors = 0;
+        let costUsd = 0;
+        for (const item of items) {
+          if (item.status === "error") errors += 1;
+          costUsd += estimateKiEventCostUsd(item);
+        }
+        const errRate = calls > 0 ? errors / calls : 0;
+        const errCls = errorBadgeClass(errRate);
+        $("kiSummary").innerHTML =
+          "<div class='kpi'><div class='val gold'>" + fmt(calls) + "</div><div class='lbl'>Calls gesamt</div><div class='sub'>Im gewählten Zeitraum &amp; Filter</div></div>" +
+          "<div class='kpi'><div class='val'>" + fmt(errors) + "<span class='badge " + errCls + "'>" + pct(errRate) + "</span></div><div class='lbl'>Fehler</div><div class='sub'>Fehlerquote im Filter</div></div>" +
+          "<div class='kpi'><div class='val'>" + costUsd.toFixed(4) + "</div><div class='lbl'>Kosten USD ~</div><div class='sub'>Geschätzt aus Token-Sätzen</div></div>";
+      }
+
+      function renderKiEventsTable(items) {
+        if (!items.length) {
+          $("kiTable").innerHTML = "<p class='empty'>Keine Ereignisse im gewählten Filter.</p>";
+          return;
+        }
+        let html = "";
+        if (kiTruncated) {
+          html += "<p class='hint'>Daten begrenzt auf " + fmt(KI_EVENTS_MAX_PAGES * 100) + " Ereignisse — Filter enger setzen für vollständige Auswertung.</p>";
+        }
+        html += "<div class='table-wrap'><table><thead><tr><th>Datum</th><th>User</th><th>Endpoint</th><th>Status</th><th>Tokens</th><th>Kosten USD</th><th>Fehlercode</th></tr></thead><tbody>";
+        for (const item of items) {
+          const tokens = item.totalTokens ?? ((Number(item.promptTokens) || 0) + (Number(item.completionTokens) || 0));
+          const cost = estimateKiEventCostUsd(item);
+          const errCode = item.errorCode ? escapeHtml(item.errorCode) : "—";
+          const statusCls = item.status === "error" ? " style='color:var(--err)'" : item.status === "ok" ? " style='color:var(--ok)'" : "";
+          html +=
+            "<tr><td class='mono'>" + escapeHtml(fmtDate(item.createdAt)) + "</td>" +
+            "<td title='" + escapeHtml(item.installId || "") + "'>" + kiEventUserLabel(item) + "</td>" +
+            "<td class='mono'>" + escapeHtml(item.endpoint) + "</td>" +
+            "<td" + statusCls + ">" + escapeHtml(item.status || "—") + "</td>" +
+            "<td>" + fmt(tokens) + "</td>" +
+            "<td>" + cost.toFixed(6) + "</td>" +
+            "<td class='mono'>" + errCode + "</td></tr>";
+        }
+        html += "</tbody></table></div>";
         $("kiTable").innerHTML = html;
+      }
+
+      function renderKiPage() {
+        const pageSize = readPageSize("kiPageSize");
+        const { slice, page, pages } = paginateSlice(kiItemsAll, kiPage, pageSize);
+        kiPage = page;
+        renderKiEventsTable(slice);
+        renderPagination("kiPagination", kiPage, pages, (p) => {
+          kiPage = p;
+          renderKiPage();
+        });
       }
 
       async function loadKi() {
@@ -716,14 +958,57 @@
         showPanelErr("kiErr", "");
         const btn = $("btnKi");
         btn.disabled = true;
+        $("kiSummary").innerHTML = "";
+        $("kiTable").innerHTML = "<p class='hint'>Lade KI-Ereignisse …</p>";
+        $("kiPagination").innerHTML = "";
         try {
-          const data = await fetchJson("/api/v1/admin/usage/daily?days=14");
-          kiRowsRaw = data.rows || [];
-          populateEndpointFilter(kiRowsRaw);
-          renderKiTable();
+          const hours = Number.parseInt($("kiHoursFilter").value, 10) || 168;
+          const endpoint = $("kiEpFilter").value.trim();
+          const status = $("kiStatusFilter").value.trim();
+          const userQ = $("kiUserFilter").value.trim();
+
+          let matchedUsers = [];
+          if (userQ) {
+            try {
+              const userData = await fetchJson(
+                "/api/v1/admin/users?q=" + encodeURIComponent(userQ) + "&pageSize=100"
+              );
+              matchedUsers = userData.users || [];
+              for (const u of matchedUsers) {
+                kiUserMeta[u.installId] = u.displayName || "";
+              }
+            } catch (_) {
+              matchedUsers = [];
+            }
+          }
+
+          const fetchParams = { hours, endpoint, status };
+          if (matchedUsers.length === 1) {
+            fetchParams.installId = matchedUsers[0].installId;
+          }
+
+          const { items: rawItems, truncated } = await fetchKiEventsPages(fetchParams);
+
+          const uniqueIds = [...new Set(rawItems.map((i) => i.installId).filter(Boolean))];
+          await enrichKiUserMeta(uniqueIds);
+
+          kiItemsAll = filterKiEventsByUser(rawItems, userQ, matchedUsers);
+          kiTruncated = truncated;
+          kiPage = 1;
+
+          renderKiSummary(kiItemsAll);
+          renderKiPage();
         } catch (e) {
-          if (authenticated) { showPanelErr("kiErr", String(e.message || e)); $("kiTable").innerHTML = ""; }
-        } finally { btn.disabled = false; }
+          if (authenticated) {
+            showPanelErr("kiErr", String(e.message || e));
+            $("kiSummary").innerHTML = "";
+            $("kiTable").innerHTML = "";
+            $("kiPagination").innerHTML = "";
+            kiItemsAll = [];
+          }
+        } finally {
+          btn.disabled = false;
+        }
       }
 
       function displayNameLabel(name) {
@@ -732,16 +1017,49 @@
       }
 
       function renderUserTable(users) {
-        if (!users.length) { $("userResults").innerHTML = "<p class='empty'>Keine Treffer.</p>"; return; }
-        let html = "<div class='table-wrap'><table><thead><tr><th>Name</th><th>Geräte-ID</th><th>Pro</th><th>Erstellt</th><th>Zuletzt aktiv</th></tr></thead><tbody>";
+        if (!users.length) {
+          $("userResults").innerHTML = "<p class='empty'>Keine Nutzer gefunden.</p>";
+          return;
+        }
+        let html = "<div class='table-wrap'><table><thead><tr><th>Name</th><th>Geräte-ID</th><th>Pro</th><th>KI-Calls</th><th>Zuletzt aktiv</th><th>Erstellt</th></tr></thead><tbody>";
         for (const u of users) {
-          html += "<tr class='clickable' data-iid='" + encodeURIComponent(u.installId) + "'><td>" + displayNameLabel(u.displayName) + "</td><td class='mono' title='" + escapeHtml(u.installId) + "'>" + escapeHtml(shortId(u.installId)) + "</td><td>" + (u.isPro ? "Pro" : "Free") + "</td><td>" + escapeHtml(fmtDate(u.createdAt)) + "</td><td>" + escapeHtml(fmtDate(u.lastSeenAt)) + "</td></tr>";
+          const kiCalls = u._count?.aiRequestLogs ?? 0;
+          html += "<tr class='clickable' data-iid='" + encodeURIComponent(u.installId) + "'><td>" + displayNameLabel(u.displayName) + "</td><td class='mono' title='" + escapeHtml(u.installId) + "'>" + escapeHtml(shortInstallId8(u.installId)) + "</td><td>" + (u.isPro ? "Pro" : "Free") + "</td><td>" + fmt(kiCalls) + "</td><td>" + escapeHtml(fmtDate(u.lastSeenAt)) + "</td><td>" + escapeHtml(fmtDate(u.createdAt)) + "</td></tr>";
         }
         html += "</tbody></table></div>";
         $("userResults").innerHTML = html;
         document.querySelectorAll("#userResults tr.clickable").forEach((tr) => {
           tr.onclick = () => showUserDetail(decodeURIComponent(tr.getAttribute("data-iid") || ""));
         });
+      }
+
+      async function loadUsers(page) {
+        if (!authenticated) return;
+        usersPage = page || 1;
+        const pageSize = readPageSize("usersPageSize");
+        showPanelErr("userSearchErr", "");
+        $("userResults").innerHTML = "<p class='hint'>Lade Nutzer …</p>";
+        $("userPagination").innerHTML = "";
+        try {
+          const params = new URLSearchParams({
+            page: String(usersPage),
+            pageSize: String(pageSize),
+          });
+          const q = $("userQ").value.trim();
+          if (q) params.set("q", q);
+          const data = await fetchJson("/api/v1/admin/users?" + params.toString());
+          const total = data.total || 0;
+          const pages = totalPagesFor(total, data.pageSize || pageSize);
+          usersPage = data.page || usersPage;
+          renderUserTable(data.users || []);
+          renderPagination("userPagination", usersPage, pages, (p) => loadUsers(p));
+        } catch (e) {
+          if (authenticated) {
+            showPanelErr("userSearchErr", String(e.message || e));
+            $("userResults").innerHTML = "";
+            $("userPagination").innerHTML = "";
+          }
+        }
       }
 
       async function showUserDetail(installId) {
@@ -796,22 +1114,6 @@
         }
       }
 
-      async function searchUsers() {
-        if (!authenticated) return;
-        showPanelErr("userSearchErr", "");
-        $("userDetail").style.display = "none";
-        const q = $("userQ").value.trim();
-        if (!q) { showPanelErr("userSearchErr", "Bitte Suchbegriff eingeben."); return; }
-        const btn = $("btnUserSearch");
-        btn.disabled = true;
-        try {
-          const data = await fetchJson("/api/v1/admin/users/search?q=" + encodeURIComponent(q));
-          renderUserTable(data.users || []);
-        } catch (e) {
-          if (authenticated) { showPanelErr("userSearchErr", String(e.message || e)); $("userResults").innerHTML = ""; }
-        } finally { btn.disabled = false; }
-      }
-
       function formatThumbRating(rating) {
         if (rating == null) return "—";
         if (rating === 1) return '<span class="thumb-rating up" title="Positiv">👍</span>';
@@ -819,14 +1121,21 @@
         return escapeHtml(String(rating));
       }
 
-      function renderFeedbackTable() {
+      function sortedFeedbackItems() {
         const items = [...feedbackItems];
         items.sort((a, b) => {
           const da = new Date(a.createdAt).getTime();
           const db = new Date(b.createdAt).getTime();
           return fbSortAsc ? da - db : db - da;
         });
-        if (!items.length) { $("fbTable").innerHTML = "<p class='empty'>Keine Feedbacks.</p>"; return; }
+        return items;
+      }
+
+      function renderFeedbackTable(items) {
+        if (!items.length) {
+          $("fbTable").innerHTML = "<p class='empty'>Keine Feedbacks.</p>";
+          return;
+        }
         const arrow = fbSortAsc ? " ↑" : " ↓";
         let html = "<div class='table-wrap'><table><thead><tr><th class='sortable' id='thFbDate'>Datum" + arrow + "</th><th>Screen</th><th>Bewertung</th><th>Kommentar</th></tr></thead><tbody>";
         for (const f of items) {
@@ -835,7 +1144,19 @@
         }
         html += "</tbody></table></div>";
         $("fbTable").innerHTML = html;
-        $("thFbDate").onclick = () => { fbSortAsc = !fbSortAsc; renderFeedbackTable(); };
+        $("thFbDate").onclick = () => { fbSortAsc = !fbSortAsc; fbPage = 1; renderFeedbackPage(); };
+      }
+
+      function renderFeedbackPage() {
+        const pageSize = readPageSize("fbPageSize");
+        const sorted = sortedFeedbackItems();
+        const { slice, page, pages } = paginateSlice(sorted, fbPage, pageSize);
+        fbPage = page;
+        renderFeedbackTable(slice);
+        renderPagination("fbPagination", fbPage, pages, (p) => {
+          fbPage = p;
+          renderFeedbackPage();
+        });
       }
 
       async function loadFeedback() {
@@ -843,12 +1164,18 @@
         showPanelErr("fbErr", "");
         const btn = $("btnFeedback");
         btn.disabled = true;
+        $("fbPagination").innerHTML = "";
         try {
-          const data = await fetchJson("/api/v1/admin/feedback?take=50");
+          const data = await fetchJson("/api/v1/admin/feedback?take=1000");
           feedbackItems = data.items || [];
-          renderFeedbackTable();
+          fbPage = 1;
+          renderFeedbackPage();
         } catch (e) {
-          if (authenticated) { showPanelErr("fbErr", String(e.message || e)); $("fbTable").innerHTML = ""; }
+          if (authenticated) {
+            showPanelErr("fbErr", String(e.message || e));
+            $("fbTable").innerHTML = "";
+            $("fbPagination").innerHTML = "";
+          }
         } finally { btn.disabled = false; }
       }
 
@@ -873,6 +1200,9 @@
           document.querySelectorAll("#nav button").forEach((b) => b.classList.toggle("active", b === btn));
           document.querySelectorAll(".panel").forEach((p) => p.classList.remove("active"));
           $("panel-" + tab).classList.add("active");
+          if (tab === "users") loadUsers(1);
+          if (tab === "ki") loadKi();
+          if (tab === "feedback" && !feedbackItems.length) loadFeedback();
         });
       });
 
@@ -881,9 +1211,14 @@
       $("btnLogout").onclick = () => logout(false);
       $("btnOverview").onclick = loadOverview;
       $("btnKi").onclick = loadKi;
-      $("epFilter").onchange = renderKiTable;
-      $("btnUserSearch").onclick = searchUsers;
-      $("userQ").addEventListener("keydown", (e) => { if (e.key === "Enter") searchUsers(); });
+      $("kiPageSize").onchange = () => { kiPage = 1; renderKiPage(); };
+      $("kiUserFilter").addEventListener("keydown", (e) => { if (e.key === "Enter") loadKi(); });
+      $("usersPageSize").onchange = () => loadUsers(1);
+      $("userQ").addEventListener("input", () => {
+        clearTimeout(userSearchTimer);
+        userSearchTimer = setTimeout(() => loadUsers(1), 300);
+      });
+      $("fbPageSize").onchange = () => { fbPage = 1; renderFeedbackPage(); };
       $("btnFeedback").onclick = loadFeedback;
 
       tryAutoLogin();

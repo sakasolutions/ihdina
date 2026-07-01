@@ -1,6 +1,7 @@
 import type { FastifyReply, FastifyRequest } from "fastify";
 import {
   getUserDetailByInstallId,
+  listAdminUsers,
   searchUsersByInstallId,
   setUserProByInstallId,
 } from "../services/admin.service.js";
@@ -13,6 +14,22 @@ import { AppError, ErrorCodes } from "../utils/errors.js";
 export async function adminMetricsOverviewHandler(_req: FastifyRequest, reply: FastifyReply) {
   const overview = await getAdminMetricsOverview();
   return reply.send({ success: true, data: { overview } });
+}
+
+export async function adminListUsersHandler(
+  req: FastifyRequest<{
+    Querystring: { page?: string; pageSize?: string; q?: string };
+  }>,
+  reply: FastifyReply
+) {
+  const page = Number.parseInt(req.query.page ?? "1", 10);
+  const pageSize = Number.parseInt(req.query.pageSize ?? "50", 10);
+  const result = await listAdminUsers({
+    page: Number.isFinite(page) ? page : 1,
+    pageSize: Number.isFinite(pageSize) ? pageSize : 50,
+    q: req.query.q,
+  });
+  return reply.send({ success: true, data: result });
 }
 
 export async function adminSearchUsersHandler(

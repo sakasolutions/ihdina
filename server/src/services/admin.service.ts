@@ -1,5 +1,48 @@
+import type { Prisma } from "@prisma/client";
 import { prisma } from "../db/client.js";
 import { AppError, ErrorCodes } from "../utils/errors.js";
+
+const MAX_PAGE_SIZE = 100;
+
+export async function listAdminUsers(params: {
+  page: number;
+  pageSize: number;
+  q?: string;
+}) {
+  const pageSize = Math.min(Math.max(params.pageSize, 1), MAX_PAGE_SIZE);
+  const page = Math.max(params.page, 1);
+  const term = params.q?.trim();
+
+  const where: Prisma.UserWhereInput | undefined = term
+    ? {
+        OR: [
+          { installId: { contains: term, mode: "insensitive" } },
+          { displayName: { contains: term, mode: "insensitive" } },
+        ],
+      }
+    : undefined;
+
+  const [total, users] = await prisma.$transaction([
+    prisma.user.count({ where }),
+    prisma.user.findMany({
+      where,
+      skip: (page - 1) * pageSize,
+      take: pageSize,
+      orderBy: [{ lastSeenAt: "desc" }, { createdAt: "desc" }],
+      select: {
+        id: true,
+        installId: true,
+        displayName: true,
+        isPro: true,
+        createdAt: true,
+        lastSeenAt: true,
+        _count: { select: { aiRequestLogs: true } },
+      },
+    }),
+  ]);
+
+  return { users, total, page, pageSize };
+}
 
 export async function searchUsersByInstallId(q: string, take = 20) {
   const term = q.trim();

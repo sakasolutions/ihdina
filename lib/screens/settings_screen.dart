@@ -107,6 +107,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   String? _installId;
   final TextEditingController _displayNameController = TextEditingController();
   bool _savingDisplayName = false;
+  bool _supportExpanded = false;
 
   @override
   void initState() {
@@ -282,186 +283,35 @@ class _SettingsScreenState extends State<SettingsScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        if (Platform.isIOS) ...[
-          Material(
-            color: Colors.transparent,
-            child: InkWell(
-              onTap: () => RevenueCatService.presentOfferCodeRedemption(),
-              borderRadius: BorderRadius.circular(20),
-              child: GlassCard(
-                borderRadius: 20,
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
-                  child: Row(
-                    children: [
-                      Icon(
-                        Icons.card_giftcard_outlined,
-                        size: 22,
-                        color: const Color(0xFFE5C07B),
-                      ),
-                      const SizedBox(width: 14),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              'Code einlösen',
-                              style: GoogleFonts.playfairDisplay(
-                                fontSize: 17,
-                                fontWeight: FontWeight.w600,
-                                color: Colors.white,
-                              ),
-                            ),
-                            const SizedBox(height: 2),
-                            Text(
-                              'Promo- oder Angebotscode eingeben',
-                              style: GoogleFonts.inter(
-                                fontSize: 12,
-                                color: Colors.white.withOpacity(0.58),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Icon(
-                        Icons.chevron_right,
-                        size: 24,
-                        color: Colors.white54,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-            ),
-          ),
-          const SizedBox(height: 12),
-        ],
         GlassCard(
           borderRadius: 20,
           child: Material(
             color: Colors.transparent,
             child: InkWell(
               borderRadius: BorderRadius.circular(20),
-              onTap: _installId == null
-                  ? null
-                  : () {
-                      Clipboard.setData(ClipboardData(text: _installId!));
-                      rootScaffoldMessengerKey.currentState?.showSnackBar(
-                        const SnackBar(
-                          content: Text('ID kopiert'),
-                          behavior: SnackBarBehavior.floating,
-                          duration: Duration(seconds: 2),
-                        ),
-                      );
-                    },
+              onTap: () => setState(() => _supportExpanded = !_supportExpanded),
               child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+                child: Row(
                   children: [
-                    Text(
-                      'Support',
-                      style: GoogleFonts.playfairDisplay(
-                        fontSize: 18,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Anzeigename (optional)',
-                      style: GoogleFonts.inter(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.white.withOpacity(0.72),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    TextField(
-                      controller: _displayNameController,
-                      maxLength: 30,
-                      enabled: !_savingDisplayName,
-                      style: GoogleFonts.inter(
-                        fontSize: 14,
-                        color: Colors.white,
-                      ),
-                      decoration: _settingsDropdownDecoration().copyWith(
-                        hintText: 'z. B. Sinan',
-                        hintStyle: GoogleFonts.inter(
-                          fontSize: 14,
-                          color: Colors.white.withOpacity(0.38),
-                        ),
-                        counterStyle: GoogleFonts.inter(
-                          fontSize: 11,
-                          color: Colors.white.withOpacity(0.45),
+                    Expanded(
+                      child: Text(
+                        'Support',
+                        style: GoogleFonts.playfairDisplay(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
                         ),
                       ),
-                      textInputAction: TextInputAction.done,
-                      onSubmitted: (_) => _saveDisplayName(),
                     ),
-                    Align(
-                      alignment: Alignment.centerRight,
-                      child: TextButton(
-                        onPressed: _installId == null || _savingDisplayName
-                            ? null
-                            : _saveDisplayName,
-                        child: _savingDisplayName
-                            ? SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white.withOpacity(0.7),
-                                ),
-                              )
-                            : Text(
-                                'Speichern',
-                                style: GoogleFonts.inter(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color: const Color(0xFFE5C07B),
-                                ),
-                              ),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Geräte-ID',
-                      style: GoogleFonts.inter(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.white.withOpacity(0.72),
-                      ),
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Expanded(
-                          child: Text(
-                            _installId ?? '…',
-                            style: GoogleFonts.inter(
-                              fontSize: 13,
-                              height: 1.4,
-                              color: Colors.white,
-                              letterSpacing: 0.2,
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        Icon(
-                          Icons.copy_outlined,
-                          size: 18,
-                          color: Colors.white.withOpacity(0.45),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'Nur für Support-Anfragen',
-                      style: GoogleFonts.inter(
-                        fontSize: 12,
-                        color: Colors.white.withOpacity(0.58),
+                    AnimatedRotation(
+                      turns: _supportExpanded ? 0 : 0.75,
+                      duration: const Duration(milliseconds: 200),
+                      curve: Curves.easeInOut,
+                      child: Icon(
+                        Icons.expand_more,
+                        size: 24,
+                        color: Colors.white.withOpacity(0.54),
                       ),
                     ),
                   ],
@@ -470,6 +320,188 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
           ),
         ),
+        if (_supportExpanded) ...[
+          const SizedBox(height: 12),
+          if (Platform.isIOS) ...[
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: () => RevenueCatService.presentOfferCodeRedemption(),
+                borderRadius: BorderRadius.circular(20),
+                child: GlassCard(
+                  borderRadius: 20,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+                    child: Row(
+                      children: [
+                        Icon(
+                          Icons.card_giftcard_outlined,
+                          size: 22,
+                          color: const Color(0xFFE5C07B),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Code einlösen',
+                                style: GoogleFonts.playfairDisplay(
+                                  fontSize: 17,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'Promo- oder Angebotscode eingeben',
+                                style: GoogleFonts.inter(
+                                  fontSize: 12,
+                                  color: Colors.white.withOpacity(0.58),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        Icon(
+                          Icons.chevron_right,
+                          size: 24,
+                          color: Colors.white54,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 12),
+          ],
+          GlassCard(
+            borderRadius: 20,
+            child: Material(
+              color: Colors.transparent,
+              child: InkWell(
+                borderRadius: BorderRadius.circular(20),
+                onTap: _installId == null
+                    ? null
+                    : () {
+                        Clipboard.setData(ClipboardData(text: _installId!));
+                        rootScaffoldMessengerKey.currentState?.showSnackBar(
+                          const SnackBar(
+                            content: Text('ID kopiert'),
+                            behavior: SnackBarBehavior.floating,
+                            duration: Duration(seconds: 2),
+                          ),
+                        );
+                      },
+                child: Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Anzeigename (optional)',
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.white.withOpacity(0.72),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      TextField(
+                        controller: _displayNameController,
+                        maxLength: 30,
+                        enabled: !_savingDisplayName,
+                        style: GoogleFonts.inter(
+                          fontSize: 14,
+                          color: Colors.white,
+                        ),
+                        decoration: _settingsDropdownDecoration().copyWith(
+                          hintText: 'z. B. Sinan',
+                          hintStyle: GoogleFonts.inter(
+                            fontSize: 14,
+                            color: Colors.white.withOpacity(0.38),
+                          ),
+                          counterStyle: GoogleFonts.inter(
+                            fontSize: 11,
+                            color: Colors.white.withOpacity(0.45),
+                          ),
+                        ),
+                        textInputAction: TextInputAction.done,
+                        onSubmitted: (_) => _saveDisplayName(),
+                      ),
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: TextButton(
+                          onPressed: _installId == null || _savingDisplayName
+                              ? null
+                              : _saveDisplayName,
+                          child: _savingDisplayName
+                              ? SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: Colors.white.withOpacity(0.7),
+                                  ),
+                                )
+                              : Text(
+                                  'Speichern',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                    color: const Color(0xFFE5C07B),
+                                  ),
+                                ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Geräte-ID',
+                        style: GoogleFonts.inter(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w500,
+                          color: Colors.white.withOpacity(0.72),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              _installId ?? '…',
+                              style: GoogleFonts.inter(
+                                fontSize: 13,
+                                height: 1.4,
+                                color: Colors.white,
+                                letterSpacing: 0.2,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Icon(
+                            Icons.copy_outlined,
+                            size: 18,
+                            color: Colors.white.withOpacity(0.45),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Nur für Support-Anfragen',
+                        style: GoogleFonts.inter(
+                          fontSize: 12,
+                          color: Colors.white.withOpacity(0.58),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ),
+          ),
+        ],
       ],
     );
   }
