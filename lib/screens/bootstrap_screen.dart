@@ -6,8 +6,10 @@ import '../data/db/database_provider.dart';
 import '../data/prayer/notification_service.dart';
 import '../data/quran/models/surah_model.dart';
 import '../data/quran/quran_repository.dart';
+import '../data/settings/settings_repository.dart';
 import '../theme/app_theme.dart';
 import '../theme/tokens.dart';
+import 'onboarding_screen.dart';
 import 'root_shell.dart';
 
 /// Ensures prebuilt DB is ready, then navigates to the app. No drift/import.
@@ -99,7 +101,10 @@ class _BootstrapScreenState extends State<BootstrapScreen> {
     }
   }
 
-  void _navigate() {
+  void _navigate() async {
+    final onboardingCompleted = await SettingsRepository.instance.getOnboardingCompleted();
+    if (!mounted) return;
+
     Navigator.of(context).pushReplacement(
       PageRouteBuilder<void>(
         transitionDuration: _homeFadeDuration,
@@ -109,7 +114,9 @@ class _BootstrapScreenState extends State<BootstrapScreen> {
             parent: animation,
             curve: Curves.easeOutCubic,
           ),
-          child: const RootShell(),
+          child: onboardingCompleted
+              ? const RootShell()
+              : const OnboardingScreen(),
         ),
       ),
     );

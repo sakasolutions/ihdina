@@ -66,8 +66,7 @@ flutter_launcher_icons:
   remove_alpha_ios: true
 
 flutter_native_splash:
-  # Nur start.png (1242×2688) – keine Farbe, kein extra Logo. Ein Bild füllt den Screen.
-  background_image: "assets/img/start.png"
+  color: "#081A15"
   fullscreen: true
   # Android 12+ unterstützt kein Vollbild-Hintergrundbild, nur Farbe + Icon.
   android_12:

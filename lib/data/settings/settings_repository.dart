@@ -122,6 +122,15 @@ class SettingsRepository {
     await _set(_keyDailyAyahReminderEnabled, enabled ? 'true' : 'false');
   }
 
+  Future<bool> getOnboardingCompleted() async {
+    final value = await _get('onboarding_completed');
+    return value == 'true';
+  }
+
+  Future<void> setOnboardingCompleted(bool completed) async {
+    await _set('onboarding_completed', completed.toString());
+  }
+
   /// Sure-Kurzintro beim ersten Öffnen einer Sure im Reader (Standard: an).
   Future<bool> getSurahIntroAutoShow() async {
     final v = await _get(_keySurahIntroAutoShow);

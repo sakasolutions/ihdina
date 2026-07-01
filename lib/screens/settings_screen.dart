@@ -5,8 +5,10 @@ import 'package:flutter/services.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../main.dart' show appRestartNotifier;
 import '../app_keys.dart';
+import '../data/api/ihdina_api_client.dart';
 import '../data/prayer/notification_service.dart';
 import '../data/prayer/prayer_models.dart';
 import '../data/prayer/prayer_times_repository.dart';
@@ -24,6 +26,7 @@ import 'sources_screen.dart';
 
 const Color _accentChampagneGold = Color(0xFFE5C07B);
 const double _settingsHelpSheetOuterPad = 24;
+const String _kDisplayNamePrefsKey = 'ihdina_display_name';
 
 /// Goldene Zwischenüberschrift im Hilfe-Bottom-Sheet (wie Gebet → Karahat-Info).
 Widget _settingsHelpSectionLabel(String text) {
@@ -102,6 +105,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   bool _surahIntroAutoShow = true;
   bool _locationLoading = false;
   String? _installId;
+  final TextEditingController _displayNameController = TextEditingController();
+  bool _savingDisplayName = false;
 
   @override
   void initState() {
@@ -112,6 +117,70 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _load();
     _loadPrayerTimes();
     _loadInstallId();
+    _loadDisplayNameFromPrefs();
+  }
+
+  @override
+  void dispose() {
+    _displayNameController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _loadDisplayNameFromPrefs() async {
+    final prefs = await SharedPreferences.getInstance();
+    final name = prefs.getString(_kDisplayNamePrefsKey) ?? '';
+    if (!mounted) return;
+    _displayNameController.text = name;
+  }
+
+  Future<void> _saveDisplayName() async {
+    final installId = _installId;
+    if (installId == null || _savingDisplayName) return;
+
+    setState(() => _savingDisplayName = true);
+    try {
+      final name = _displayNameController.text.trim();
+      await IhdinaApiClient.instance.updateDisplayName(installId, name);
+
+      final prefs = await SharedPreferences.getInstance();
+      if (name.isEmpty) {
+        await prefs.remove(_kDisplayNamePrefsKey);
+      } else {
+        await prefs.setString(_kDisplayNamePrefsKey, name);
+      }
+
+      if (mounted) {
+        rootScaffoldMessengerKey.currentState?.showSnackBar(
+          const SnackBar(
+            content: Text('Name gespeichert'),
+            behavior: SnackBarBehavior.floating,
+            duration: Duration(seconds: 2),
+          ),
+        );
+      }
+    } on IhdinaApiException catch (e) {
+      if (mounted) {
+        rootScaffoldMessengerKey.currentState?.showSnackBar(
+          SnackBar(
+            content: Text(e.message),
+            behavior: SnackBarBehavior.floating,
+            duration: const Duration(seconds: 3),
+          ),
+        );
+      }
+    } catch (_) {
+      if (mounted) {
+        rootScaffoldMessengerKey.currentState?.showSnackBar(
+          const SnackBar(
+            content: Text('Name konnte nicht gespeichert werden.'),
+            behavior: SnackBarBehavior.floating,
+            duration: Duration(seconds: 3),
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _savingDisplayName = false);
+    }
   }
 
   Future<void> _loadInstallId() async {
@@ -299,6 +368,63 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       ),
                     ),
                     const SizedBox(height: 16),
+                    Text(
+                      'Anzeigename (optional)',
+                      style: GoogleFonts.inter(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.white.withOpacity(0.72),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    TextField(
+                      controller: _displayNameController,
+                      maxLength: 30,
+                      enabled: !_savingDisplayName,
+                      style: GoogleFonts.inter(
+                        fontSize: 14,
+                        color: Colors.white,
+                      ),
+                      decoration: _settingsDropdownDecoration().copyWith(
+                        hintText: 'z. B. Sinan',
+                        hintStyle: GoogleFonts.inter(
+                          fontSize: 14,
+                          color: Colors.white.withOpacity(0.38),
+                        ),
+                        counterStyle: GoogleFonts.inter(
+                          fontSize: 11,
+                          color: Colors.white.withOpacity(0.45),
+                        ),
+                      ),
+                      textInputAction: TextInputAction.done,
+                      onSubmitted: (_) => _saveDisplayName(),
+                    ),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        onPressed: _installId == null || _savingDisplayName
+                            ? null
+                            : _saveDisplayName,
+                        child: _savingDisplayName
+                            ? SizedBox(
+                                width: 18,
+                                height: 18,
+                                child: CircularProgressIndicator(
+                                  strokeWidth: 2,
+                                  color: Colors.white.withOpacity(0.7),
+                                ),
+                              )
+                            : Text(
+                                'Speichern',
+                                style: GoogleFonts.inter(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w600,
+                                  color: const Color(0xFFE5C07B),
+                                ),
+                              ),
+                      ),
+                    ),
+                    const SizedBox(height: 8),
                     Text(
                       'Geräte-ID',
                       style: GoogleFonts.inter(

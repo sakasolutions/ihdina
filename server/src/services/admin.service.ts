@@ -13,6 +13,7 @@ export async function searchUsersByInstallId(q: string, take = 20) {
     select: {
       id: true,
       installId: true,
+      displayName: true,
       isPro: true,
       revenueCatAppUserId: true,
       proExpiresAt: true,

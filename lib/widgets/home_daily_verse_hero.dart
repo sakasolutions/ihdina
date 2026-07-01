@@ -118,12 +118,7 @@ class HomeDailyVerseHero extends StatelessWidget {
               compactVerseLayout: shortVerse,
               header: _buildHeaderRow(),
               verseBlock: _buildTier1VerseBlock(showArabic: shortVerse),
-              middleBlock: tier1ShortFill
-                  ? _buildTier1TakeawayBlock(
-                      _resolvedTakeawayLine(),
-                      takeawayNeutralPresentation,
-                    )
-                  : null,
+              middleBlock: null,
               pinnedBlock: _buildTier1PinnedBlock(compactTopGap: shortVerse),
             )
           : _buildLegacyColumn(

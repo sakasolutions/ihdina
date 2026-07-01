@@ -33,7 +33,6 @@ Future<void> main() async {
     }
   }
   await NotificationService.instance.initialize();
-  await NotificationService.instance.requestPermissions();
   if (kDebugMode) {
     await runDbDiagnostics();
   }

@@ -216,6 +216,23 @@ class IhdinaApiClient {
     return _parseJsonObjectResponse(res, context: 'postReflectionMoment');
   }
 
+  Future<void> updateDisplayName(String installId, String displayName) async {
+    final res = await http
+        .patch(
+          _uri('/api/v1/profile'),
+          headers: const {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          body: jsonEncode({
+            'installId': installId,
+            'displayName': displayName,
+          }),
+        )
+        .timeout(_timeout);
+    _parseJsonObjectResponse(res, context: 'updateDisplayName');
+  }
+
   Map<String, dynamic> _parseJsonObjectResponse(
     http.Response res, {
     String context = 'api',
