@@ -1,9 +1,25 @@
-Für BACKLOG_1_2.md:
+# Ihdina Update 1.2 — Backlog
 
-Athan / Adhan Funktion (Gebetsruf als Benachrichtigung)
+## Features
 
-Jetzt in App Store Connect eintragen:
+- [ ] Athan / Adhan Funktion — Gebetsruf als Benachrichtigung (APNs/FCM)
+- [ ] Dua-Tab — eigener Tab mit Bittgebeten (Morgen, Abend, Nach dem Gebet, Reise etc.)
+- [ ] Navigation umstrukturieren: Dua → Koran → Home → Gebet → Mehr
+- [ ] Moment zum Nachdenken in Dua-Tab verschieben (raus aus Gebet-Tab)
+- [ ] Koran Vorlesemodus — kapitelweise abspielen wie Spotify
 
-App-Name ändern auf „Ihdina – Koran auf Deutsch"
-Untertitel: „Vers, Hadith & KI auf Deutsch"
-Keywords eintragen
+## ASO
+
+- [ ] Screenshots erneuern — Mockup auf schönem Hintergrund
+- [ ] App Store: Primärsprache Deutsch prüfen ob aktiv
+
+## Tech / Security
+
+- [ ] NSLocationAlwaysAndWhenInUseUsageDescription wieder in Info.plist
+- [ ] Projekt dauerhaft aus OneDrive → lokaler Ordner
+- [ ] Git-basiertes Deployment auf Server einrichten
+
+## Preise
+
+- [ ] Monatspreis auf 2,99€ prüfen
+- [ ] Jahrespreis auf 21,99€ prüfen

@@ -218,6 +218,7 @@
     .kpi .val.gold { color: var(--gold); }
     .kpi .lbl { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-2); margin-top: 6px; }
     .kpi .sub { font-size: 0.76rem; color: var(--text-2); margin-top: 4px; }
+    .kpi[title], th[title], td[title], dt[title], .user-modal-stat[title], .overview-subsection h3[title], .ep-bar-meta[title], .user-modal-list li[title] { cursor: help; }
     .badge {
       display: inline-block;
       font-size: 0.68rem;
@@ -232,6 +233,71 @@
     .badge.err { background: rgba(224, 122, 106, 0.2); color: var(--err); }
 
     .chart-wrap { position: relative; height: 260px; margin-top: 8px; }
+    .overview-insights { list-style: none; margin: 0; padding: 0; }
+    .overview-insight-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      padding: 10px 12px;
+      margin-bottom: 8px;
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      background: rgba(255, 255, 255, 0.03);
+      font-size: 0.84rem;
+      line-height: 1.45;
+      color: var(--text);
+    }
+    .overview-insight-icon {
+      flex-shrink: 0;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: rgba(200, 169, 110, 0.18);
+      color: var(--gold);
+      font-size: 0.72rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 1px;
+    }
+    .overview-subsection { margin-top: 20px; }
+    .overview-subsection h3 {
+      margin: 0 0 12px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-2);
+    }
+    .ep-bar-row { margin-bottom: 10px; }
+    .ep-bar-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 8px;
+      margin-bottom: 4px;
+      font-size: 0.8rem;
+    }
+    .ep-bar-label { color: var(--text); font-weight: 500; }
+    .ep-bar-meta { color: var(--text-2); font-size: 0.76rem; white-space: nowrap; }
+    .ep-bar-track {
+      height: 8px;
+      border-radius: 4px;
+      background: rgba(255, 255, 255, 0.06);
+      overflow: hidden;
+    }
+    .ep-bar-fill {
+      height: 100%;
+      border-radius: 4px;
+      background: linear-gradient(90deg, rgba(200, 169, 110, 0.55), rgba(200, 169, 110, 0.85));
+      min-width: 2px;
+    }
+    .overview-err-table { min-width: 0; }
+    .overview-err-table td:first-child { width: 38%; }
+    .latency-ok { color: var(--ok); font-weight: 600; }
+    .latency-warn { color: var(--warn); font-weight: 600; }
+    .latency-err { color: var(--err); font-weight: 600; }
     .row { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; margin-bottom: 12px; }
     .table-toolbar {
       justify-content: flex-end;
@@ -275,6 +341,8 @@
     tr:last-child td { border-bottom: none; }
     tr.clickable { cursor: pointer; }
     tr.clickable:hover { background: rgba(255, 255, 255, 0.03); }
+    td.clickable { cursor: pointer; }
+    td.clickable:hover { color: var(--gold); }
     tr.sum-row td { font-weight: 700; color: var(--gold); background: rgba(200, 169, 110, 0.06); }
     .mono { font-family: ui-monospace, monospace; font-size: 0.76rem; }
     .empty { color: var(--text-2); padding: 16px 0; font-size: 0.88rem; }
@@ -293,6 +361,168 @@
     .thumb-rating { font-size: 1.15rem; line-height: 1; }
     .thumb-rating.up { color: var(--ok); }
     .thumb-rating.down { color: var(--err); }
+
+    #panel-users .users-tab-wrap {
+      position: relative;
+      min-height: 100%;
+    }
+    .user-modal {
+      display: none;
+      position: absolute;
+      inset: 0;
+      z-index: 40;
+      align-items: flex-start;
+      justify-content: center;
+      padding: 20px 14px;
+      overflow-y: auto;
+    }
+    .user-modal.open { display: flex; }
+    .user-modal-backdrop {
+      position: absolute;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.68);
+    }
+    .user-modal-panel {
+      position: relative;
+      z-index: 1;
+      width: 100%;
+      max-width: 600px;
+      max-height: min(90vh, 720px);
+      overflow-y: auto;
+      background: var(--card);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px;
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.45);
+    }
+    .user-modal-header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 4px;
+    }
+    .user-modal-header h3 {
+      margin: 0 0 4px;
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .user-modal-meta {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.82rem;
+      color: var(--text-2);
+      margin-top: 8px;
+    }
+    .user-modal-install-copy {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      width: 100%;
+      margin-top: 6px;
+      padding: 8px 10px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.03);
+      cursor: pointer;
+      text-align: left;
+      color: var(--text-2);
+    }
+    .user-modal-install-copy:hover {
+      border-color: rgba(200, 169, 110, 0.35);
+      background: rgba(200, 169, 110, 0.06);
+    }
+    .user-modal-install-id {
+      flex: 1;
+      font-size: 0.78rem;
+      line-height: 1.45;
+      word-break: break-all;
+      color: var(--text);
+    }
+    .user-modal-copy-icon {
+      flex-shrink: 0;
+      width: 15px;
+      height: 15px;
+      margin-top: 1px;
+      opacity: 0.5;
+    }
+    .user-modal-install-copy:hover .user-modal-copy-icon { opacity: 0.85; }
+    .user-modal-copy-ok {
+      display: block;
+      min-height: 1.1em;
+      margin-top: 4px;
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--ok);
+      opacity: 0;
+      transition: opacity 0.15s ease;
+    }
+    .user-modal-copy-ok.show { opacity: 1; }
+    .user-modal-close {
+      flex-shrink: 0;
+      width: 32px;
+      height: 32px;
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.04);
+      color: var(--text-2);
+      font-size: 1.25rem;
+      line-height: 1;
+      cursor: pointer;
+      padding: 0;
+    }
+    .user-modal-close:hover { color: var(--text); background: rgba(255, 255, 255, 0.08); }
+    .pro-badge {
+      display: inline-block;
+      font-size: 0.68rem;
+      font-weight: 700;
+      padding: 3px 8px;
+      border-radius: 6px;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .pro-badge.on { background: rgba(200, 169, 110, 0.22); color: var(--gold); }
+    .pro-badge.off { background: rgba(255, 255, 255, 0.06); color: var(--text-2); }
+    .user-modal-stats {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 10px;
+      margin: 16px 0;
+    }
+    @media (max-width: 480px) { .user-modal-stats { grid-template-columns: 1fr; } }
+    .user-modal-stat {
+      padding: 12px 14px;
+      border: 1px solid var(--border);
+      border-radius: 10px;
+      background: rgba(255, 255, 255, 0.02);
+    }
+    .user-modal-stat .val { font-size: 1rem; font-weight: 700; color: var(--text); }
+    .user-modal-stat .lbl {
+      font-size: 0.65rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-2);
+      margin-top: 4px;
+    }
+    .user-modal-section-title {
+      margin: 16px 0 8px;
+      font-size: 0.72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-2);
+    }
+    .user-modal-list {
+      margin: 0;
+      padding: 0 0 0 1.1rem;
+      font-size: 0.88rem;
+      color: var(--text);
+    }
+    .user-modal-list li { margin: 5px 0; }
+    .user-modal-actions { margin-top: 18px; display: flex; flex-wrap: wrap; gap: 8px; }
 
     .detail-panel { margin-top: 16px; padding-top: 16px; border-top: 1px solid var(--border); }
     .detail-grid {
@@ -356,19 +586,35 @@
 
       <div class="kpi-grid" id="kpiGrid"></div>
 
+      <section class="card" id="overviewInsightsSection" style="display:none">
+        <h2>Server-Hinweise</h2>
+        <ul id="overviewInsights" class="overview-insights"></ul>
+      </section>
+
       <section class="card">
         <div class="row">
           <h2 style="margin:0;flex:1">KI-Volumen (14 Tage)</h2>
           <button type="button" class="btn btn-gold" id="btnOverview" style="width:auto">Daten laden</button>
         </div>
         <div id="overviewErr" class="panel-err"></div>
+        <p class="hint" style="margin-top:-4px">Goldene Linie: alle KI-Anfragen pro Tag. Rote Linie: fehlgeschlagene Anfragen — jeder Tap auf Erklärung, Folgefrage usw. zählt einmal.</p>
         <div class="chart-wrap"><canvas id="chLineAi"></canvas></div>
+        <div id="overviewEndpoints"></div>
+        <div id="overviewErrorCodes"></div>
       </section>
     </div>
 
     <div id="panel-ki" class="panel">
       <section class="card">
+        <h2>Kosten &amp; Volumen pro Tag</h2>
+        <p class="hint" style="margin-top:-4px">Kosten sind Schätzwerte basierend auf OpenAI-Tokenpreisen — Y-Achse: USD pro Kalendertag.</p>
+        <div id="kiDailyErr" class="panel-err"></div>
+        <div class="chart-wrap"><canvas id="chKiDailyCost"></canvas></div>
+        <div id="kiDailyTable" style="margin-top:12px"></div>
+      </section>
+      <section class="card">
         <h2>KI-Einzelereignisse</h2>
+        <p class="hint" style="margin-top:-4px">Jede Zeile ist eine protokollierte KI-Anfrage — Tokens und Kosten sind Schätzwerte pro Ereignis.</p>
         <div class="row">
           <div style="min-width:140px;flex:1">
             <label for="kiEpFilter">Endpoint</label>
@@ -420,27 +666,32 @@
     </div>
 
     <div id="panel-users" class="panel">
-      <section class="card">
-        <h2>Nutzer</h2>
-        <p class="hint">Alle Geräte — Suche nach Name oder Geräte-ID.</p>
-        <div class="row">
-          <input id="userQ" type="text" placeholder="Name oder Geräte-ID …" style="flex:1;min-width:200px;margin:0" autocomplete="off" />
+      <div class="users-tab-wrap">
+        <section class="card">
+          <h2>Nutzer</h2>
+          <p class="hint">Alle Geräte — Suche nach Name oder Geräte-ID.</p>
+          <div class="row">
+            <input id="userQ" type="text" placeholder="Name oder Geräte-ID …" style="flex:1;min-width:200px;margin:0" autocomplete="off" />
+          </div>
+          <div id="userSearchErr" class="panel-err"></div>
+          <div class="row table-toolbar">
+            <label for="usersPageSize">Anzeigen:</label>
+            <select id="usersPageSize">
+              <option value="10" selected>10</option>
+              <option value="25">25</option>
+              <option value="100">100</option>
+              <option value="500">500</option>
+              <option value="1000">1000</option>
+            </select>
+          </div>
+          <div id="userResults"></div>
+          <div id="userPagination"></div>
+        </section>
+        <div id="userModal" class="user-modal" aria-hidden="true">
+          <div class="user-modal-backdrop" id="userModalBackdrop"></div>
+          <div id="userDetail" class="user-modal-panel" role="dialog" aria-modal="true" aria-labelledby="userModalTitle"></div>
         </div>
-        <div id="userSearchErr" class="panel-err"></div>
-        <div class="row table-toolbar">
-          <label for="usersPageSize">Anzeigen:</label>
-          <select id="usersPageSize">
-            <option value="10" selected>10</option>
-            <option value="25">25</option>
-            <option value="100">100</option>
-            <option value="500">500</option>
-            <option value="1000">1000</option>
-          </select>
-        </div>
-        <div id="userResults"></div>
-        <div id="userPagination"></div>
-        <div id="userDetail" class="detail-panel" style="display:none"></div>
-      </section>
+      </div>
     </div>
 
     <div id="panel-feedback" class="panel">
@@ -448,6 +699,17 @@
         <div class="row">
           <h2 style="margin:0;flex:1">Letzte Feedbacks</h2>
           <button type="button" class="btn btn-gold" id="btnFeedback" style="width:auto">Daten laden</button>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <div style="min-width:200px;flex:1">
+            <label for="fbScreenFilter">Screen</label>
+            <select id="fbScreenFilter">
+              <option value="">Alle Screens</option>
+              <option value="settings">Einstellungen</option>
+              <option value="ai_verse_explanation">KI-Erklärung</option>
+              <option value="_untagged">Weitere</option>
+            </select>
+          </div>
         </div>
         <div id="fbErr" class="panel-err"></div>
         <div class="row table-toolbar">
@@ -479,6 +741,7 @@
       let sessionKey = "";
       let authenticated = false;
       let chLineAi = null;
+      let chKiDailyCost = null;
       const kiUserMeta = {};
       let feedbackItems = [];
       let fbSortAsc = false;
@@ -578,6 +841,7 @@
         authenticated = false;
         sessionKey = "";
         destroyChart();
+        destroyKiDailyChart();
         $("loginScreen").style.display = "flex";
         $("dashboard").classList.remove("visible");
         $("loginKey").value = localStorage.getItem(LS_KEY) || "";
@@ -634,6 +898,63 @@
         );
       }
 
+      const METRIC_HINTS = {
+        usersTotal: "Geräte, die mindestens einmal einen API-Request an den Ihdina-Server gesendet haben.",
+        usersProShare: "Anteil Pro-Nutzer an allen Geräten mit Server-Kontakt.",
+        usersActive7d: "Geräte, die in den letzten 7 Tagen mindestens einen API-Call gemacht haben.",
+        aiRequests24h: "Gezählte Anfragen an OpenAI — jeder Tap auf „Mehr verstehen“, Folgefrage, Kernbotschaft oder Reflection zählt einmal.",
+        aiRequests7d: "Alle KI-Anfragen der letzten 7 Tage (gleiche Zählweise wie 24h).",
+        aiErrorRate7d: "Anteil der KI-Anfragen mit Status „error“ in den letzten 7 Tagen.",
+        aiErrors7d: "KI-Anfragen mit fehlgeschlagenem Status in den letzten 7 Tagen.",
+        aiOk7d: "Erfolgreiche KI-Anfragen (Status „ok“) in den letzten 7 Tagen.",
+        feedbackPositive: "Anteil positiver Daumen-Bewertungen (👍) an allen Bewertungen der letzten 7 Tage.",
+        feedbackWithRating7d: "Feedbacks mit Daumen hoch oder runter in den letzten 7 Tagen.",
+        endpointShare7d: "Anzahl Anfragen pro KI-Funktion; Prozent = Anteil am Gesamtvolumen der letzten 7 Tage.",
+        errorCodeCount7d: "Wie oft dieser Fehlercode in KI-Logs der letzten 7 Tage vorkam.",
+        kiDailyCalls: "Anzahl KI-Anfragen an diesem Kalendertag (alle Endpoints).",
+        kiDailyTokens: "Summe aller verbrauchten Tokens (Eingabe + Ausgabe) an diesem Tag.",
+        kiDailyCost: "Geschätzte OpenAI-Kosten dieses Tages in US-Dollar.",
+        kiDailyLatency: "Durchschnittliche Antwortzeit der KI-Anfragen an diesem Tag in Millisekunden.",
+        kiSummaryCalls: "Alle KI-Einzelereignisse im gewählten Filterzeitraum.",
+        kiSummaryErrors: "Anfragen mit Status „error“ im aktuellen Filter.",
+        kiSummaryCost: "Summe geschätzter Kosten aus Token-Sätzen für den gefilterten Zeitraum.",
+        kiColTokens: "Verbrauchte Tokens dieser einzelnen Anfrage (Prompt + Completion).",
+        kiColCost: "Geschätzte Kosten dieser Anfrage basierend auf Modell und Tokenpreisen.",
+        kiColLatency: "Zeit von Anfrage bis Antwort — grün unter 2 s, gelb 2–5 s, rot über 5 s.",
+        userKiCalls: "Anzahl protokollierter KI-Anfragen dieses Geräts insgesamt.",
+        userModalKiCalls: "Gesamtzahl aller in der Datenbank gespeicherten KI-Logs für dieses Gerät.",
+        userDailyUsageSection: "Tagesquotas für Erklärungen, Kernbotschaften und Reflection — basierend auf UTC-Kalendertag.",
+        userDailyVerse: "Erklärungen des Tagesverses heute (UTC-Kalendertag).",
+        userDailyExtra: "Zusätzliche Vers-Erklärungen heute; Free-Nutzer maximal 1 pro Tag.",
+        userDailyTakeaway: "Generierte Kernbotschaften heute.",
+        userDailyReflection: "„Moment zum Nachdenken“-Antworten heute.",
+        userFollowUpCount: "Anzahl Folgefragen zu diesem Vers über die Follow-up-Funktion.",
+        userFollowUpSection: "Die drei Verse mit den meisten Folgefragen dieses Nutzers.",
+      };
+
+      function hintAttr(key) {
+        const t = METRIC_HINTS[key];
+        return t ? " title=\"" + escapeHtml(t) + "\"" : "";
+      }
+
+      function kpiCard(valHtml, label, hintKey, subHtml, valClass) {
+        return (
+          "<div class='kpi'" + hintAttr(hintKey) + ">" +
+          "<div class='val" + (valClass ? " " + valClass : "") + "'>" + valHtml + "</div>" +
+          "<div class='lbl'>" + escapeHtml(label) + "</div>" +
+          (subHtml ? "<div class='sub'>" + subHtml + "</div>" : "") +
+          "</div>"
+        );
+      }
+
+      function thHint(text, hintKey) {
+        return "<th" + hintAttr(hintKey) + ">" + escapeHtml(text) + "</th>";
+      }
+
+      function dtHint(text, hintKey, suffixHtml) {
+        return "<dt" + hintAttr(hintKey) + ">" + escapeHtml(text) + (suffixHtml || "") + "</dt>";
+      }
+
       function fmt(n) { return Number(n).toLocaleString("de-DE"); }
       function pct(rate) { return (Number(rate) * 100).toFixed(1).replace(".", ",") + " %"; }
       function shortId(id) {
@@ -658,6 +979,138 @@
       function destroyChart() {
         try { chLineAi && chLineAi.destroy(); } catch (_) {}
         chLineAi = null;
+      }
+
+      function destroyKiDailyChart() {
+        try { chKiDailyCost && chKiDailyCost.destroy(); } catch (_) {}
+        chKiDailyCost = null;
+      }
+
+      function formatLatencyMs(ms) {
+        if (ms == null || ms === "" || Number.isNaN(Number(ms))) return "—";
+        const n = Math.round(Number(ms));
+        let cls = "latency-ok";
+        if (n >= 5000) cls = "latency-err";
+        else if (n >= 2000) cls = "latency-warn";
+        return "<span class='" + cls + "'>" + fmt(n) + " ms</span>";
+      }
+
+      function aggregateDailyUsageRows(rows) {
+        const map = new Map();
+        for (const r of rows || []) {
+          const day = r.day;
+          if (!day) continue;
+          if (!map.has(day)) {
+            map.set(day, { day, calls: 0, tokens: 0, costUsd: 0, latSum: 0, latWeight: 0 });
+          }
+          const agg = map.get(day);
+          const count = Number(r.count) || 0;
+          agg.calls += count;
+          agg.tokens += Number(r.totalSum) || 0;
+          agg.costUsd += Number(r.costUsd) || 0;
+          if (r.avgLatencyMs != null && count > 0) {
+            agg.latSum += Number(r.avgLatencyMs) * count;
+            agg.latWeight += count;
+          }
+        }
+        return Array.from(map.values())
+          .map((a) => ({
+            day: a.day,
+            calls: a.calls,
+            tokens: a.tokens,
+            costUsd: a.costUsd,
+            avgLatencyMs: a.latWeight > 0 ? Math.round(a.latSum / a.latWeight) : null,
+          }))
+          .sort((a, b) => a.day.localeCompare(b.day));
+      }
+
+      function renderKiDailyCostChart(days) {
+        if (typeof Chart === "undefined") {
+          showPanelErr("kiDailyErr", "Diagramm konnte nicht geladen werden.");
+          return;
+        }
+        destroyKiDailyChart();
+        const labels = days.length ? days.map((d) => d.day) : ["(keine Daten)"];
+        const costs = days.length ? days.map((d) => Math.round(d.costUsd * 1_000_000) / 1_000_000) : [0];
+        const tick = "rgba(255,255,255,0.45)";
+        const grid = "rgba(255,255,255,0.08)";
+        chKiDailyCost = new Chart($("chKiDailyCost").getContext("2d"), {
+          type: "line",
+          data: {
+            labels,
+            datasets: [
+              {
+                label: "Kosten USD",
+                data: costs,
+                borderColor: "#c8a96e",
+                backgroundColor: "rgba(200,169,110,0.12)",
+                fill: true,
+                tension: 0.25,
+                pointRadius: 2,
+              },
+            ],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { labels: { color: tick, font: { size: 11 } } } },
+            scales: {
+              x: { ticks: { color: tick, maxRotation: 45 }, grid: { color: grid } },
+              y: {
+                ticks: {
+                  color: tick,
+                  callback: (v) => "$" + Number(v).toFixed(4),
+                },
+                grid: { color: grid },
+                beginAtZero: true,
+              },
+            },
+          },
+        });
+      }
+
+      function renderKiDailyTable(days) {
+        const el = $("kiDailyTable");
+        if (!days.length) {
+          el.innerHTML = "<p class='empty'>Keine Tagesdaten im Zeitraum.</p>";
+          return;
+        }
+        const sorted = [...days].sort((a, b) => (a.day < b.day ? 1 : -1));
+        let html =
+          "<div class='table-wrap'><table><thead><tr><th>Tag</th>" +
+          thHint("Calls", "kiDailyCalls") +
+          thHint("Tokens gesamt", "kiDailyTokens") +
+          thHint("Kosten USD", "kiDailyCost") +
+          thHint("Ø Latenz", "kiDailyLatency") +
+          "</tr></thead><tbody>";
+        for (const d of sorted) {
+          html +=
+            "<tr><td class='mono'>" + escapeHtml(d.day) + "</td>" +
+            "<td>" + fmt(d.calls) + "</td>" +
+            "<td>" + fmt(d.tokens) + "</td>" +
+            "<td>" + d.costUsd.toFixed(4) + "</td>" +
+            "<td>" + formatLatencyMs(d.avgLatencyMs) + "</td></tr>";
+        }
+        html += "</tbody></table></div>";
+        el.innerHTML = html;
+      }
+
+      async function loadKiDaily() {
+        if (!authenticated) return;
+        showPanelErr("kiDailyErr", "");
+        $("kiDailyTable").innerHTML = "<p class='hint'>Lade Tagesaggregate …</p>";
+        try {
+          const data = await fetchJson("/api/v1/admin/usage/daily?days=14");
+          const days = aggregateDailyUsageRows(data.rows || []);
+          renderKiDailyCostChart(days);
+          renderKiDailyTable(days);
+        } catch (e) {
+          if (authenticated) {
+            showPanelErr("kiDailyErr", String(e.message || e));
+            $("kiDailyTable").innerHTML = "";
+            destroyKiDailyChart();
+          }
+        }
       }
 
       function readPageSize(selectId) {
@@ -718,6 +1171,102 @@
         };
       }
 
+      const ENDPOINT_LABELS = {
+        "POST /api/v1/explain": "Vers-Erklärung",
+        "POST /api/v1/follow-up": "Folgefrage",
+        "POST /api/v1/takeaway": "Kernbotschaft",
+        "POST /api/v1/reflection-moment": "Moment zum Nachdenken",
+      };
+
+      const ERROR_CODE_LABELS = {
+        FREE_LIMIT_REACHED: "Tageslimit erreicht (Free-Nutzer)",
+        INVALID_INPUT: "Ungültige Anfrage",
+      };
+
+      function endpointDisplayLabel(endpoint) {
+        const ep = String(endpoint || "").trim();
+        if (ENDPOINT_LABELS[ep]) return ENDPOINT_LABELS[ep];
+        for (const [key, label] of Object.entries(ENDPOINT_LABELS)) {
+          if (ep.includes(key.replace("POST ", ""))) return label;
+        }
+        return ep || "—";
+      }
+
+      function renderOverviewInsights(o) {
+        const insights = o.insights || [];
+        const section = $("overviewInsightsSection");
+        if (!insights.length) {
+          section.style.display = "none";
+          $("overviewInsights").innerHTML = "";
+          return;
+        }
+        section.style.display = "block";
+        $("overviewInsights").innerHTML = insights
+          .map(
+            (text) =>
+              "<li class='overview-insight-item'><span class='overview-insight-icon' aria-hidden='true'>i</span><span>" +
+              escapeHtml(text) +
+              "</span></li>"
+          )
+          .join("");
+      }
+
+      function renderEndpointDistribution(rows) {
+        const el = $("overviewEndpoints");
+        const list = rows || [];
+        if (!list.length) {
+          el.innerHTML = "";
+          return;
+        }
+        const total = list.reduce((sum, r) => sum + (Number(r.count) || 0), 0);
+        const sorted = [...list].sort((a, b) => (Number(b.count) || 0) - (Number(a.count) || 0));
+        let html = "<div class='overview-subsection'><h3" + hintAttr("endpointShare7d") + ">Welche Funktionen werden genutzt (7 Tage)</h3>";
+        for (const r of sorted) {
+          const count = Number(r.count) || 0;
+          const share = total > 0 ? (count / total) * 100 : 0;
+          const label = endpointDisplayLabel(r.endpoint);
+          html +=
+            "<div class='ep-bar-row'>" +
+            "<div class='ep-bar-head'><span class='ep-bar-label'>" + escapeHtml(label) + "</span>" +
+            "<span class='ep-bar-meta'" + hintAttr("endpointShare7d") + ">" + fmt(count) + " · " + share.toFixed(1).replace(".", ",") + " %</span></div>" +
+            "<div class='ep-bar-track'><div class='ep-bar-fill' style='width:" + Math.max(share, total > 0 ? 0.5 : 0).toFixed(2) + "%'></div></div>" +
+            "</div>";
+        }
+        html += "</div>";
+        el.innerHTML = html;
+      }
+
+      function renderTopErrorCodes(rows) {
+        const el = $("overviewErrorCodes");
+        const list = (rows || []).filter((r) => (Number(r.count) || 0) > 0);
+        if (!list.length) {
+          el.innerHTML = "";
+          return;
+        }
+        let html =
+          "<div class='overview-subsection'><h3>Häufigste Fehler (7 Tage)</h3>" +
+          "<div class='table-wrap'><table class='overview-err-table'><thead><tr><th>Fehler</th><th>Erklärung</th>" +
+          thHint("Anzahl", "errorCodeCount7d") +
+          "</tr></thead><tbody>";
+        for (const r of list) {
+          const code = String(r.errorCode || "").trim() || "—";
+          let explanation;
+          if (ERROR_CODE_LABELS[code]) {
+            explanation = ERROR_CODE_LABELS[code];
+          } else if (code === "(kein Code)") {
+            explanation = "Kein Fehlercode protokolliert";
+          } else {
+            explanation = code;
+          }
+          html +=
+            "<tr><td class='mono'>" + escapeHtml(code) + "</td>" +
+            "<td>" + escapeHtml(explanation) + "</td>" +
+            "<td" + hintAttr("errorCodeCount7d") + ">" + fmt(r.count) + "</td></tr>";
+        }
+        html += "</tbody></table></div></div>";
+        el.innerHTML = html;
+      }
+
       function buildStatusLines(o) {
         const lines = [];
         const errRate = o.ai.errorRateLast7d;
@@ -749,12 +1298,17 @@
         const errCls = errorBadgeClass(o.ai.errorRateLast7d);
         const errPct = pct(o.ai.errorRateLast7d);
         const posFb = formatPositiveKpi(o.feedback);
+        const errBadge = (errCls === "ok" ? "OK" : errCls === "warn" ? "Achtung" : "Kritisch");
         $("kpiGrid").innerHTML =
-          "<div class='kpi'><div class='val'>" + fmt(o.users.total) + "</div><div class='lbl'>Geräte mit Server-Kontakt</div><div class='sub'>" + fmt(o.users.pro) + " Pro · " + pct(o.users.proShare) + "</div></div>" +
-          "<div class='kpi'><div class='val'>" + fmt(o.users.activeLast7d) + "</div><div class='lbl'>Aktive Geräte letzte 7 Tage</div><div class='sub'>Server-Kontakt in den letzten 7 Tagen</div></div>" +
-          "<div class='kpi'><div class='val gold'>" + fmt(o.ai.requestsLast24h) + "</div><div class='lbl'>KI-Anfragen 24h</div><div class='sub'>7 Tage: " + fmt(o.ai.requestsLast7d) + "</div></div>" +
-          "<div class='kpi'><div class='val'>" + errPct + "<span class='badge " + errCls + "'>" + (errCls === "ok" ? "OK" : errCls === "warn" ? "Achtung" : "Kritisch") + "</span></div><div class='lbl'>KI-Fehlerquote 7T</div><div class='sub'>" + fmt(o.ai.errorsLast7d) + " Fehler / " + fmt(o.ai.okLast7d) + " ok</div></div>" +
-          "<div class='kpi'><div class='val'>" + escapeHtml(posFb.val) + "</div><div class='lbl'>Positives Feedback</div><div class='sub'>" + escapeHtml(posFb.sub) + "</div></div>";
+          kpiCard(fmt(o.users.total), "Geräte mit Server-Kontakt", "usersTotal",
+            "<span" + hintAttr("usersProShare") + ">" + fmt(o.users.pro) + " Pro · " + pct(o.users.proShare) + "</span>") +
+          kpiCard(fmt(o.users.activeLast7d), "Aktive Geräte (7 Tage)", "usersActive7d", "Mindestens ein API-Call") +
+          kpiCard(fmt(o.ai.requestsLast24h), "KI-Anfragen (24h)", "aiRequests24h",
+            "<span" + hintAttr("aiRequests7d") + ">7 Tage: " + fmt(o.ai.requestsLast7d) + "</span>", "gold") +
+          kpiCard(errPct + "<span class='badge " + errCls + "'>" + errBadge + "</span>", "KI-Fehlerquote (7T)", "aiErrorRate7d",
+            "<span" + hintAttr("aiErrors7d") + ">" + fmt(o.ai.errorsLast7d) + " Fehler</span> / <span" + hintAttr("aiOk7d") + ">" + fmt(o.ai.okLast7d) + " ok</span>") +
+          kpiCard(escapeHtml(posFb.val), "Positives Feedback", "feedbackPositive",
+            "<span" + hintAttr("feedbackWithRating7d") + ">" + escapeHtml(posFb.sub) + "</span>");
       }
 
       function renderLineChart(byDay) {
@@ -799,7 +1353,10 @@
           const o = pack.overview;
           buildStatusLines(o);
           renderKpis(o);
+          renderOverviewInsights(o);
           renderLineChart(o.ai.byDay || []);
+          renderEndpointDistribution(o.ai.byEndpoint7d);
+          renderTopErrorCodes(o.ai.topErrorCodes7d);
         } catch (e) {
           if (authenticated) showPanelErr("overviewErr", String(e.message || e));
         } finally {
@@ -909,9 +1466,9 @@
         const errRate = calls > 0 ? errors / calls : 0;
         const errCls = errorBadgeClass(errRate);
         $("kiSummary").innerHTML =
-          "<div class='kpi'><div class='val gold'>" + fmt(calls) + "</div><div class='lbl'>Calls gesamt</div><div class='sub'>Im gewählten Zeitraum &amp; Filter</div></div>" +
-          "<div class='kpi'><div class='val'>" + fmt(errors) + "<span class='badge " + errCls + "'>" + pct(errRate) + "</span></div><div class='lbl'>Fehler</div><div class='sub'>Fehlerquote im Filter</div></div>" +
-          "<div class='kpi'><div class='val'>" + costUsd.toFixed(4) + "</div><div class='lbl'>Kosten USD ~</div><div class='sub'>Geschätzt aus Token-Sätzen</div></div>";
+          kpiCard(fmt(calls), "Calls gesamt", "kiSummaryCalls", "Im gewählten Zeitraum &amp; Filter", "gold") +
+          kpiCard(fmt(errors) + "<span class='badge " + errCls + "'>" + pct(errRate) + "</span>", "Fehler", "kiSummaryErrors", "Fehlerquote im Filter") +
+          kpiCard(costUsd.toFixed(4), "Kosten USD ~", "kiSummaryCost", "Geschätzt aus Token-Sätzen");
       }
 
       function renderKiEventsTable(items) {
@@ -923,7 +1480,11 @@
         if (kiTruncated) {
           html += "<p class='hint'>Daten begrenzt auf " + fmt(KI_EVENTS_MAX_PAGES * 100) + " Ereignisse — Filter enger setzen für vollständige Auswertung.</p>";
         }
-        html += "<div class='table-wrap'><table><thead><tr><th>Datum</th><th>User</th><th>Endpoint</th><th>Status</th><th>Tokens</th><th>Kosten USD</th><th>Fehlercode</th></tr></thead><tbody>";
+        html += "<div class='table-wrap'><table><thead><tr><th>Datum</th><th>User</th><th>Endpoint</th><th>Status</th>" +
+          thHint("Tokens", "kiColTokens") +
+          thHint("Kosten USD", "kiColCost") +
+          thHint("Latenz", "kiColLatency") +
+          "<th>Fehlercode</th></tr></thead><tbody>";
         for (const item of items) {
           const tokens = item.totalTokens ?? ((Number(item.promptTokens) || 0) + (Number(item.completionTokens) || 0));
           const cost = estimateKiEventCostUsd(item);
@@ -936,6 +1497,7 @@
             "<td" + statusCls + ">" + escapeHtml(item.status || "—") + "</td>" +
             "<td>" + fmt(tokens) + "</td>" +
             "<td>" + cost.toFixed(6) + "</td>" +
+            "<td>" + formatLatencyMs(item.latencyMs) + "</td>" +
             "<td class='mono'>" + errCode + "</td></tr>";
         }
         html += "</tbody></table></div>";
@@ -961,6 +1523,7 @@
         $("kiSummary").innerHTML = "";
         $("kiTable").innerHTML = "<p class='hint'>Lade KI-Ereignisse …</p>";
         $("kiPagination").innerHTML = "";
+        const dailyPromise = loadKiDaily();
         try {
           const hours = Number.parseInt($("kiHoursFilter").value, 10) || 168;
           const endpoint = $("kiEpFilter").value.trim();
@@ -1007,6 +1570,7 @@
             kiItemsAll = [];
           }
         } finally {
+          await dailyPromise;
           btn.disabled = false;
         }
       }
@@ -1021,10 +1585,12 @@
           $("userResults").innerHTML = "<p class='empty'>Keine Nutzer gefunden.</p>";
           return;
         }
-        let html = "<div class='table-wrap'><table><thead><tr><th>Name</th><th>Geräte-ID</th><th>Pro</th><th>KI-Calls</th><th>Zuletzt aktiv</th><th>Erstellt</th></tr></thead><tbody>";
+        let html = "<div class='table-wrap'><table><thead><tr><th>Name</th><th>Geräte-ID</th><th>Pro</th>" +
+          thHint("KI-Calls", "userKiCalls") +
+          "<th>Zuletzt aktiv</th><th>Erstellt</th></tr></thead><tbody>";
         for (const u of users) {
           const kiCalls = u._count?.aiRequestLogs ?? 0;
-          html += "<tr class='clickable' data-iid='" + encodeURIComponent(u.installId) + "'><td>" + displayNameLabel(u.displayName) + "</td><td class='mono' title='" + escapeHtml(u.installId) + "'>" + escapeHtml(shortInstallId8(u.installId)) + "</td><td>" + (u.isPro ? "Pro" : "Free") + "</td><td>" + fmt(kiCalls) + "</td><td>" + escapeHtml(fmtDate(u.lastSeenAt)) + "</td><td>" + escapeHtml(fmtDate(u.createdAt)) + "</td></tr>";
+          html += "<tr class='clickable' data-iid='" + encodeURIComponent(u.installId) + "'><td>" + displayNameLabel(u.displayName) + "</td><td class='mono' title='" + escapeHtml(u.installId) + "'>" + escapeHtml(shortInstallId8(u.installId)) + "</td><td>" + (u.isPro ? "Pro" : "Free") + "</td><td" + hintAttr("userKiCalls") + ">" + fmt(kiCalls) + "</td><td>" + escapeHtml(fmtDate(u.lastSeenAt)) + "</td><td>" + escapeHtml(fmtDate(u.createdAt)) + "</td></tr>";
         }
         html += "</tbody></table></div>";
         $("userResults").innerHTML = html;
@@ -1062,46 +1628,174 @@
         }
       }
 
-      async function showUserDetail(installId) {
+      function copyUserModalInstallId(installId) {
+        const hint = $("userModalCopyHint");
+        const showOk = () => {
+          if (!hint) return;
+          hint.textContent = "Kopiert";
+          hint.classList.add("show");
+          window.clearTimeout(copyUserModalInstallId._t);
+          copyUserModalInstallId._t = window.setTimeout(() => {
+            hint.classList.remove("show");
+            hint.textContent = "";
+          }, 1800);
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(installId).then(showOk).catch(() => {});
+          return;
+        }
+        const ta = document.createElement("textarea");
+        ta.value = installId;
+        ta.style.position = "fixed";
+        ta.style.left = "-9999px";
+        document.body.appendChild(ta);
+        ta.select();
+        try {
+          if (document.execCommand("copy")) showOk();
+        } catch (_) {}
+        document.body.removeChild(ta);
+      }
+
+      function utcTodayString() {
+        return new Date().toISOString().slice(0, 10);
+      }
+
+      function findTodayDailyUsage(dailyUsages) {
+        const today = utcTodayString();
+        const row = (dailyUsages || []).find((d) => {
+          const day = (d.usageDate || "").slice(0, 10);
+          return day === today;
+        });
+        return {
+          dailyVerseCount: Number(row?.dailyVerseCount) || 0,
+          extraCount: Number(row?.extraCount) || 0,
+          takeawayCount: Number(row?.takeawayCount) || 0,
+          reflectionCount: Number(row?.reflectionCount) || 0,
+        };
+      }
+
+      function formatExtraUsageToday(extraCount, isPro) {
+        const x = Number(extraCount) || 0;
+        if (isPro) return fmt(x);
+        return fmt(x) + " / 1";
+      }
+
+      function renderUserDailyUsageSection(user) {
+        const u = findTodayDailyUsage(user.dailyUsages);
+        const extraHint = user.isPro ? "" : " <span class='hint'>(Free-Limit)</span>";
+        return (
+          "<div class='user-modal-section-title'" + hintAttr("userDailyUsageSection") + ">Feature-Nutzung heute</div>" +
+          "<p class='hint' style='margin:-4px 0 8px'>Zähler für den heutigen UTC-Tag laut Server-Quotas.</p>" +
+          "<dl class='detail-grid'>" +
+          dtHint("Tagesvers-Erklärungen", "userDailyVerse") + "<dd>" + fmt(u.dailyVerseCount) + "</dd>" +
+          dtHint("Extra-Erklärungen", "userDailyExtra", extraHint) + "<dd>" + formatExtraUsageToday(u.extraCount, user.isPro) + "</dd>" +
+          dtHint("Kernbotschaften", "userDailyTakeaway") + "<dd>" + fmt(u.takeawayCount) + "</dd>" +
+          dtHint("Reflection", "userDailyReflection") + "<dd>" + fmt(u.reflectionCount) + "</dd>" +
+          "</dl>"
+        );
+      }
+
+      function topFollowUpVerses(followUpUsages, limit) {
+        return [...(followUpUsages || [])]
+          .sort((a, b) => (Number(b.count) || 0) - (Number(a.count) || 0))
+          .slice(0, limit);
+      }
+
+      function followUpQuestionLabel(count) {
+        const n = Number(count) || 0;
+        return n === 1 ? "1 Frage" : fmt(n) + " Fragen";
+      }
+
+      function renderUserFollowUpSection(followUpUsages) {
+        const top = topFollowUpVerses(followUpUsages, 3);
+        let body;
+        if (!top.length) {
+          body = "<p class='hint'>Noch keine Folgefragen.</p>";
+        } else {
+          body = "<ul class='user-modal-list'>";
+          for (const f of top) {
+            body +=
+              "<li" + hintAttr("userFollowUpCount") + ">" + escapeHtml(f.surahName || "—") + " Vers " + fmt(f.ayahNumber) + ": " +
+              escapeHtml(followUpQuestionLabel(f.count)) + "</li>";
+          }
+          body += "</ul>";
+        }
+        return "<div class='user-modal-section-title'" + hintAttr("userFollowUpSection") + ">Follow-up-Tiefe (Top 3)</div>" + body;
+      }
+
+      async function showUserDetail(installId, errPanelId) {
+        if (errPanelId === undefined) errPanelId = "userSearchErr";
         selectedInstallId = installId;
+        const modal = $("userModal");
         const panel = $("userDetail");
-        panel.style.display = "block";
+        modal.classList.add("open");
+        modal.setAttribute("aria-hidden", "false");
         panel.innerHTML = "<p class='hint'>Lade Details …</p>";
         showPanelErr("userSearchErr", "");
         try {
           const data = await fetchJson("/api/v1/admin/users/" + encodeURIComponent(installId));
           const u = data.user;
-          const logs = (u.aiRequestLogs || []).slice(0, 30);
+          const logs = (u.aiRequestLogs || []).slice(0, 10);
+          const kiCalls = (u.aiRequestLogs || []).length;
+          const nameText = (u.displayName || "").trim() || "—";
+          const proBadge = u.isPro
+            ? "<span class='pro-badge on'>Pro</span>"
+            : "<span class='pro-badge off'>Free</span>";
           let logHtml = "";
           for (const L of logs) {
-            logHtml += "<tr><td class='mono'>" + escapeHtml(fmtDate(L.createdAt)) + "</td><td class='mono'>" + escapeHtml(L.endpoint) + "</td><td>" + escapeHtml(L.status) + "</td><td>" + (L.totalTokens ?? "—") + "</td></tr>";
+            const statusCls = L.status === "error" ? " style='color:var(--err)'" : L.status === "ok" ? " style='color:var(--ok)'" : "";
+            logHtml +=
+              "<tr><td class='mono'>" + escapeHtml(fmtDate(L.createdAt)) + "</td>" +
+              "<td class='mono'>" + escapeHtml(L.endpoint) + "</td>" +
+              "<td" + statusCls + ">" + escapeHtml(L.status || "—") + "</td></tr>";
           }
           panel.innerHTML =
-            "<h3 style='margin:0 0 12px;color:var(--gold)'>Gerätedetails</h3>" +
-            "<dl class='detail-grid'>" +
-            "<dt>Name</dt><dd>" + displayNameLabel(u.displayName) + "</dd>" +
-            "<dt>Geräte-ID</dt><dd class='mono'>" + escapeHtml(u.installId) + "</dd>" +
-            "<dt>Interne ID</dt><dd class='mono'>" + escapeHtml(u.id) + "</dd>" +
-            "<dt>Pro</dt><dd>" + (u.isPro ? "Ja" : "Nein") + "</dd>" +
-            "<dt>Erstellt</dt><dd>" + escapeHtml(fmtDate(u.createdAt)) + "</dd>" +
-            "<dt>Zuletzt aktiv</dt><dd>" + escapeHtml(fmtDate(u.lastSeenAt)) + "</dd>" +
-            "<dt>Pro läuft ab</dt><dd>" + escapeHtml(fmtDate(u.proExpiresAt)) + "</dd>" +
-            "<dt>Pro-Quelle</dt><dd>" + escapeHtml(u.entitlementSource || "—") + "</dd>" +
-            "</dl>" +
-            "<div class='row'>" +
-            "<button type='button' class='btn btn-gold' id='btnProOn' style='width:auto'>Pro aktivieren</button>" +
-            "<button type='button' class='btn btn-ghost' id='btnProOff'>Pro deaktivieren</button>" +
+            "<div class='user-modal-header'>" +
+            "<div style='flex:1;min-width:0'>" +
+            "<h3 id='userModalTitle'>" + escapeHtml(nameText) + "</h3>" +
+            "<button type='button' class='user-modal-install-copy' id='userModalInstallCopy' title='Geräte-ID kopieren'>" +
+            "<span class='mono user-modal-install-id'>" + escapeHtml(u.installId) + "</span>" +
+            "<svg class='user-modal-copy-icon' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' aria-hidden='true'>" +
+            "<rect x='9' y='9' width='13' height='13' rx='2'></rect>" +
+            "<path d='M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1'></path>" +
+            "</svg>" +
+            "</button>" +
+            "<span class='user-modal-copy-ok' id='userModalCopyHint' aria-live='polite'></span>" +
+            "<div class='user-modal-meta'>" + proBadge + "</div>" +
             "</div>" +
-            "<h3 style='margin:16px 0 8px;font-size:0.9rem'>Letzte KI-Logs</h3>" +
-            "<div class='table-wrap'><table><thead><tr><th>Zeit</th><th>Endpoint</th><th>Status</th><th>Tokens</th></tr></thead><tbody>" +
-            (logHtml || "<tr><td colspan='4' class='empty'>Keine Logs</td></tr>") +
-            "</tbody></table></div>";
+            "<button type='button' class='user-modal-close' id='userModalClose' aria-label='Schließen'>×</button>" +
+            "</div>" +
+            "<div class='user-modal-stats'>" +
+            "<div class='user-modal-stat'" + hintAttr("userModalKiCalls") + "><div class='val'>" + fmt(kiCalls) + "</div><div class='lbl'>KI-Calls gesamt</div></div>" +
+            "<div class='user-modal-stat'><div class='val'>" + escapeHtml(fmtDate(u.lastSeenAt)) + "</div><div class='lbl'>Zuletzt aktiv</div></div>" +
+            "<div class='user-modal-stat'><div class='val'>" + escapeHtml(fmtDate(u.createdAt)) + "</div><div class='lbl'>Erstellt</div></div>" +
+            "<div class='user-modal-stat'><div class='val'>" + (u.isPro ? "Pro" : "Free") + "</div><div class='lbl'>Pro-Status</div></div>" +
+            "</div>" +
+            renderUserDailyUsageSection(u) +
+            renderUserFollowUpSection(u.followUpUsages) +
+            "<div class='user-modal-section-title'>Letzte KI-Aktivität</div>" +
+            "<div class='table-wrap'><table><thead><tr><th>Datum</th><th>Endpoint</th><th>Status</th></tr></thead><tbody>" +
+            (logHtml || "<tr><td colspan='3' class='empty'>Keine Logs</td></tr>") +
+            "</tbody></table></div>" +
+            "<div class='user-modal-actions'>" +
+            "<button type='button' class='btn btn-gold' id='btnProOn' style='width:auto'" + (u.isPro ? " disabled" : "") + ">Pro aktivieren</button>" +
+            "<button type='button' class='btn btn-ghost' id='btnProOff'" + (!u.isPro ? " disabled" : "") + ">Pro entfernen</button>" +
+            "</div>";
+          $("userModalClose").onclick = closeUserDetail;
+          $("userModalInstallCopy").onclick = () => copyUserModalInstallId(u.installId);
           $("btnProOn").onclick = () => patchUserPro(true);
           $("btnProOff").onclick = () => patchUserPro(false);
         } catch (e) {
-          panel.innerHTML = "";
-          if (authenticated) showPanelErr("userSearchErr", String(e.message || e));
+          closeUserDetail();
+          if (authenticated) showPanelErr(errPanelId, String(e.message || e));
         }
+      }
+
+      function closeUserDetail() {
+        const modal = $("userModal");
+        modal.classList.remove("open");
+        modal.setAttribute("aria-hidden", "true");
+        $("userDetail").innerHTML = "";
       }
 
       async function patchUserPro(isPro) {
@@ -1131,20 +1825,36 @@
         return items;
       }
 
+      function feedbackDeviceCell(installId) {
+        const iid = (installId || "").trim();
+        if (!iid) return "<td>—</td>";
+        return (
+          "<td class='mono clickable fb-device' data-iid='" + encodeURIComponent(iid) + "' title='" + escapeHtml(iid) + "'>" +
+          escapeHtml(shortInstallId8(iid)) +
+          "</td>"
+        );
+      }
+
       function renderFeedbackTable(items) {
         if (!items.length) {
           $("fbTable").innerHTML = "<p class='empty'>Keine Feedbacks.</p>";
           return;
         }
         const arrow = fbSortAsc ? " ↑" : " ↓";
-        let html = "<div class='table-wrap'><table><thead><tr><th class='sortable' id='thFbDate'>Datum" + arrow + "</th><th>Screen</th><th>Bewertung</th><th>Kommentar</th></tr></thead><tbody>";
+        let html = "<div class='table-wrap'><table><thead><tr><th class='sortable' id='thFbDate'>Datum" + arrow + "</th><th>Gerät</th><th>Screen</th><th>Bewertung</th><th>Kommentar</th></tr></thead><tbody>";
         for (const f of items) {
           const comment = f.comment ? escapeHtml(f.comment) : "<span style='color:var(--text-2)'>—</span>";
-          html += "<tr><td class='mono'>" + escapeHtml(fmtDate(f.createdAt)) + "</td><td class='mono'>" + escapeHtml(f.screen || "—") + "</td><td>" + formatThumbRating(f.rating) + "</td><td>" + comment + "</td></tr>";
+          html +=
+            "<tr><td class='mono'>" + escapeHtml(fmtDate(f.createdAt)) + "</td>" +
+            feedbackDeviceCell(f.installId) +
+            "<td class='mono'>" + escapeHtml(f.screen || "—") + "</td><td>" + formatThumbRating(f.rating) + "</td><td>" + comment + "</td></tr>";
         }
         html += "</tbody></table></div>";
         $("fbTable").innerHTML = html;
         $("thFbDate").onclick = () => { fbSortAsc = !fbSortAsc; fbPage = 1; renderFeedbackPage(); };
+        document.querySelectorAll("#fbTable .fb-device").forEach((td) => {
+          td.onclick = () => showUserDetail(decodeURIComponent(td.getAttribute("data-iid") || ""), "fbErr");
+        });
       }
 
       function renderFeedbackPage() {
@@ -1165,8 +1875,12 @@
         const btn = $("btnFeedback");
         btn.disabled = true;
         $("fbPagination").innerHTML = "";
+        $("fbTable").innerHTML = "<p class='hint'>Lade Feedbacks …</p>";
         try {
-          const data = await fetchJson("/api/v1/admin/feedback?take=1000");
+          const screen = $("fbScreenFilter").value.trim();
+          let url = "/api/v1/admin/feedback?take=1000";
+          if (screen) url += "&screen=" + encodeURIComponent(screen);
+          const data = await fetchJson(url);
           feedbackItems = data.items || [];
           fbPage = 1;
           renderFeedbackPage();
@@ -1202,7 +1916,7 @@
           $("panel-" + tab).classList.add("active");
           if (tab === "users") loadUsers(1);
           if (tab === "ki") loadKi();
-          if (tab === "feedback" && !feedbackItems.length) loadFeedback();
+          if (tab === "feedback") loadFeedback();
         });
       });
 
@@ -1214,11 +1928,13 @@
       $("kiPageSize").onchange = () => { kiPage = 1; renderKiPage(); };
       $("kiUserFilter").addEventListener("keydown", (e) => { if (e.key === "Enter") loadKi(); });
       $("usersPageSize").onchange = () => loadUsers(1);
+      $("userModalBackdrop").onclick = closeUserDetail;
       $("userQ").addEventListener("input", () => {
         clearTimeout(userSearchTimer);
         userSearchTimer = setTimeout(() => loadUsers(1), 300);
       });
       $("fbPageSize").onchange = () => { fbPage = 1; renderFeedbackPage(); };
+      $("fbScreenFilter").onchange = loadFeedback;
       $("btnFeedback").onclick = loadFeedback;
 
       tryAutoLogin();
