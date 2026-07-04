@@ -171,6 +171,7 @@ class IhdinaApiClient {
   }
 
   Future<Map<String, dynamic>> postTakeaway({
+    required String installId,
     required String surahName,
     required int ayahNumber,
     required String textAr,
@@ -184,6 +185,7 @@ class IhdinaApiClient {
             'Accept': 'application/json',
           },
           body: jsonEncode({
+            'installId': installId,
             'surahName': surahName,
             'ayahNumber': ayahNumber,
             'textAr': textAr,

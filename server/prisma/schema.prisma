@@ -26,6 +26,7 @@ model User {
   followUpUsages FollowUpUsage[]
   aiRequestLogs  AiRequestLog[]
   appFeedbacks   AppFeedback[]
+  appOpenEvents  AppOpenEvent[]
 }
 
 /// Idempotente Speicherung eingehender RevenueCat-Webhooks (Audit + Duplikat-Schutz).
@@ -103,5 +104,16 @@ model AppFeedback {
   createdAt DateTime @default(now())
 
   @@index([installId])
+  @@index([createdAt])
+}
+
+/// App-Foreground/Start — ein Eintrag pro gemeldeter Öffnung (kein Feature-Bezug).
+model AppOpenEvent {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+
+  @@index([userId])
   @@index([createdAt])
 }

@@ -1,6 +1,7 @@
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../api/ihdina_api_client.dart';
+import '../../services/install_id_service.dart';
 import '../../utils/daily_verse_takeaway.dart';
 
 /// Kurzer KI-Impuls „Für dich heute“ – ein Satz, streng an den Vers gebunden.
@@ -37,7 +38,9 @@ class TakeawayService {
     try {
       final client = IhdinaApiClient.instance;
       if (client.isConfigured) {
+        final installId = await InstallIdService.instance.getOrCreate();
         final data = await client.postTakeaway(
+          installId: installId,
           surahName: surahName,
           ayahNumber: ayahNumber,
           textAr: arabic,
