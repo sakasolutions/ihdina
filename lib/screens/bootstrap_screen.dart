@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -7,6 +9,7 @@ import '../data/prayer/notification_service.dart';
 import '../data/quran/models/surah_model.dart';
 import '../data/quran/quran_repository.dart';
 import '../data/settings/settings_repository.dart';
+import '../services/app_opened_service.dart';
 import '../theme/app_theme.dart';
 import '../theme/tokens.dart';
 import 'onboarding_screen.dart';
@@ -31,6 +34,7 @@ class _BootstrapScreenState extends State<BootstrapScreen> {
   @override
   void initState() {
     super.initState();
+    unawaited(AppOpenedService.recordAppOpened());
     _checkStartImage();
     _precacheImage();
     _run();

@@ -3,6 +3,7 @@ import {
   adminFeedbackListHandler,
   adminListUsersHandler,
   adminMetricsFeatureUsageHandler,
+  adminMetricsGrowthHandler,
   adminMetricsOverviewHandler,
   adminMetricsReturningHandler,
   adminSearchUsersHandler,
@@ -18,6 +19,7 @@ export async function registerAdminRoutes(app: FastifyInstance) {
   app.get("/metrics/overview", adminMetricsOverviewHandler);
   app.get("/metrics/returning", adminMetricsReturningHandler);
   app.get("/metrics/feature-usage", adminMetricsFeatureUsageHandler);
+  app.get("/metrics/growth", adminMetricsGrowthHandler);
   app.get("/usage/daily", adminUsageDailyHandler);
   app.get("/usage/events", adminUsageEventsHandler);
   app.get("/feedback", adminFeedbackListHandler);

@@ -13,6 +13,7 @@ export type AdminMetricsOverview = {
     pro: number;
     proShare: number;
     newLast7d: number;
+    /** „Aktive Geräte“ (7 Tage): vorerst User mit lastSeenAt im Fenster. Später auf AppOpenEvent umstellen (siehe getAdminMetricsOverview). */
     activeLast7d: number;
   };
   ai: {
@@ -138,6 +139,8 @@ export async function getAdminMetricsOverview(): Promise<AdminMetricsOverview> {
     prisma.user.count(),
     prisma.user.count({ where: { isPro: true } }),
     prisma.user.count({ where: { createdAt: { gte: from7d } } }),
+    // Aktive Geräte (7 Tage): lastSeenAt — nicht AppOpenEvent (Client-Ping noch nicht überall ausgewertet).
+    // TODO(Admin-Dashboard): auf COUNT(DISTINCT userId) aus AppOpenEvent im 7-Tage-Fenster umstellen.
     prisma.user.count({ where: { lastSeenAt: { gte: from7d } } }),
     prisma.aiRequestLog.count({ where: { createdAt: { gte: from24h } } }),
     prisma.aiRequestLog.count({ where: { createdAt: { gte: from7d } } }),

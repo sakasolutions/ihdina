@@ -170,6 +170,21 @@ class IhdinaApiClient {
     return _parseJsonObjectResponse(res, context: 'postFeedback');
   }
 
+  /// App-Start-Ping (Retention); kein Feature-Bezug.
+  Future<void> postAppOpened({required String installId}) async {
+    final res = await http
+        .post(
+          _uri('/api/v1/app-opened'),
+          headers: const {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          body: jsonEncode({'installId': installId}),
+        )
+        .timeout(_timeout);
+    _parseJsonObjectResponse(res, context: 'postAppOpened');
+  }
+
   Future<Map<String, dynamic>> postTakeaway({
     required String installId,
     required String surahName,

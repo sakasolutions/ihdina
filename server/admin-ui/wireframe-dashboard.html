@@ -1,0 +1,307 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <meta name="robots" content="noindex, nofollow" />
+  <title>Ihdina Admin — Wireframe (Struktur)</title>
+  <!-- Nur Layout-Abstimmung: kein Design, keine Charts, keine API-Calls -->
+</head>
+<body>
+
+  <header>
+    <h1>Ihdina Admin</h1>
+    <p>[Platzhalter: API-Key / Login — unverändert zum heutigen Dashboard]</p>
+    <button type="button">Abmelden</button>
+  </header>
+
+  <nav aria-label="Hauptnavigation">
+    <ul>
+      <li><a href="#tab-uebersicht">1. Übersicht</a></li>
+      <li><a href="#tab-wachstum">2. Wachstum</a></li>
+      <li><a href="#tab-nutzerverhalten">3. Nutzerverhalten</a></li>
+      <li><a href="#tab-nutzer">4. Nutzer</a></li>
+      <li><a href="#tab-feedback">5. Feedback</a></li>
+    </ul>
+  </nav>
+
+  <main>
+
+    <!-- ============================================================ -->
+    <!-- TAB 1: ÜBERSICHT — KPI-Kacheln, Trend ggü. Vorwoche, keine Charts -->
+    <!-- ============================================================ -->
+    <section id="tab-uebersicht">
+      <h2>1. Übersicht</h2>
+      <p>[Keine Diagramme in diesem Tab]</p>
+
+      <div role="group" aria-label="KPI-Kacheln">
+        <article>
+          <h3>API-Status</h3>
+          <p>[Wert: z. B. OK / Degraded / Down]</p>
+          <p>[Trend ggü. Vorwoche: ↑ / ↓ / → Platzhalter]</p>
+        </article>
+
+        <article>
+          <h3>Fehlerquote</h3>
+          <p>[Wert: z. B. 3,2 %]</p>
+          <p>[Trend ggü. Vorwoche: ↑ / ↓ / → Platzhalter]</p>
+        </article>
+
+        <article>
+          <h3>Aktive Geräte (7 Tage)</h3>
+          <p>[Wert: z. B. 142]</p>
+          <p>[Trend ggü. Vorwoche: ↑ / ↓ / → Platzhalter]</p>
+          <p>[Hinweis: aus AppOpenEvent / lastSeenAt — Definition später]</p>
+        </article>
+
+        <article>
+          <h3>Neue Geräte (7 Tage)</h3>
+          <p>[Wert: z. B. 28]</p>
+          <p>[Trend ggü. Vorwoche: ↑ / ↓ / → Platzhalter]</p>
+        </article>
+
+        <article>
+          <h3>Pro-Anzahl</h3>
+          <p>[Wert: z. B. 12]</p>
+          <p>[Trend ggü. Vorwoche: ↑ / ↓ / → Platzhalter]</p>
+        </article>
+      </div>
+
+      <p>[Optional unten: Zeitstempel „Stand: …“ / letzte Aktualisierung]</p>
+    </section>
+
+    <hr />
+
+    <!-- ============================================================ -->
+    <!-- TAB 2: WACHSTUM — Neue Geräte Zeitreihe, Zeitraum-Filter -->
+    <!-- ============================================================ -->
+    <section id="tab-wachstum">
+      <h2>2. Wachstum</h2>
+
+      <div role="group" aria-label="Zeitraum">
+        <button type="button">7 Tage</button>
+        <button type="button">14 Tage</button>
+        <button type="button">30 Tage</button>
+        <button type="button">90 Tage</button>
+        <span>[Aktiv: 30 Tage — Platzhalter]</span>
+      </div>
+
+      <h3>Neue Geräte pro Tag</h3>
+      <div aria-label="Chart-Platzhalter" style="border: 1px dashed #999; min-height: 280px; padding: 16px;">
+        <p>[Chart.js Zeitreihen-Chart]</p>
+        <p>[X-Achse: UTC-Tage]</p>
+        <p>[Y-Achse: Anzahl neuer User (User.createdAt)]</p>
+        <p>[Datenquelle: neuer Admin-Endpunkt oder Aggregation — noch offen]</p>
+      </div>
+
+      <p>[Optional: Summe im gewählten Zeitraum neben dem Chart]</p>
+    </section>
+
+    <hr />
+
+    <!-- ============================================================ -->
+    <!-- TAB 3: NUTZERVERHALTEN — Feature-Usage, distinctUsers, Rangliste -->
+    <!-- ============================================================ -->
+    <section id="tab-nutzerverhalten">
+      <h2>3. Nutzerverhalten</h2>
+
+      <div role="group" aria-label="Zeitraum Feature-Usage">
+        <button type="button">7 Tage</button>
+        <button type="button">14 Tage</button>
+        <button type="button">30 Tage</button>
+        <button type="button">90 Tage</button>
+        <span>[Aktiv: 30 Tage — Platzhalter]</span>
+      </div>
+
+      <h3>Feature-Nutzung pro Tag</h3>
+      <div aria-label="Chart-Platzhalter gestapelt" style="border: 1px dashed #999; min-height: 320px; padding: 16px;">
+        <p>[Chart.js: gestapeltes oder mehrfarbiges Linien-/Balken-Chart]</p>
+        <p>[Serien: extraCount, dailyVerseCount, takeawayCount, reflectionCount, followUpCount]</p>
+        <p>[Datenquelle: GET /api/v1/admin/metrics/feature-usage?days=… → byDay]</p>
+      </div>
+
+      <h3>Summen im Zeitraum</h3>
+      <table border="1" cellpadding="8" cellspacing="0">
+        <thead>
+          <tr>
+            <th>Feature</th>
+            <th>Summe (totals)</th>
+            <th>distinctUsers</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Extra-Erklärung</td><td>[123]</td><td>[— oder pro Feature falls API erweitert]</td></tr>
+          <tr><td>Tagesvers-Erklärung</td><td>[456]</td><td>[—]</td></tr>
+          <tr><td>Takeaway</td><td>[78]</td><td>[—]</td></tr>
+          <tr><td>Reflection-Moment</td><td>[90]</td><td>[—]</td></tr>
+          <tr><td>Folgefragen</td><td>[34]</td><td>[—]</td></tr>
+          <tr><td><strong>Gesamt distinctUsers</strong></td><td colspan="2"><strong>[87 — aus featureUsage.distinctUsers]</strong></td></tr>
+        </tbody>
+      </table>
+      <p>[Hinweis Wireframe: distinctUsers aktuell nur gesamt; pro-Feature distinct optional später]</p>
+
+      <h3>Rangliste — meistgenutztes Feature</h3>
+      <ol>
+        <li>[1. Tagesvers-Erklärung — 456 Nutzungen]</li>
+        <li>[2. Extra-Erklärung — 123 Nutzungen]</li>
+        <li>[3. Reflection-Moment — 90 Nutzungen]</li>
+        <li>[4. Takeaway — 78 Nutzungen]</li>
+        <li>[5. Folgefragen — 34 Nutzungen]</li>
+      </ol>
+      <p>[Sortierung aus totals.* abgeleitet]</p>
+    </section>
+
+    <hr />
+
+    <!-- ============================================================ -->
+    <!-- TAB 4: NUTZER — Liste, Filter, sortierbare Spalten -->
+    <!-- ============================================================ -->
+    <section id="tab-nutzer">
+      <h2>4. Nutzer</h2>
+
+      <div role="search" aria-label="Filter">
+        <label>
+          Suche (installId / Name)
+          <input type="search" placeholder="z. B. abc-123…" />
+        </label>
+
+        <fieldset>
+          <legend>Pro-Status</legend>
+          <label><input type="radio" name="pro-filter" checked /> Alle</label>
+          <label><input type="radio" name="pro-filter" /> Nur Pro</label>
+          <label><input type="radio" name="pro-filter" /> Nur Free</label>
+        </fieldset>
+
+        <button type="button">Suchen / Anwenden</button>
+      </div>
+
+      <p>[Pagination: Seite 1 · 50 pro Seite — Platzhalter]</p>
+
+      <table border="1" cellpadding="8" cellspacing="0" aria-label="Nutzerliste">
+        <thead>
+          <tr>
+            <th>installId</th>
+            <th>Anzeigename</th>
+            <th>Pro</th>
+            <th>
+              <button type="button">Zuletzt aktiv ↕</button>
+              <br /><small>[sortierbar]</small>
+            </th>
+            <th>
+              <button type="button">KI-Calls ↕</button>
+              <br /><small>[sortierbar]</small>
+            </th>
+            <th>
+              <button type="button">proExpiresAt ↕</button>
+              <br /><small>[sortierbar]</small>
+            </th>
+            <th>
+              <button type="button">Erstellt ↕</button>
+              <br /><small>[sortierbar]</small>
+            </th>
+            <th>Aktion</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>[550e8400-…]</td>
+            <td>[Max]</td>
+            <td>[Pro]</td>
+            <td>[2026-07-04 18:22]</td>
+            <td>[42]</td>
+            <td>[2026-08-01]</td>
+            <td>[2026-03-12]</td>
+            <td><button type="button">Details</button></td>
+          </tr>
+          <tr>
+            <td>[7f3a…]</td>
+            <td>[—]</td>
+            <td>[Free]</td>
+            <td>[2026-07-03 09:10]</td>
+            <td>[3]</td>
+            <td>[—]</td>
+            <td>[2026-06-20]</td>
+            <td><button type="button">Details</button></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <aside aria-label="Nutzer-Detail (Modal oder Seitenpanel)">
+        <h3>[Nutzer-Detail — bei Klick auf Zeile / Details]</h3>
+        <p>[Bestehendes Modal: Tagesnutzung, Follow-ups, letzte KI-Logs — unverändert übernehmen]</p>
+      </aside>
+    </section>
+
+    <hr />
+
+    <!-- ============================================================ -->
+    <!-- TAB 5: FEEDBACK — Screen- + Rating-Filter als UI -->
+    <!-- ============================================================ -->
+    <section id="tab-feedback">
+      <h2>5. Feedback</h2>
+
+      <div role="group" aria-label="Filter Screen">
+        <span>Screen:</span>
+        <button type="button">Alle</button>
+        <button type="button">settings</button>
+        <button type="button">ai_verse_explanation</button>
+        <button type="button">_untagged</button>
+        <select aria-label="Screen Dropdown">
+          <option>Alle Screens</option>
+          <option>settings</option>
+          <option>ai_verse_explanation</option>
+          <option>_untagged</option>
+        </select>
+      </div>
+
+      <div role="group" aria-label="Filter Rating">
+        <span>Rating:</span>
+        <button type="button">Alle</button>
+        <button type="button">👍 Positiv (1)</button>
+        <button type="button">👎 Negativ (-1)</button>
+        <button type="button">Mit Rating</button>
+        <button type="button">Ohne Rating</button>
+      </div>
+
+      <p>[Anzahl Treffer: 42 — Platzhalter]</p>
+
+      <table border="1" cellpadding="8" cellspacing="0" aria-label="Feedback-Liste">
+        <thead>
+          <tr>
+            <th>Datum</th>
+            <th>Rating</th>
+            <th>Screen</th>
+            <th>installId</th>
+            <th>Kontext</th>
+            <th>Kommentar</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>[2026-07-04 14:00]</td>
+            <td>[👍 1]</td>
+            <td>[ai_verse_explanation]</td>
+            <td>[abc…]</td>
+            <td>[Sure Al-Baqara, Vers 255]</td>
+            <td>[—]</td>
+          </tr>
+          <tr>
+            <td>[2026-07-03 11:20]</td>
+            <td>[👎 -1]</td>
+            <td>[settings]</td>
+            <td>[def…]</td>
+            <td>[—]</td>
+            <td>[App stürzt ab beim …]</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+  </main>
+
+  <footer>
+    <p>Wireframe v2 — Struktur zur Abstimmung. Ersetzt noch nicht admin-ui/index.html.</p>
+  </footer>
+
+</body>
+</html>
