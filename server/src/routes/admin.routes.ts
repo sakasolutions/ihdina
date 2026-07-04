@@ -2,6 +2,7 @@ import type { FastifyInstance } from "fastify";
 import {
   adminFeedbackListHandler,
   adminListUsersHandler,
+  adminMetricsFeatureUsageHandler,
   adminMetricsOverviewHandler,
   adminMetricsReturningHandler,
   adminSearchUsersHandler,
@@ -16,6 +17,7 @@ export async function registerAdminRoutes(app: FastifyInstance) {
   app.addHook("preHandler", requireAdmin);
   app.get("/metrics/overview", adminMetricsOverviewHandler);
   app.get("/metrics/returning", adminMetricsReturningHandler);
+  app.get("/metrics/feature-usage", adminMetricsFeatureUsageHandler);
   app.get("/usage/daily", adminUsageDailyHandler);
   app.get("/usage/events", adminUsageEventsHandler);
   app.get("/feedback", adminFeedbackListHandler);

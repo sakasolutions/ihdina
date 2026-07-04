@@ -5,6 +5,7 @@ import {
   searchUsersByInstallId,
   setUserProByInstallId,
 } from "../services/admin.service.js";
+import { getAdminFeatureUsage } from "../services/adminFeatureUsage.service.js";
 import { getAdminMetricsOverview, getAdminMetricsReturning } from "../services/adminMetrics.service.js";
 import { listAiRequestLogEvents } from "../services/adminUsageEvents.service.js";
 import { getUsageDailyAggregates } from "../services/adminUsage.service.js";
@@ -19,6 +20,16 @@ export async function adminMetricsOverviewHandler(_req: FastifyRequest, reply: F
 export async function adminMetricsReturningHandler(_req: FastifyRequest, reply: FastifyReply) {
   const returning = await getAdminMetricsReturning();
   return reply.send({ success: true, data: { returning } });
+}
+
+export async function adminMetricsFeatureUsageHandler(
+  req: FastifyRequest<{ Querystring: { days?: string } }>,
+  reply: FastifyReply
+) {
+  const raw = req.query.days ?? "30";
+  const days = Number.parseInt(raw, 10);
+  const featureUsage = await getAdminFeatureUsage(Number.isFinite(days) ? days : 30);
+  return reply.send({ success: true, data: { featureUsage } });
 }
 
 export async function adminListUsersHandler(
