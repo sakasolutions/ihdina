@@ -5,7 +5,7 @@ import {
   searchUsersByInstallId,
   setUserProByInstallId,
 } from "../services/admin.service.js";
-import { getAdminMetricsOverview } from "../services/adminMetrics.service.js";
+import { getAdminMetricsOverview, getAdminMetricsReturning } from "../services/adminMetrics.service.js";
 import { listAiRequestLogEvents } from "../services/adminUsageEvents.service.js";
 import { getUsageDailyAggregates } from "../services/adminUsage.service.js";
 import { listRecentFeedbacks } from "../services/feedback.service.js";
@@ -14,6 +14,11 @@ import { AppError, ErrorCodes } from "../utils/errors.js";
 export async function adminMetricsOverviewHandler(_req: FastifyRequest, reply: FastifyReply) {
   const overview = await getAdminMetricsOverview();
   return reply.send({ success: true, data: { overview } });
+}
+
+export async function adminMetricsReturningHandler(_req: FastifyRequest, reply: FastifyReply) {
+  const returning = await getAdminMetricsReturning();
+  return reply.send({ success: true, data: { returning } });
 }
 
 export async function adminListUsersHandler(

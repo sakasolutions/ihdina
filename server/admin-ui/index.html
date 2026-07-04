@@ -293,6 +293,10 @@
       background: linear-gradient(90deg, rgba(200, 169, 110, 0.55), rgba(200, 169, 110, 0.85));
       min-width: 2px;
     }
+    .active-days-bar { letter-spacing: 0.12em; font-size: 0.88rem; white-space: nowrap; }
+    .active-days-bar .on { color: var(--gold); }
+    .active-days-bar .off { color: var(--text-2); opacity: 0.4; }
+    .returning-top-toggle { margin-top: 10px; text-align: center; }
     .overview-err-table { min-width: 0; }
     .overview-err-table td:first-child { width: 38%; }
     .latency-ok { color: var(--ok); font-weight: 600; }
@@ -586,6 +590,18 @@
 
       <div class="kpi-grid" id="kpiGrid"></div>
 
+      <section class="card" id="overviewReturningSection">
+        <h2>Nutzungsfrequenz (letzte 7 Tage)</h2>
+        <div id="returningErr" class="panel-err"></div>
+        <div class="kpi-grid" id="returningKpiGrid">
+          <p class="hint">Lade Nutzungsfrequenz …</p>
+        </div>
+        <div class="overview-subsection">
+          <h3>Top-Nutzer diese Woche</h3>
+          <div id="returningTopUsers"><p class="hint">—</p></div>
+        </div>
+      </section>
+
       <section class="card" id="overviewInsightsSection" style="display:none">
         <h2>Server-Hinweise</h2>
         <ul id="overviewInsights" class="overview-insights"></ul>
@@ -752,6 +768,8 @@
       let kiItemsAll = [];
       let kiTruncated = false;
       let kiPage = 1;
+      let returningTopUsersCache = [];
+      let returningTopExpanded = false;
 
       function apiBase() {
         const stored = localStorage.getItem(LS_API);
@@ -930,6 +948,9 @@
         userDailyReflection: "„Moment zum Nachdenken“-Antworten heute.",
         userFollowUpCount: "Anzahl Folgefragen zu diesem Vers über die Follow-up-Funktion.",
         userFollowUpSection: "Die drei Verse mit den meisten Folgefragen dieses Nutzers.",
+        returningDaily: "Nutzer die an 5 oder mehr der letzten 7 Tage die KI genutzt haben.",
+        returningRegular: "Nutzer die an 3–4 der letzten 7 Tage aktiv waren.",
+        returningCasual: "Nutzer die in der letzten Woche 1–2 Mal aktiv waren.",
       };
 
       function hintAttr(key) {
@@ -1311,6 +1332,90 @@
             "<span" + hintAttr("feedbackWithRating7d") + ">" + escapeHtml(posFb.sub) + "</span>");
       }
 
+      function activeDaysBarHtml(activeDays) {
+        const n = Math.min(7, Math.max(0, Number(activeDays) || 0));
+        let html = "<span class='active-days-bar' aria-label='" + n + " von 7 Tagen aktiv'>";
+        for (let i = 0; i < 7; i++) {
+          html += "<span class='" + (i < n ? "on" : "off") + "'>" + (i < n ? "●" : "○") + "</span>";
+        }
+        return html + "</span>";
+      }
+
+      function returningUserLabel(u) {
+        const name = (u.displayName || "").trim();
+        if (name) return escapeHtml(name);
+        const iid = u.installId || "";
+        return escapeHtml(iid.length <= 8 ? iid || "—" : iid.slice(0, 8) + "…");
+      }
+
+      function returningEligibleUsers(topUsers) {
+        return (topUsers || []).filter((u) => (Number(u.activeDays) || 0) >= 2);
+      }
+
+      function returningTopListsDiffer(topUsers) {
+        const collapsed = (topUsers || []).slice(0, 5);
+        const expanded = returningEligibleUsers(topUsers);
+        if (expanded.length > 5) return true;
+        if (!expanded.length) return false;
+        const cIds = collapsed.map((u) => u.installId).join("\0");
+        const eIds = expanded.map((u) => u.installId).join("\0");
+        return cIds !== eIds;
+      }
+
+      function renderReturningTopUsersTable() {
+        const top = returningTopUsersCache;
+        const el = $("returningTopUsers");
+        if (!top.length) {
+          el.innerHTML = "<p class='hint'>Keine KI-Aktivität in den letzten 7 Tagen.</p>";
+          return;
+        }
+        const eligible = returningEligibleUsers(top);
+        const visible = returningTopExpanded ? eligible : top.slice(0, 5);
+        let html = "<div class='table-wrap'><table><thead><tr><th>Name</th><th>Aktive Tage</th></tr></thead><tbody>";
+        if (!visible.length) {
+          html += "<tr><td colspan='2' class='hint'>Keine Nutzer mit 2+ aktiven Tagen.</td></tr>";
+        } else {
+          for (const u of visible) {
+            const days = Number(u.activeDays) || 0;
+            html +=
+              "<tr><td>" + returningUserLabel(u) + "</td><td>" +
+              activeDaysBarHtml(days) +
+              " <span class='hint'>(" + fmt(days) + "/7)</span></td></tr>";
+          }
+        }
+        html += "</tbody></table></div>";
+        const showToggle = returningTopExpanded || returningTopListsDiffer(top);
+        if (showToggle && eligible.length > 0) {
+          const label = returningTopExpanded
+            ? "Weniger anzeigen"
+            : "Alle anzeigen (" + fmt(eligible.length) + " Nutzer)";
+          html +=
+            "<div class='returning-top-toggle'>" +
+            "<button type='button' class='btn btn-ghost' id='btnReturningTopToggle' style='width:auto'>" +
+            escapeHtml(label) +
+            "</button></div>";
+        }
+        el.innerHTML = html;
+        const btn = $("btnReturningTopToggle");
+        if (btn) {
+          btn.onclick = () => {
+            returningTopExpanded = !returningTopExpanded;
+            renderReturningTopUsersTable();
+          };
+        }
+      }
+
+      function renderReturningSection(returning) {
+        const r = returning || {};
+        $("returningKpiGrid").innerHTML =
+          kpiCard(fmt(r.dailyUsers || 0), "Täglich (5–7 Tage)", "returningDaily", "5+ aktive Tage") +
+          kpiCard(fmt(r.regularUsers || 0), "Regelmäßig (3–4 Tage)", "returningRegular", "3–4 aktive Tage") +
+          kpiCard(fmt(r.casualUsers || 0), "Gelegentlich (1–2 Tage)", "returningCasual", "1–2 aktive Tage");
+        returningTopUsersCache = r.topUsers || [];
+        returningTopExpanded = false;
+        renderReturningTopUsersTable();
+      }
+
       function renderLineChart(byDay) {
         if (typeof Chart === "undefined") {
           showPanelErr("overviewErr", "Diagramm konnte nicht geladen werden.");
@@ -1346,19 +1451,31 @@
       async function loadOverview() {
         if (!authenticated) return;
         showPanelErr("overviewErr", "");
+        showPanelErr("returningErr", "");
         const btn = $("btnOverview");
         btn.disabled = true;
+        $("returningKpiGrid").innerHTML = "<p class='hint'>Lade Nutzungsfrequenz …</p>";
+        $("returningTopUsers").innerHTML = "<p class='hint'>—</p>";
         try {
-          const pack = await fetchJson("/api/v1/admin/metrics/overview");
+          const [pack, returningPack] = await Promise.all([
+            fetchJson("/api/v1/admin/metrics/overview"),
+            fetchJson("/api/v1/admin/metrics/returning"),
+          ]);
           const o = pack.overview;
           buildStatusLines(o);
           renderKpis(o);
+          renderReturningSection(returningPack.returning);
           renderOverviewInsights(o);
           renderLineChart(o.ai.byDay || []);
           renderEndpointDistribution(o.ai.byEndpoint7d);
           renderTopErrorCodes(o.ai.topErrorCodes7d);
         } catch (e) {
-          if (authenticated) showPanelErr("overviewErr", String(e.message || e));
+          if (authenticated) {
+            showPanelErr("overviewErr", String(e.message || e));
+            showPanelErr("returningErr", String(e.message || e));
+            $("returningKpiGrid").innerHTML = "";
+            $("returningTopUsers").innerHTML = "";
+          }
         } finally {
           btn.disabled = false;
         }

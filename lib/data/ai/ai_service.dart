@@ -61,11 +61,14 @@ class AiFollowUpResult {
   AiFollowUpResult({
     required this.text,
     required this.remainingFollowUpsForVerse,
+    this.remainingFollowUpsToday,
     this.relatedAyahs = const [],
   });
 
   final String text;
   final int remainingFollowUpsForVerse;
+  /// `null` = Pro (unbegrenzt); sonst verbleibende Folgefragen heute (Free).
+  final int? remainingFollowUpsToday;
   final List<RelatedAyahRef> relatedAyahs;
 }
 
@@ -249,10 +252,17 @@ class AIService {
       final remaining = remRaw is int
           ? remRaw
           : (remRaw is num ? remRaw.toInt() : 0);
+      final remTodayRaw = data['remainingFollowUpsToday'];
+      final int? remainingToday = remTodayRaw == null
+          ? null
+          : (remTodayRaw is int
+              ? remTodayRaw
+              : (remTodayRaw is num ? remTodayRaw.toInt() : null));
       final related = relatedAyahsFromApiJson(data['relatedAyahs']);
       return AiFollowUpResult(
         text: trimmed,
         remainingFollowUpsForVerse: remaining,
+        remainingFollowUpsToday: remainingToday,
         relatedAyahs: related,
       );
     } on IhdinaApiException catch (_) {

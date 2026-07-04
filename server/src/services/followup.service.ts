@@ -1,6 +1,12 @@
 import type OpenAI from "openai";
 import { prisma } from "../db/client.js";
+import { MAX_FREE_FOLLOWUPS_PER_DAY } from "../config/limits.js";
 import { AppError, ErrorCodes } from "../utils/errors.js";
+import { utcDateString } from "../utils/date.js";
+import {
+  bumpDailyFollowUpCount,
+  getDailyFollowUpCount,
+} from "./dailyExplanationUsageQueries.js";
 import { completeFollowUp } from "./openai.service.js";
 import { extractRelatedAyahsFromText } from "../utils/relatedAyahsFromText.js";
 import { getOrCreateUser } from "./user.service.js";
@@ -8,24 +14,6 @@ import { logAiRequest } from "./usageLog.service.js";
 
 const MAX_FOLLOWUPS_PER_VERSE = 3;
 const allowedRoles = new Set(["system", "user", "assistant"]);
-
-/**
- * Vor öffentlichem Store-Launch: `true` — Folgefragen für Nicht-Pro immer erlaubt,
- * auch wenn auf dem Server `ALLOW_FREE_FOLLOWUPS=false` steht.
- * Vor Release auf `false` setzen; dann steuert nur noch die Env-Variable.
- */
-const FOLLOWUPS_FREE_BETA = false;
-
-/**
- * Wenn {@link FOLLOWUPS_FREE_BETA} false ist: Folgefragen ohne Pro erlauben,
- * solange `ALLOW_FREE_FOLLOWUPS` nicht explizit aus ist.
- * Production: `ALLOW_FREE_FOLLOWUPS=false` (oder `0` / `no`) setzen.
- */
-function allowFreeFollowupsFromEnv(): boolean {
-  const v = process.env.ALLOW_FREE_FOLLOWUPS?.trim().toLowerCase();
-  if (v === "false" || v === "0" || v === "no") return false;
-  return true;
-}
 
 export type FollowUpInput = {
   installId: string;
@@ -79,20 +67,23 @@ export async function followUpVerse(input: FollowUpInput) {
   validateFollowUpInput(input);
 
   const user = await getOrCreateUser(input.installId);
-  const freeFollowupsForNonPro =
-    FOLLOWUPS_FREE_BETA || allowFreeFollowupsFromEnv();
-  if (!user.isPro && !freeFollowupsForNonPro) {
-    await logAiRequest({
-      userId: user.id,
-      endpoint: "POST /api/v1/follow-up",
-      status: "error",
-      errorCode: ErrorCodes.PRO_REQUIRED,
-    });
-    throw new AppError(
-      ErrorCodes.PRO_REQUIRED,
-      "Pro subscription is required for follow-up questions.",
-      403
-    );
+  const usageDate = utcDateString();
+
+  if (!user.isPro) {
+    const dailyUsed = await getDailyFollowUpCount(user.id, usageDate);
+    if (dailyUsed >= MAX_FREE_FOLLOWUPS_PER_DAY) {
+      await logAiRequest({
+        userId: user.id,
+        endpoint: "POST /api/v1/follow-up",
+        status: "error",
+        errorCode: ErrorCodes.FREE_FOLLOWUP_LIMIT_REACHED,
+      });
+      throw new AppError(
+        ErrorCodes.FREE_FOLLOWUP_LIMIT_REACHED,
+        "Daily free follow-up limit reached.",
+        403
+      );
+    }
   }
 
   const existing = await prisma.followUpUsage.findUnique({
@@ -161,6 +152,10 @@ export async function followUpVerse(input: FollowUpInput) {
     update: { count: { increment: 1 } },
   });
 
+  if (!user.isPro) {
+    await bumpDailyFollowUpCount(user.id, usageDate);
+  }
+
   await logAiRequest({
     userId: user.id,
     endpoint: "POST /api/v1/follow-up",
@@ -184,12 +179,21 @@ export async function followUpVerse(input: FollowUpInput) {
   const used = after?.count ?? 0;
   const remainingFollowUpsForVerse = Math.max(0, MAX_FOLLOWUPS_PER_VERSE - used);
 
+  const remainingFollowUpsToday = user.isPro
+    ? null
+    : Math.max(
+        0,
+        MAX_FREE_FOLLOWUPS_PER_DAY -
+          (await getDailyFollowUpCount(user.id, usageDate))
+      );
+
   const relatedAyahs = extractRelatedAyahsFromText(text);
 
   return {
     text,
     isPro: user.isPro,
     remainingFollowUpsForVerse,
+    remainingFollowUpsToday,
     relatedAyahs,
   };
 }

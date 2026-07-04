@@ -25,16 +25,6 @@ import 'paywall_screen.dart';
 import 'quran_reader_screen.dart';
 
 const Color _accentChampagneGold = Color(0xFFE5C07B);
-/// Vor Store-Launch `true`: Eingabefeld immer, unabhängig von `--dart-define`.
-/// Vor Release auf `false`; dann wie Server über [_kAllowFreeFollowups].
-const bool _followUpsFreeBeta = false;
-
-/// Wenn [_followUpsFreeBeta] false: Folgefragen ohne Pro (default an).
-/// Production: `--dart-define=ALLOW_FREE_FOLLOWUPS=false`.
-const bool _kAllowFreeFollowups = bool.fromEnvironment(
-  'ALLOW_FREE_FOLLOWUPS',
-  defaultValue: false,
-);
 
 /// `true`: Phasen Lesen → Verstehen (Labels), Segment-Tabs, flache Erklärung; Fragen-Footer einklappbar; Schnellfragen volle Breite.
 /// Auf `false` setzen für das komplette vorherige Layout — nur UI, keine Logikänderung.
@@ -268,6 +258,8 @@ class _ExplanationBottomSheetContentState
 
   /// Verbleibende Follow-ups laut letzter Server-Antwort; `null` = noch keine Follow-up-Antwort in dieser Session.
   int? _remainingFollowUps;
+  /// Verbleibende Folgefragen heute (Free); `null` = Pro oder noch unbekannt.
+  int? _remainingFollowUpsToday;
   String? _installId;
   bool _verseExplanationFeedbackSent = false;
   /// Nur UI: Verstehen-Bereich bei Variante 0 einklappbar.
@@ -280,9 +272,8 @@ class _ExplanationBottomSheetContentState
 
   bool get isProUser => RevenueCatService.isPro;
 
-  /// Folgefragen-Chat: Pro **oder** Beta-Schalter **oder** Dart-Define (siehe [_kAllowFreeFollowups]).
-  bool get _followUpsUnlocked =>
-      RevenueCatService.isPro || _followUpsFreeBeta || _kAllowFreeFollowups;
+  /// Folgefragen-Chat: Free und Pro dürfen stellen (Free: Tageslimit serverseitig).
+  bool get _followUpsUnlocked => true;
 
   /// Volltext der ersten Assistant-Antwort für Follow-up-API / Konversationskontext.
   String get _firstAssistantReplyText {
@@ -751,8 +742,12 @@ class _ExplanationBottomSheetContentState
   }
 
   Future<void> _sendFollowUp(String question) async {
-    if (!_followUpsUnlocked) return;
     if (_remainingFollowUps != null && _remainingFollowUps! <= 0) {
+      return;
+    }
+    if (!isProUser &&
+        _remainingFollowUpsToday != null &&
+        _remainingFollowUpsToday! <= 0) {
       return;
     }
     if (question.trim().isEmpty ||
@@ -808,6 +803,7 @@ class _ExplanationBottomSheetContentState
         );
         _isLoadingFollowUp = false;
         _remainingFollowUps = result.remainingFollowUpsForVerse;
+        _remainingFollowUpsToday = result.remainingFollowUpsToday;
       });
       _scrollToBottom();
     } on IhdinaApiException catch (e) {
@@ -821,8 +817,14 @@ class _ExplanationBottomSheetContentState
       if (e.code == IhdinaApiErrorCodes.followupLimitReached) {
         setState(() => _remainingFollowUps = 0);
       }
+      if (e.code == IhdinaApiErrorCodes.freeFollowupLimitReached) {
+        setState(() => _remainingFollowUpsToday = 0);
+      }
+      final errText = e.code == IhdinaApiErrorCodes.freeFollowupLimitReached
+          ? 'Du hast dein Tageslimit erreicht. Morgen wieder 2 Folgefragen.'
+          : e.message;
       setState(() {
-        _messages.add(ChatMessage(isUser: false, text: e.message));
+        _messages.add(ChatMessage(isUser: false, text: errText));
         _isLoadingFollowUp = false;
       });
       _scrollToBottom();
@@ -1733,51 +1735,83 @@ class _ExplanationBottomSheetContentState
     );
   }
 
-  Widget _buildChatInput() {
-    if (!_followUpsUnlocked) {
-      return Padding(
-        padding: const EdgeInsets.fromLTRB(4, 0, 4, 4),
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute<void>(builder: (_) => const PaywallScreen()),
-              );
-            },
+  String _remainingFollowUpsTodayLabel(int count) {
+    if (count == 1) return 'Noch 1 Folgefrage heute';
+    return 'Noch $count Folgefragen heute';
+  }
+
+  Widget _buildSoftProFollowUpHint() {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute<void>(builder: (_) => const PaywallScreen()),
+          );
+        },
+        borderRadius: BorderRadius.circular(22),
+        child: Ink(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: Colors.white.withOpacity(0.05),
             borderRadius: BorderRadius.circular(22),
-            child: Ink(
-              padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 14),
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.06),
-                borderRadius: BorderRadius.circular(22),
-              ),
-              child: Row(
-                children: [
-                  Icon(Icons.lock_outline, color: _accentChampagneGold, size: 22),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      'Eigene Fragen stellen? Werde Pro-Mitglied',
-                      style: TextStyle(
-                        fontSize: 15,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.white.withOpacity(0.92),
-                        height: 1.3,
-                      ),
-                    ),
+            border: Border.all(color: Colors.white.withOpacity(0.08)),
+          ),
+          child: Row(
+            children: [
+              Icon(Icons.star_outline, color: _accentChampagneGold, size: 20),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'Mit Pro unbegrenzt Folgefragen stellen',
+                  style: TextStyle(
+                    fontSize: 14,
+                    fontWeight: FontWeight.w500,
+                    color: Colors.white.withOpacity(0.78),
+                    height: 1.35,
                   ),
-                ],
+                ),
               ),
-            ),
+            ],
           ),
         ),
-      );
-    }
+      ),
+    );
+  }
+
+  Widget _buildDailyFollowUpLimitHint() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(4, 0, 4, 4),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.stretch,
+        children: [
+          Text(
+            'Du hast dein Tageslimit erreicht. Morgen wieder 2 Folgefragen.',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              fontSize: 14,
+              height: 1.45,
+              color: Colors.white.withOpacity(0.72),
+            ),
+          ),
+          const SizedBox(height: 10),
+          _buildSoftProFollowUpHint(),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildChatInput() {
     if (_remainingFollowUps != null && _remainingFollowUps! <= 0) {
       return _buildFollowUpLimitHint();
     }
+    if (!isProUser &&
+        _remainingFollowUpsToday != null &&
+        _remainingFollowUpsToday! <= 0) {
+      return _buildDailyFollowUpLimitHint();
+    }
+    final inputEnabled = !_isLoadingFollowUp;
     return Material(
       color: Colors.transparent,
       child: Column(
@@ -1795,7 +1829,7 @@ class _ExplanationBottomSheetContentState
                 Expanded(
                   child: TextField(
                     controller: _inputController,
-                    enabled: !_isLoadingFollowUp,
+                    enabled: inputEnabled,
                     textAlign: _inputController.text.isEmpty
                         ? TextAlign.center
                         : TextAlign.start,
@@ -1827,7 +1861,7 @@ class _ExplanationBottomSheetContentState
                 LocalDictationIconButton(
                   controller: _inputController,
                   listenMode: ListenMode.dictation,
-                  enabled: !_isLoadingFollowUp,
+                  enabled: inputEnabled,
                   iconColor: Colors.white.withOpacity(0.85),
                   iconSize: 22,
                   padding: const EdgeInsets.all(6),
@@ -1862,6 +1896,20 @@ class _ExplanationBottomSheetContentState
           const LocalSpeechPrivacyCaption(
             padding: EdgeInsets.fromLTRB(8, 6, 8, 0),
           ),
+          if (!isProUser &&
+              _remainingFollowUpsToday != null &&
+              _remainingFollowUpsToday! > 0)
+            Padding(
+              padding: const EdgeInsets.fromLTRB(12, 6, 12, 0),
+              child: Text(
+                _remainingFollowUpsTodayLabel(_remainingFollowUpsToday!),
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Colors.white.withOpacity(0.45),
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -2057,8 +2105,10 @@ class _ExplanationBottomSheetContentState
     }
     final keyboardOpen = media.viewInsets.bottom > 0;
     final quickQs = _visibleQuickQuestions();
-    final showQuickChips = _followUpsUnlocked &&
-        (_remainingFollowUps == null || _remainingFollowUps! > 0) &&
+    final showQuickChips = (_remainingFollowUps == null || _remainingFollowUps! > 0) &&
+        (isProUser ||
+            _remainingFollowUpsToday == null ||
+            _remainingFollowUpsToday! > 0) &&
         !keyboardOpen &&
         quickQs.isNotEmpty;
     final showInlineAiFeedback =

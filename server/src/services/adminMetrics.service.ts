@@ -38,6 +38,19 @@ export type AdminMetricsOverview = {
   insights: string[];
 };
 
+export type ReturningTopUser = {
+  installId: string;
+  displayName: string | null;
+  activeDays: number;
+};
+
+export type AdminMetricsReturning = {
+  dailyUsers: number;
+  regularUsers: number;
+  casualUsers: number;
+  topUsers: ReturningTopUser[];
+};
+
 function toInt(v: unknown): number {
   if (typeof v === "bigint") return Number(v);
   if (typeof v === "number") return Math.trunc(v);
@@ -256,5 +269,63 @@ export async function getAdminMetricsOverview(): Promise<AdminMetricsOverview> {
       byScreen7d,
     },
     insights,
+  };
+}
+
+export async function getAdminMetricsReturning(): Promise<AdminMetricsReturning> {
+  const now = new Date();
+  const from7d = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+  const countRows = await prisma.$queryRaw<
+    { daily_users: unknown; regular_users: unknown; casual_users: unknown }[]
+  >(Prisma.sql`
+    WITH user_days AS (
+      SELECT
+        "userId",
+        COUNT(DISTINCT DATE("createdAt" AT TIME ZONE 'UTC'))::int AS active_days
+      FROM "AiRequestLog"
+      WHERE "createdAt" >= ${from7d}
+        AND "userId" IS NOT NULL
+      GROUP BY "userId"
+    )
+    SELECT
+      COALESCE(SUM(CASE WHEN active_days BETWEEN 5 AND 7 THEN 1 ELSE 0 END), 0)::bigint AS daily_users,
+      COALESCE(SUM(CASE WHEN active_days BETWEEN 3 AND 4 THEN 1 ELSE 0 END), 0)::bigint AS regular_users,
+      COALESCE(SUM(CASE WHEN active_days BETWEEN 1 AND 2 THEN 1 ELSE 0 END), 0)::bigint AS casual_users
+    FROM user_days
+  `);
+
+  const topRows = await prisma.$queryRaw<
+    { installId: string; display_name: string | null; active_days: unknown }[]
+  >(Prisma.sql`
+    WITH user_days AS (
+      SELECT
+        "userId",
+        COUNT(DISTINCT DATE("createdAt" AT TIME ZONE 'UTC'))::int AS active_days
+      FROM "AiRequestLog"
+      WHERE "createdAt" >= ${from7d}
+        AND "userId" IS NOT NULL
+      GROUP BY "userId"
+    )
+    SELECT
+      u."installId",
+      u.display_name,
+      ud.active_days
+    FROM user_days ud
+    INNER JOIN "User" u ON u.id = ud."userId"
+    ORDER BY ud.active_days DESC, u."lastSeenAt" DESC NULLS LAST
+    LIMIT 20
+  `);
+
+  const counts = countRows[0];
+  return {
+    dailyUsers: toInt(counts?.daily_users),
+    regularUsers: toInt(counts?.regular_users),
+    casualUsers: toInt(counts?.casual_users),
+    topUsers: topRows.map((r) => ({
+      installId: r.installId,
+      displayName: r.display_name,
+      activeDays: toInt(r.active_days),
+    })),
   };
 }

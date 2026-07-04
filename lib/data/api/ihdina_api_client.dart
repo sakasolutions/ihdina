@@ -9,6 +9,7 @@ abstract class IhdinaApiErrorCodes {
   static const freeLimitReached = 'FREE_LIMIT_REACHED';
   static const proRequired = 'PRO_REQUIRED';
   static const followupLimitReached = 'FOLLOWUP_LIMIT_REACHED';
+  static const freeFollowupLimitReached = 'FREE_FOLLOWUP_LIMIT_REACHED';
   static const invalidInput = 'INVALID_INPUT';
   static const aiTemporarilyUnavailable = 'AI_TEMPORARILY_UNAVAILABLE';
 }

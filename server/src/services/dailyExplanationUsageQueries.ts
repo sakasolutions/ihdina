@@ -5,13 +5,15 @@ export type DailyUsageColumn =
   | "extraCount"
   | "dailyVerseCount"
   | "takeawayCount"
-  | "reflectionCount";
+  | "reflectionCount"
+  | "followUpCount";
 
 const USAGE_COLUMNS: readonly DailyUsageColumn[] = [
   "extraCount",
   "dailyVerseCount",
   "takeawayCount",
   "reflectionCount",
+  "followUpCount",
 ] as const;
 
 function assertUsageColumn(column: DailyUsageColumn): DailyUsageColumn {
@@ -32,6 +34,8 @@ function columnSql(column: DailyUsageColumn): Prisma.Sql {
       return Prisma.raw(`"takeawayCount"`);
     case "reflectionCount":
       return Prisma.raw(`"reflectionCount"`);
+    case "followUpCount":
+      return Prisma.raw(`"follow_up_count"`);
   }
 }
 
@@ -40,12 +44,14 @@ function insertCounts(column: DailyUsageColumn): {
   dailyVerseCount: number;
   takeawayCount: number;
   reflectionCount: number;
+  followUpCount: number;
 } {
   return {
     extraCount: column === "extraCount" ? 1 : 0,
     dailyVerseCount: column === "dailyVerseCount" ? 1 : 0,
     takeawayCount: column === "takeawayCount" ? 1 : 0,
     reflectionCount: column === "reflectionCount" ? 1 : 0,
+    followUpCount: column === "followUpCount" ? 1 : 0,
   };
 }
 
@@ -115,12 +121,12 @@ export async function bumpDailyUsageCount(
     await prisma.$executeRaw(
       Prisma.sql`INSERT INTO "DailyExplanationUsage" (
           "id", "userId", "usageDate",
-          "extraCount", "dailyVerseCount", "takeawayCount", "reflectionCount"
+          "extraCount", "dailyVerseCount", "takeawayCount", "reflectionCount", "follow_up_count"
         )
         VALUES (
           gen_random_uuid()::text, ${userId}, ${usageDate},
           ${counts.extraCount}, ${counts.dailyVerseCount},
-          ${counts.takeawayCount}, ${counts.reflectionCount}
+          ${counts.takeawayCount}, ${counts.reflectionCount}, ${counts.followUpCount}
         )`
     );
   } catch (e) {
@@ -196,4 +202,18 @@ export async function bumpDailyReflectionCount(
   usageDate: string
 ): Promise<void> {
   return bumpDailyUsageCount(userId, usageDate, "reflectionCount");
+}
+
+export async function getDailyFollowUpCount(
+  userId: string,
+  usageDate: string
+): Promise<number> {
+  return getDailyUsageCount(userId, usageDate, "followUpCount");
+}
+
+export async function bumpDailyFollowUpCount(
+  userId: string,
+  usageDate: string
+): Promise<void> {
+  return bumpDailyUsageCount(userId, usageDate, "followUpCount");
 }

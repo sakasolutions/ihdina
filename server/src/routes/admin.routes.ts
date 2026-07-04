@@ -3,6 +3,7 @@ import {
   adminFeedbackListHandler,
   adminListUsersHandler,
   adminMetricsOverviewHandler,
+  adminMetricsReturningHandler,
   adminSearchUsersHandler,
   adminSetProHandler,
   adminUsageDailyHandler,
@@ -14,6 +15,7 @@ import { requireAdmin } from "../middleware/adminAuth.js";
 export async function registerAdminRoutes(app: FastifyInstance) {
   app.addHook("preHandler", requireAdmin);
   app.get("/metrics/overview", adminMetricsOverviewHandler);
+  app.get("/metrics/returning", adminMetricsReturningHandler);
   app.get("/usage/daily", adminUsageDailyHandler);
   app.get("/usage/events", adminUsageEventsHandler);
   app.get("/feedback", adminFeedbackListHandler);

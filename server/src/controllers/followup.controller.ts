@@ -37,6 +37,7 @@ export async function followUpHandler(req: FastifyRequest, reply: FastifyReply) 
         text: data.text,
         isPro: data.isPro,
         remainingFollowUpsForVerse: data.remainingFollowUpsForVerse,
+        remainingFollowUpsToday: data.remainingFollowUpsToday,
         relatedAyahs: data.relatedAyahs,
       },
     });
