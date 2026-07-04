@@ -26,7 +26,7 @@ import 'quran_reader_screen.dart';
 
 const Color _accentChampagneGold = Color(0xFFE5C07B);
 
-/// `true`: Phasen Lesen → Verstehen (Labels), Segment-Tabs, flache Erklärung; Fragen-Footer einklappbar; Schnellfragen volle Breite.
+/// `true`: Phasen Lesen → Verstehen (Labels), Segment-Tabs, flache Erklärung; Fragen-Footer einklappbar.
 /// Auf `false` setzen für das komplette vorherige Layout — nur UI, keine Logikänderung.
 const bool _kExplanationSheetRefinedUi = true;
 
@@ -1611,7 +1611,46 @@ class _ExplanationBottomSheetContentState
     );
   }
 
+  Widget _buildExplanationFeedbackRow() {
+    return Row(
+      children: [
+        Expanded(
+          child: Text(
+            'War die Erklärung hilfreich?',
+            style: GoogleFonts.inter(
+              fontSize: 13,
+              fontWeight: FontWeight.w500,
+              color: Colors.white.withOpacity(0.72),
+            ),
+          ),
+        ),
+        IconButton(
+          tooltip: 'Ja',
+          onPressed: () => _submitVerseExplanationFeedback(1),
+          icon: Icon(
+            Icons.thumb_up_outlined,
+            color: _accentChampagneGold,
+            size: 22,
+          ),
+        ),
+        IconButton(
+          tooltip: 'Nein',
+          onPressed: () => _submitVerseExplanationFeedback(-1),
+          icon: Icon(
+            Icons.thumb_down_outlined,
+            color: Colors.white54,
+            size: 22,
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildVerseExplainCard(String body) {
+    final keyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
+    final showFeedback =
+        _cards != null && !_verseExplanationFeedbackSent && !keyboardOpen;
+
     final markdown = _MarkdownSection(
       text: _linkifyAyahReferences(body),
       textColor: Colors.white,
@@ -1620,7 +1659,17 @@ class _ExplanationBottomSheetContentState
     if (_kExplanationSheetRefinedUi) {
       return Padding(
         padding: const EdgeInsets.fromLTRB(4, 2, 4, 0),
-        child: markdown,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            markdown,
+            if (showFeedback) ...[
+              const SizedBox(height: 14),
+              _buildExplanationFeedbackRow(),
+            ],
+          ],
+        ),
       );
     }
     return Padding(
@@ -1632,7 +1681,17 @@ class _ExplanationBottomSheetContentState
         ),
         child: Padding(
           padding: const EdgeInsets.fromLTRB(14, 14, 14, 14),
-          child: markdown,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              markdown,
+              if (showFeedback) ...[
+                const SizedBox(height: 14),
+                _buildExplanationFeedbackRow(),
+              ],
+            ],
+          ),
         ),
       ),
     );
@@ -1692,46 +1751,50 @@ class _ExplanationBottomSheetContentState
   }
 
   Widget _buildQuickChipsRefined(List<String> qs) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.stretch,
-      mainAxisSize: MainAxisSize.min,
-      children: [
-        for (var i = 0; i < qs.length; i++) ...[
-          if (i > 0) const SizedBox(height: 6),
-          Material(
+    return SizedBox(
+      height: 50,
+      child: ListView.separated(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 2),
+        itemCount: qs.length,
+        separatorBuilder: (_, __) => const SizedBox(width: 8),
+        itemBuilder: (context, index) {
+          final label = qs[index];
+          return Material(
             color: Colors.transparent,
             child: InkWell(
-              onTap: _isLoadingFollowUp ? null : () => _sendFollowUp(qs[i]),
-              borderRadius: BorderRadius.circular(12),
-              splashColor: Colors.white.withOpacity(0.06),
-              highlightColor: Colors.white.withOpacity(0.04),
+              onTap: _isLoadingFollowUp ? null : () => _sendFollowUp(label),
+              borderRadius: BorderRadius.circular(22),
+              splashColor: Colors.white.withOpacity(0.08),
+              highlightColor: Colors.white.withOpacity(0.06),
               child: Ink(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 9),
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.045),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.white.withOpacity(0.06)),
+                  color: Colors.white.withOpacity(0.06),
+                  borderRadius: BorderRadius.circular(22),
+                  border: Border.all(color: Colors.white.withOpacity(0.12)),
                 ),
-                child: Align(
-                  alignment: Alignment.centerLeft,
+                child: Center(
                   child: Text(
-                    qs[i],
-                    maxLines: 3,
+                    label,
+                    maxLines: 2,
                     overflow: TextOverflow.ellipsis,
-                    textAlign: TextAlign.start,
+                    textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontSize: 12.5,
-                      height: 1.32,
+                      fontSize: 12,
+                      height: 1.25,
                       fontWeight: FontWeight.w500,
-                      color: _isLoadingFollowUp ? Colors.white38 : Colors.white.withOpacity(0.88),
+                      color: _isLoadingFollowUp
+                          ? Colors.white38
+                          : Colors.white.withOpacity(0.92),
                     ),
                   ),
                 ),
               ),
             ),
-          ),
-        ],
-      ],
+          );
+        },
+      ),
     );
   }
 
@@ -2022,21 +2085,14 @@ class _ExplanationBottomSheetContentState
     return _fragenComposerMustStayOpen(media) || _fragenComposerExpanded;
   }
 
-  String _fragenCollapsedSubtitle({
-    required bool showFeedback,
-    required bool showQuickChips,
-  }) {
+  String _fragenCollapsedSubtitle({required bool showQuickChips}) {
     final parts = <String>[];
-    if (showFeedback) parts.add('Feedback');
     if (showQuickChips) parts.add('Schnellfragen');
     parts.add('Eigene Frage');
     return parts.join(' · ');
   }
 
-  Widget _buildFragenCollapsedRow({
-    required bool showFeedback,
-    required bool showQuickChips,
-  }) {
+  Widget _buildFragenCollapsedRow({required bool showQuickChips}) {
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -2070,10 +2126,7 @@ class _ExplanationBottomSheetContentState
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      _fragenCollapsedSubtitle(
-                        showFeedback: showFeedback,
-                        showQuickChips: showQuickChips,
-                      ),
+                      _fragenCollapsedSubtitle(showQuickChips: showQuickChips),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                       style: GoogleFonts.inter(
@@ -2111,60 +2164,10 @@ class _ExplanationBottomSheetContentState
             _remainingFollowUpsToday! > 0) &&
         !keyboardOpen &&
         quickQs.isNotEmpty;
-    final showInlineAiFeedback =
-        _cards != null && !_verseExplanationFeedbackSent && !keyboardOpen;
-
     final expandedChildren = <Widget>[
-      if (showInlineAiFeedback) ...[
-        Padding(
-          padding: EdgeInsets.fromLTRB(
-            8,
-            _kExplanationSheetRefinedUi ? 12 : 10,
-            8,
-            0,
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: Text(
-                  'War die Erklärung hilfreich?',
-                  style: GoogleFonts.inter(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w500,
-                    color: Colors.white.withOpacity(0.72),
-                  ),
-                ),
-              ),
-              IconButton(
-                tooltip: 'Ja',
-                onPressed: () => _submitVerseExplanationFeedback(1),
-                icon: Icon(
-                  Icons.thumb_up_outlined,
-                  color: _accentChampagneGold,
-                  size: 22,
-                ),
-              ),
-              IconButton(
-                tooltip: 'Nein',
-                onPressed: () => _submitVerseExplanationFeedback(-1),
-                icon: Icon(
-                  Icons.thumb_down_outlined,
-                  color: Colors.white54,
-                  size: 22,
-                ),
-              ),
-            ],
-          ),
-        ),
-      ],
-      SizedBox(
-        height: showQuickChips
-            ? (_kExplanationSheetRefinedUi ? 12 : 10)
-            : 8,
-      ),
       if (showQuickChips) ...[
         _buildQuickChips(),
-        SizedBox(height: _kExplanationSheetRefinedUi ? 12 : 10),
+        const SizedBox(height: 12),
       ],
       _buildChatInput(),
     ];
@@ -2199,10 +2202,7 @@ class _ExplanationBottomSheetContentState
             color: Colors.white.withOpacity(open ? 0.055 : 0.08),
           ),
           if (!open)
-            _buildFragenCollapsedRow(
-              showFeedback: showInlineAiFeedback,
-              showQuickChips: showQuickChips,
-            )
+            _buildFragenCollapsedRow(showQuickChips: showQuickChips)
           else ...[
             if (!mustStay)
               Align(
@@ -2230,20 +2230,13 @@ class _ExplanationBottomSheetContentState
                   ),
                 ),
               ),
-            const SizedBox(height: 8),
-            DecoratedBox(
-              decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.022),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: Colors.white.withOpacity(0.05)),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.fromLTRB(8, 10, 8, 6),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.stretch,
-                  mainAxisSize: MainAxisSize.min,
-                  children: expandedChildren,
-                ),
+            const SizedBox(height: 6),
+            Padding(
+              padding: const EdgeInsets.fromLTRB(4, 4, 4, 2),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.stretch,
+                mainAxisSize: MainAxisSize.min,
+                children: expandedChildren,
               ),
             ),
           ],
@@ -2279,7 +2272,7 @@ class _MessageBubble extends StatelessWidget {
             decoration: BoxDecoration(
               color: message.isUser
                   ? Colors.white.withOpacity(0.14)
-                  : Colors.white.withOpacity(0.04),
+                  : Colors.white.withOpacity(0.03),
               borderRadius: BorderRadius.only(
                 topLeft: const Radius.circular(18),
                 topRight: const Radius.circular(18),
@@ -2288,10 +2281,20 @@ class _MessageBubble extends StatelessWidget {
               ),
               border: message.isUser
                   ? null
-                  : Border.all(color: Colors.white.withOpacity(0.06)),
+                  : Border(
+                      left: BorderSide(
+                        color: _accentChampagneGold.withOpacity(0.4),
+                        width: 2,
+                      ),
+                    ),
             ),
             child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              padding: EdgeInsets.fromLTRB(
+                message.isUser ? 16 : 16,
+                12,
+                16,
+                12,
+              ),
               child: message.isUser
                   ? Text(
                       message.text,
@@ -2342,35 +2345,44 @@ class _MarkdownSection extends StatelessWidget {
           height: 1.5,
         ),
         h1: const TextStyle(
-          fontSize: 16,
+          fontSize: 14,
           fontWeight: FontWeight.bold,
           color: Colors.white,
         ),
         h2: const TextStyle(
-          fontSize: 16,
+          fontSize: 14,
           fontWeight: FontWeight.bold,
           color: Colors.white,
         ),
         h3: const TextStyle(
-          fontSize: 16,
+          fontSize: 14,
           fontWeight: FontWeight.bold,
           color: Colors.white,
         ),
+        h1Padding: const EdgeInsets.only(top: 18, bottom: 6),
+        h2Padding: const EdgeInsets.only(top: 16, bottom: 6),
+        h3Padding: const EdgeInsets.only(top: 14, bottom: 4),
         listIndent: 24,
         blockquote: TextStyle(
           fontSize: 15,
           color: textColor.withOpacity(0.9),
           fontStyle: FontStyle.italic,
         ),
+        blockquotePadding: const EdgeInsets.fromLTRB(12, 8, 8, 8),
         blockquoteDecoration: BoxDecoration(
+          color: Colors.white.withOpacity(0.04),
           border: Border(
             left: BorderSide(
-              color: Colors.white.withOpacity(0.4),
+              color: _accentChampagneGold.withOpacity(0.65),
               width: 3,
             ),
           ),
         ),
-        blockSpacing: 12,
+        blockSpacing: 18,
+        strong: const TextStyle(
+          fontWeight: FontWeight.bold,
+          color: _accentChampagneGold,
+        ),
       ).copyWith(
         p: TextStyle(
           fontSize: 15,
@@ -2378,19 +2390,23 @@ class _MarkdownSection extends StatelessWidget {
           height: 1.5,
         ),
         h1: TextStyle(
-          fontSize: 16,
+          fontSize: 14,
           fontWeight: FontWeight.bold,
           color: textColor,
         ),
         h2: TextStyle(
-          fontSize: 16,
+          fontSize: 14,
           fontWeight: FontWeight.bold,
           color: textColor,
         ),
         h3: TextStyle(
-          fontSize: 16,
+          fontSize: 14,
           fontWeight: FontWeight.bold,
           color: textColor,
+        ),
+        strong: const TextStyle(
+          fontWeight: FontWeight.bold,
+          color: _accentChampagneGold,
         ),
         a: TextStyle(
           color: _accentChampagneGold,
