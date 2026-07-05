@@ -34,6 +34,7 @@ export async function listAdminUsers(params: {
         installId: true,
         displayName: true,
         isPro: true,
+        proExpiresAt: true,
         createdAt: true,
         lastSeenAt: true,
         _count: { select: { aiRequestLogs: true } },

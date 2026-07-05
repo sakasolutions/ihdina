@@ -114,13 +114,16 @@
       </div>
 
       <h3>Feature-Nutzung pro Tag</h3>
+      <p>[Hinweis: Serien im Chart nach Messlogik gruppiert — siehe Tabellen unten]</p>
       <div aria-label="Chart-Platzhalter gestapelt" style="border: 1px dashed #999; min-height: 320px; padding: 16px;">
         <p>[Chart.js: gestapeltes oder mehrfarbiges Linien-/Balken-Chart]</p>
-        <p>[Serien: extraCount, dailyVerseCount, takeawayCount, reflectionCount, followUpCount]</p>
+        <p>[Legende Gruppe A — automatisch: takeawayCount, reflectionCount]</p>
+        <p>[Legende Gruppe B — aktive Handlung: extraCount, dailyVerseCount, followUpCount]</p>
         <p>[Datenquelle: GET /api/v1/admin/metrics/feature-usage?days=… → byDay]</p>
       </div>
 
       <h3>Summen im Zeitraum</h3>
+      <p><strong>Automatisch generiert (Tab-Öffnung)</strong> — misst Generierung beim Tab-Laden, nicht Konsum.</p>
       <table border="1" cellpadding="8" cellspacing="0">
         <thead>
           <tr>
@@ -130,25 +133,45 @@
           </tr>
         </thead>
         <tbody>
-          <tr><td>Extra-Erklärung</td><td>[123]</td><td>[— oder pro Feature falls API erweitert]</td></tr>
-          <tr><td>Tagesvers-Erklärung</td><td>[456]</td><td>[—]</td></tr>
-          <tr><td>Takeaway</td><td>[78]</td><td>[—]</td></tr>
-          <tr><td>Reflection-Moment</td><td>[90]</td><td>[—]</td></tr>
-          <tr><td>Folgefragen</td><td>[34]</td><td>[—]</td></tr>
-          <tr><td><strong>Gesamt distinctUsers</strong></td><td colspan="2"><strong>[87 — aus featureUsage.distinctUsers]</strong></td></tr>
+          <tr><td>Takeaway (Home)</td><td>[78]</td><td>[—]</td></tr>
+          <tr><td>Reflection-Moment (Gebet)</td><td>[90]</td><td>[—]</td></tr>
         </tbody>
       </table>
-      <p>[Hinweis Wireframe: distinctUsers aktuell nur gesamt; pro-Feature distinct optional später]</p>
 
-      <h3>Rangliste — meistgenutztes Feature</h3>
+      <p><strong>Aktive Nutzerhandlung</strong> — Klick/Tap des Nutzers.</p>
+      <table border="1" cellpadding="8" cellspacing="0">
+        <thead>
+          <tr>
+            <th>Feature</th>
+            <th>Summe (totals)</th>
+            <th>distinctUsers</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr><td>Extra-Erklärung (Explain)</td><td>[123]</td><td>[—]</td></tr>
+          <tr><td>Tagesvers-Erklärung (Explain)</td><td>[456]</td><td>[—]</td></tr>
+          <tr><td>Folgefragen (Follow-up)</td><td>[34]</td><td>[—]</td></tr>
+        </tbody>
+      </table>
+
+      <p><strong>Gesamt distinctUsers</strong> (Feature-Usage API, alle Counter): [87]</p>
+      <p>[Hinweis: distinctUsers aktuell nur gesamt; pro Feature optional später]</p>
+
+      <h3>Rangliste — nur innerhalb derselben Messlogik</h3>
+      <p>[Keine gemeinsame Top-5 über beide Gruppen — würde falsche Schlüsse nahelegen]</p>
+
+      <h4>Automatisch generiert (Tab-Öffnung)</h4>
       <ol>
-        <li>[1. Tagesvers-Erklärung — 456 Nutzungen]</li>
-        <li>[2. Extra-Erklärung — 123 Nutzungen]</li>
-        <li>[3. Reflection-Moment — 90 Nutzungen]</li>
-        <li>[4. Takeaway — 78 Nutzungen]</li>
-        <li>[5. Folgefragen — 34 Nutzungen]</li>
+        <li>[1. Reflection-Moment — 90]</li>
+        <li>[2. Takeaway — 78]</li>
       </ol>
-      <p>[Sortierung aus totals.* abgeleitet]</p>
+
+      <h4>Aktive Nutzerhandlung</h4>
+      <ol>
+        <li>[1. Tagesvers-Erklärung — 456]</li>
+        <li>[2. Extra-Erklärung — 123]</li>
+        <li>[3. Folgefragen — 34]</li>
+      </ol>
     </section>
 
     <hr />
