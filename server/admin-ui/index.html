@@ -9,6 +9,7 @@
     :root {
       --bg: #0a1a14;
       --card: #0f2018;
+      --card-2: #12251c;
       --border: rgba(255, 255, 255, 0.08);
       --gold: #c8a96e;
       --text: rgba(255, 255, 255, 0.92);
@@ -16,7 +17,7 @@
       --ok: #6dbf7a;
       --warn: #d4a84b;
       --err: #e07a6a;
-      --maxw: 1100px;
+      --maxw: 1180px;
     }
     * { box-sizing: border-box; }
     body {
@@ -98,6 +99,11 @@
       padding: 6px 12px;
     }
     .btn-ghost:hover:not(:disabled) { color: var(--text); border-color: rgba(255,255,255,0.18); }
+    .btn-ghost.active {
+      color: var(--gold);
+      border-color: rgba(200, 169, 110, 0.4);
+      background: rgba(200, 169, 110, 0.1);
+    }
     .form-err {
       display: none;
       margin-bottom: 12px;
@@ -214,6 +220,7 @@
       border-radius: 12px;
       padding: 16px;
     }
+    .kpi .val-row { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
     .kpi .val { font-size: 1.6rem; font-weight: 800; letter-spacing: -0.02em; line-height: 1.1; }
     .kpi .val.gold { color: var(--gold); }
     .kpi .lbl { font-size: 0.68rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-2); margin-top: 6px; }
@@ -232,7 +239,22 @@
     .badge.warn { background: rgba(212, 168, 75, 0.2); color: var(--warn); }
     .badge.err { background: rgba(224, 122, 106, 0.2); color: var(--err); }
 
+    .trend {
+      display: inline-flex;
+      align-items: center;
+      gap: 3px;
+      font-size: 0.76rem;
+      font-weight: 700;
+      padding: 2px 7px;
+      border-radius: 6px;
+    }
+    .trend.up-good, .trend.down-good { background: rgba(109, 191, 122, 0.16); color: var(--ok); }
+    .trend.up-bad, .trend.down-bad { background: rgba(224, 122, 106, 0.16); color: var(--err); }
+    .trend.flat { background: rgba(255, 255, 255, 0.06); color: var(--text-2); }
+    .trend.unknown { background: rgba(255, 255, 255, 0.04); color: var(--text-2); font-weight: 500; font-style: italic; }
+
     .chart-wrap { position: relative; height: 260px; margin-top: 8px; }
+    .chart-wrap.tall { height: 300px; }
     .overview-insights { list-style: none; margin: 0; padding: 0; }
     .overview-insight-item {
       display: flex;
@@ -293,10 +315,10 @@
       background: linear-gradient(90deg, rgba(200, 169, 110, 0.55), rgba(200, 169, 110, 0.85));
       min-width: 2px;
     }
+    .ep-bar-fill.muted { background: linear-gradient(90deg, rgba(255,255,255,0.18), rgba(255,255,255,0.32)); }
     .active-days-bar { letter-spacing: 0.12em; font-size: 0.88rem; white-space: nowrap; }
     .active-days-bar .on { color: var(--gold); }
     .active-days-bar .off { color: var(--text-2); opacity: 0.4; }
-    .returning-top-toggle { margin-top: 10px; text-align: center; }
     .overview-err-table { min-width: 0; }
     .overview-err-table td:first-child { width: 38%; }
     .latency-ok { color: var(--ok); font-weight: 600; }
@@ -329,6 +351,8 @@
     }
     .pagination-info { margin: 0; font-size: 0.82rem; }
 
+    .range-group { display: inline-flex; gap: 4px; flex-wrap: wrap; }
+
     .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 10px; }
     table { width: 100%; border-collapse: collapse; font-size: 0.8rem; min-width: 640px; }
     th, td { text-align: left; padding: 9px 11px; border-bottom: 1px solid var(--border); vertical-align: top; }
@@ -342,6 +366,7 @@
     }
     th.sortable { cursor: pointer; user-select: none; }
     th.sortable:hover { color: var(--text); }
+    th.sortable .sort-arrow { color: var(--gold); margin-left: 3px; }
     tr:last-child td { border-bottom: none; }
     tr.clickable { cursor: pointer; }
     tr.clickable:hover { background: rgba(255, 255, 255, 0.03); }
@@ -365,6 +390,21 @@
     .thumb-rating { font-size: 1.15rem; line-height: 1; }
     .thumb-rating.up { color: var(--ok); }
     .thumb-rating.down { color: var(--err); }
+
+    .behavior-group { margin-bottom: 22px; }
+    .behavior-group-title {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 0 0 4px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--text);
+    }
+    .behavior-group-note { color: var(--text-2); font-size: 0.78rem; margin: 0 0 12px; }
+    .group-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+    .group-dot.auto { background: var(--warn); }
+    .group-dot.active { background: var(--gold); }
 
     #panel-users .users-tab-wrap {
       position: relative;
@@ -575,11 +615,14 @@
 
     <nav id="nav" aria-label="Navigation">
       <button type="button" class="active" data-tab="overview">Übersicht</button>
-      <button type="button" data-tab="ki">KI &amp; Kosten</button>
+      <button type="button" data-tab="growth">Wachstum</button>
+      <button type="button" data-tab="behavior">Nutzerverhalten</button>
       <button type="button" data-tab="users">Nutzer</button>
+      <button type="button" data-tab="ki">KI &amp; Kosten</button>
       <button type="button" data-tab="feedback">Feedback</button>
     </nav>
 
+    <!-- ================= ÜBERSICHT ================= -->
     <div id="panel-overview" class="panel active">
       <section class="card">
         <h2>Auf einen Blick</h2>
@@ -606,20 +649,91 @@
         <h2>Server-Hinweise</h2>
         <ul id="overviewInsights" class="overview-insights"></ul>
       </section>
+    </div>
 
+    <!-- ================= WACHSTUM ================= -->
+    <div id="panel-growth" class="panel">
       <section class="card">
         <div class="row">
-          <h2 style="margin:0;flex:1">KI-Volumen (14 Tage)</h2>
-          <button type="button" class="btn btn-gold" id="btnOverview" style="width:auto">Daten laden</button>
+          <h2 style="margin:0;flex:1">Neue Geräte</h2>
+          <div class="range-group" id="growthRange">
+            <button type="button" class="btn btn-ghost" data-days="7">7 Tage</button>
+            <button type="button" class="btn btn-ghost active" data-days="30">30 Tage</button>
+            <button type="button" class="btn btn-ghost" data-days="90">90 Tage</button>
+          </div>
         </div>
-        <div id="overviewErr" class="panel-err"></div>
-        <p class="hint" style="margin-top:-4px">Goldene Linie: alle KI-Anfragen pro Tag. Rote Linie: fehlgeschlagene Anfragen — jeder Tap auf Erklärung, Folgefrage usw. zählt einmal.</p>
-        <div class="chart-wrap"><canvas id="chLineAi"></canvas></div>
-        <div id="overviewEndpoints"></div>
-        <div id="overviewErrorCodes"></div>
+        <p class="hint" style="margin-top:-4px">Zählt neue Geräte mit erstem Server-Kontakt, nicht App-Installationen direkt.</p>
+        <div id="growthErr" class="panel-err"></div>
+        <div class="kpi-grid" id="growthKpiGrid"></div>
+        <div class="chart-wrap"><canvas id="chGrowth"></canvas></div>
       </section>
     </div>
 
+    <!-- ================= NUTZERVERHALTEN ================= -->
+    <div id="panel-behavior" class="panel">
+      <section class="card">
+        <div class="row">
+          <h2 style="margin:0;flex:1">Feature-Nutzung</h2>
+          <div class="range-group" id="behaviorRange">
+            <button type="button" class="btn btn-ghost" data-days="7">7 Tage</button>
+            <button type="button" class="btn btn-ghost active" data-days="30">30 Tage</button>
+            <button type="button" class="btn btn-ghost" data-days="90">90 Tage</button>
+          </div>
+        </div>
+        <p class="hint" style="margin-top:-4px">Zwei Gruppen, weil sie unterschiedliche Dinge messen — siehe Hinweise unten.</p>
+        <div id="behaviorErr" class="panel-err"></div>
+        <div class="kpi-grid" id="behaviorKpiGrid"></div>
+        <div class="chart-wrap tall"><canvas id="chBehavior"></canvas></div>
+
+        <div class="behavior-group" style="margin-top:20px">
+          <p class="behavior-group-title"><span class="group-dot active"></span>Aktive Nutzerhandlung</p>
+          <p class="behavior-group-note">Nutzer hat aktiv getippt oder eine Frage gestellt — zeigt echtes Interesse am jeweiligen Feature.</p>
+          <div id="behaviorTableActive"></div>
+        </div>
+
+        <div class="behavior-group">
+          <p class="behavior-group-title"><span class="group-dot auto"></span>Automatisch generiert</p>
+          <p class="behavior-group-note">Wird beim Öffnen des Tabs ausgelöst, ohne Klick. Misst Tab-Öffnungen, nicht bewusstes Interesse am Inhalt.</p>
+          <div id="behaviorTableAuto"></div>
+        </div>
+      </section>
+    </div>
+
+    <!-- ================= NUTZER ================= -->
+    <div id="panel-users" class="panel">
+      <div class="users-tab-wrap">
+        <section class="card">
+          <h2>Nutzer</h2>
+          <p class="hint">Suche nach Name oder Geräte-ID. Sortierung per Klick auf Spaltenkopf.</p>
+          <div class="row">
+            <input id="userQ" type="text" placeholder="Name oder Geräte-ID …" style="flex:2;min-width:200px;margin:0" autocomplete="off" />
+            <div style="display:flex;gap:4px">
+              <button type="button" class="btn btn-ghost active" data-pro-filter="all">Alle</button>
+              <button type="button" class="btn btn-ghost" data-pro-filter="pro">Nur Pro</button>
+              <button type="button" class="btn btn-ghost" data-pro-filter="free">Nur Free</button>
+            </div>
+          </div>
+          <div id="userSearchErr" class="panel-err"></div>
+          <div class="row table-toolbar">
+            <label for="usersPageSize">Anzeigen:</label>
+            <select id="usersPageSize">
+              <option value="10" selected>10</option>
+              <option value="25">25</option>
+              <option value="100">100</option>
+              <option value="500">500</option>
+            </select>
+          </div>
+          <div id="userResults"></div>
+          <div id="userPagination"></div>
+        </section>
+        <div id="userModal" class="user-modal" aria-hidden="true">
+          <div class="user-modal-backdrop" id="userModalBackdrop"></div>
+          <div id="userDetail" class="user-modal-panel" role="dialog" aria-modal="true" aria-labelledby="userModalTitle"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ================= KI & KOSTEN ================= -->
     <div id="panel-ki" class="panel">
       <section class="card">
         <h2>Kosten &amp; Volumen pro Tag</h2>
@@ -627,6 +741,14 @@
         <div id="kiDailyErr" class="panel-err"></div>
         <div class="chart-wrap"><canvas id="chKiDailyCost"></canvas></div>
         <div id="kiDailyTable" style="margin-top:12px"></div>
+      </section>
+      <section class="card">
+        <h2>KI-Volumen (14 Tage)</h2>
+        <p class="hint" style="margin-top:-4px">Goldene Linie: alle KI-Anfragen pro Tag. Rote Linie: fehlgeschlagene Anfragen.</p>
+        <div id="overviewErr" class="panel-err"></div>
+        <div class="chart-wrap"><canvas id="chLineAi"></canvas></div>
+        <div id="overviewEndpoints"></div>
+        <div id="overviewErrorCodes"></div>
       </section>
       <section class="card">
         <h2>KI-Einzelereignisse</h2>
@@ -681,35 +803,7 @@
       </section>
     </div>
 
-    <div id="panel-users" class="panel">
-      <div class="users-tab-wrap">
-        <section class="card">
-          <h2>Nutzer</h2>
-          <p class="hint">Alle Geräte — Suche nach Name oder Geräte-ID.</p>
-          <div class="row">
-            <input id="userQ" type="text" placeholder="Name oder Geräte-ID …" style="flex:1;min-width:200px;margin:0" autocomplete="off" />
-          </div>
-          <div id="userSearchErr" class="panel-err"></div>
-          <div class="row table-toolbar">
-            <label for="usersPageSize">Anzeigen:</label>
-            <select id="usersPageSize">
-              <option value="10" selected>10</option>
-              <option value="25">25</option>
-              <option value="100">100</option>
-              <option value="500">500</option>
-              <option value="1000">1000</option>
-            </select>
-          </div>
-          <div id="userResults"></div>
-          <div id="userPagination"></div>
-        </section>
-        <div id="userModal" class="user-modal" aria-hidden="true">
-          <div class="user-modal-backdrop" id="userModalBackdrop"></div>
-          <div id="userDetail" class="user-modal-panel" role="dialog" aria-modal="true" aria-labelledby="userModalTitle"></div>
-        </div>
-      </div>
-    </div>
-
+    <!-- ================= FEEDBACK ================= -->
     <div id="panel-feedback" class="panel">
       <section class="card">
         <div class="row">
@@ -724,6 +818,15 @@
               <option value="settings">Einstellungen</option>
               <option value="ai_verse_explanation">KI-Erklärung</option>
               <option value="_untagged">Weitere</option>
+            </select>
+          </div>
+          <div style="min-width:160px;flex:1">
+            <label for="fbRatingFilter">Bewertung</label>
+            <select id="fbRatingFilter">
+              <option value="">Alle</option>
+              <option value="1">👍 Positiv</option>
+              <option value="-1">👎 Negativ</option>
+              <option value="none">Ohne Bewertung</option>
             </select>
           </div>
         </div>
@@ -758,18 +861,25 @@
       let authenticated = false;
       let chLineAi = null;
       let chKiDailyCost = null;
+      let chGrowth = null;
+      let chBehavior = null;
       const kiUserMeta = {};
       let feedbackItems = [];
       let fbSortAsc = false;
       let fbPage = 1;
+      let fbRatingValue = "";
       let selectedInstallId = "";
       let usersPage = 1;
       let userSearchTimer = null;
+      let usersAll = [];
+      let usersProFilter = "all";
+      let usersSortKey = "lastSeenAt";
+      let usersSortAsc = false;
       let kiItemsAll = [];
       let kiTruncated = false;
       let kiPage = 1;
-      let returningTopUsersCache = [];
-      let returningTopExpanded = false;
+      let growthDays = 30;
+      let behaviorDays = 30;
 
       function apiBase() {
         const stored = localStorage.getItem(LS_API);
@@ -860,6 +970,8 @@
         sessionKey = "";
         destroyChart();
         destroyKiDailyChart();
+        destroyGrowthChart();
+        destroyBehaviorChart();
         $("loginScreen").style.display = "flex";
         $("dashboard").classList.remove("visible");
         $("loginKey").value = localStorage.getItem(LS_KEY) || "";
@@ -919,7 +1031,8 @@
       const METRIC_HINTS = {
         usersTotal: "Geräte, die mindestens einmal einen API-Request an den Ihdina-Server gesendet haben.",
         usersProShare: "Anteil Pro-Nutzer an allen Geräten mit Server-Kontakt.",
-        usersActive7d: "Geräte, die in den letzten 7 Tagen mindestens einen API-Call gemacht haben.",
+        usersActive7d: "Geräte, die in den letzten 7 Tagen mindestens einen API-Call gemacht haben. Basiert aktuell auf lastSeenAt, nicht auf echten App-Öffnungen — Umstellung geplant sobald App-Opened-Tracking genug Daten hat.",
+        usersProCount: "Aktuelle Anzahl Geräte mit aktivem Pro-Status.",
         aiRequests24h: "Gezählte Anfragen an OpenAI — jeder Tap auf „Mehr verstehen“, Folgefrage, Kernbotschaft oder Reflection zählt einmal.",
         aiRequests7d: "Alle KI-Anfragen der letzten 7 Tage (gleiche Zählweise wie 24h).",
         aiErrorRate7d: "Anteil der KI-Anfragen mit Status „error“ in den letzten 7 Tagen.",
@@ -951,6 +1064,9 @@
         returningDaily: "Nutzer die an 5 oder mehr der letzten 7 Tage die KI genutzt haben.",
         returningRegular: "Nutzer die an 3–4 der letzten 7 Tage aktiv waren.",
         returningCasual: "Nutzer die in der letzten Woche 1–2 Mal aktiv waren.",
+        growthTotal: "Summe aller neuen Geräte im gewählten Zeitraum, gezählt über User.createdAt.",
+        behaviorDistinct: "Anzahl unterschiedlicher Geräte mit mindestens einer Feature-Nutzung im gewählten Zeitraum, über alle Features zusammen.",
+        trendUnknown: "Für diese Kennzahl gibt es aktuell keinen historischen Vergleichswert, nur die aktuelle Momentaufnahme.",
       };
 
       function hintAttr(key) {
@@ -961,7 +1077,7 @@
       function kpiCard(valHtml, label, hintKey, subHtml, valClass) {
         return (
           "<div class='kpi'" + hintAttr(hintKey) + ">" +
-          "<div class='val" + (valClass ? " " + valClass : "") + "'>" + valHtml + "</div>" +
+          "<div class='val-row'><div class='val" + (valClass ? " " + valClass : "") + "'>" + valHtml + "</div></div>" +
           "<div class='lbl'>" + escapeHtml(label) + "</div>" +
           (subHtml ? "<div class='sub'>" + subHtml + "</div>" : "") +
           "</div>"
@@ -1001,10 +1117,40 @@
         try { chLineAi && chLineAi.destroy(); } catch (_) {}
         chLineAi = null;
       }
-
       function destroyKiDailyChart() {
         try { chKiDailyCost && chKiDailyCost.destroy(); } catch (_) {}
         chKiDailyCost = null;
+      }
+      function destroyGrowthChart() {
+        try { chGrowth && chGrowth.destroy(); } catch (_) {}
+        chGrowth = null;
+      }
+      function destroyBehaviorChart() {
+        try { chBehavior && chBehavior.destroy(); } catch (_) {}
+        chBehavior = null;
+      }
+
+      // ---------- Trend badge helper ----------
+      // direction: "up-good" (Anstieg ist positiv), "up-bad" (Anstieg ist negativ, z.B. Fehlerquote)
+      function trendBadge(current, previous, mode) {
+        if (previous == null || Number.isNaN(previous)) {
+          return "<span class='trend unknown'" + hintAttr("trendUnknown") + ">kein Vergleich</span>";
+        }
+        if (previous === 0 && current === 0) {
+          return "<span class='trend flat'>→ 0</span>";
+        }
+        const diff = current - previous;
+        const diffPct = previous !== 0 ? (diff / previous) * 100 : (current > 0 ? 100 : 0);
+        const arrow = diff > 0 ? "↑" : diff < 0 ? "↓" : "→";
+        let cls = "flat";
+        if (diff !== 0) {
+          const goodDirectionIsUp = mode !== "invert";
+          const isIncrease = diff > 0;
+          const isGood = goodDirectionIsUp ? isIncrease : !isIncrease;
+          cls = isGood ? (isIncrease ? "up-good" : "down-good") : (isIncrease ? "up-bad" : "down-bad");
+        }
+        const pctText = Math.abs(diffPct).toFixed(0) + " %";
+        return "<span class='trend " + cls + "'>" + arrow + " " + pctText + " ggü. Vorwoche</span>";
       }
 
       function formatLatencyMs(ms) {
@@ -1078,10 +1224,7 @@
             scales: {
               x: { ticks: { color: tick, maxRotation: 45 }, grid: { color: grid } },
               y: {
-                ticks: {
-                  color: tick,
-                  callback: (v) => "$" + Number(v).toFixed(4),
-                },
+                ticks: { color: tick, callback: (v) => "$" + Number(v).toFixed(4) },
                 grid: { color: grid },
                 beginAtZero: true,
               },
@@ -1272,13 +1415,9 @@
         for (const r of list) {
           const code = String(r.errorCode || "").trim() || "—";
           let explanation;
-          if (ERROR_CODE_LABELS[code]) {
-            explanation = ERROR_CODE_LABELS[code];
-          } else if (code === "(kein Code)") {
-            explanation = "Kein Fehlercode protokolliert";
-          } else {
-            explanation = code;
-          }
+          if (ERROR_CODE_LABELS[code]) explanation = ERROR_CODE_LABELS[code];
+          else if (code === "(kein Code)") explanation = "Kein Fehlercode protokolliert";
+          else explanation = code;
           html +=
             "<tr><td class='mono'>" + escapeHtml(code) + "</td>" +
             "<td>" + escapeHtml(explanation) + "</td>" +
@@ -1302,12 +1441,7 @@
         if (posPct != null) {
           lines.push({
             cls: "info",
-            text:
-              "Positives Feedback (7 Tage): " +
-              posPct.toFixed(0).replace(".", ",") +
-              " % positiv · " +
-              fmt(o.feedback.withRatingLast7d) +
-              " Daumen-Bewertungen",
+            text: "Positives Feedback (7 Tage): " + posPct.toFixed(0).replace(".", ",") + " % positiv · " + fmt(o.feedback.withRatingLast7d) + " Daumen-Bewertungen",
           });
         } else {
           lines.push({ cls: "info", text: "Kein Feedback mit Daumen-Bewertung in den letzten 7 Tagen." });
@@ -1315,29 +1449,96 @@
         $("statusLines").innerHTML = lines.map((l) => "<li class='" + l.cls + "'>" + escapeHtml(l.text) + "</li>").join("");
       }
 
-      function renderKpis(o) {
+      // Fehlerquote-Trend: 14-Tage-Fenster aus overview.ai.byDay in zwei 7er-Hälften teilen
+      function computeErrorRateTrendFromByDay(byDay) {
+        const rows = (byDay || []).slice().sort((a, b) => a.day.localeCompare(b.day));
+        if (rows.length < 14) return { current: null, previous: null };
+        const recent = rows.slice(-7);
+        const prior = rows.slice(-14, -7);
+        const rate = (arr) => {
+          const total = arr.reduce((s, d) => s + (Number(d.total) || 0), 0);
+          const errors = arr.reduce((s, d) => s + (Number(d.errors) || 0), 0);
+          return total > 0 ? errors / total : 0;
+        };
+        return { current: rate(recent), previous: rate(prior) };
+      }
+
+      async function computeNewDevicesTrend() {
+        try {
+          const data = await fetchJson("/api/v1/admin/metrics/growth?days=14");
+          const rows = (data.growth?.byDay || []).slice().sort((a, b) => a.day.localeCompare(b.day));
+          if (rows.length < 14) return { current: null, previous: null };
+          const sum = (arr) => arr.reduce((s, d) => s + (Number(d.newUsers) || 0), 0);
+          return { current: sum(rows.slice(-7)), previous: sum(rows.slice(-14, -7)) };
+        } catch (_) {
+          return { current: null, previous: null };
+        }
+      }
+
+      function renderKpis(o, trends) {
         const errCls = errorBadgeClass(o.ai.errorRateLast7d);
         const errPct = pct(o.ai.errorRateLast7d);
         const posFb = formatPositiveKpi(o.feedback);
         const errBadge = (errCls === "ok" ? "OK" : errCls === "warn" ? "Achtung" : "Kritisch");
+
+        const errTrendHtml = trends.errorRate.previous != null
+          ? trendBadge(o.ai.errorRateLast7d, trends.errorRate.previous, "invert")
+          : "<span class='trend unknown'" + hintAttr("trendUnknown") + ">kein Vergleich</span>";
+        const newDevTrendHtml = trends.newDevices.previous != null
+          ? trendBadge(o.users.newLast7d, trends.newDevices.previous, "normal")
+          : "<span class='trend unknown'" + hintAttr("trendUnknown") + ">kein Vergleich</span>";
+
         $("kpiGrid").innerHTML =
-          kpiCard(fmt(o.users.total), "Geräte mit Server-Kontakt", "usersTotal",
-            "<span" + hintAttr("usersProShare") + ">" + fmt(o.users.pro) + " Pro · " + pct(o.users.proShare) + "</span>") +
-          kpiCard(fmt(o.users.activeLast7d), "Aktive Geräte (7 Tage)", "usersActive7d", "Mindestens ein API-Call") +
-          kpiCard(fmt(o.ai.requestsLast24h), "KI-Anfragen (24h)", "aiRequests24h",
-            "<span" + hintAttr("aiRequests7d") + ">7 Tage: " + fmt(o.ai.requestsLast7d) + "</span>", "gold") +
-          kpiCard(errPct + "<span class='badge " + errCls + "'>" + errBadge + "</span>", "KI-Fehlerquote (7T)", "aiErrorRate7d",
-            "<span" + hintAttr("aiErrors7d") + ">" + fmt(o.ai.errorsLast7d) + " Fehler</span> / <span" + hintAttr("aiOk7d") + ">" + fmt(o.ai.okLast7d) + " ok</span>") +
-          kpiCard(escapeHtml(posFb.val), "Positives Feedback", "feedbackPositive",
-            "<span" + hintAttr("feedbackWithRating7d") + ">" + escapeHtml(posFb.sub) + "</span>");
+          kpiCard(
+            fmt(o.users.total),
+            "Geräte mit Server-Kontakt",
+            "usersTotal",
+            "<span" + hintAttr("usersProShare") + ">" + fmt(o.users.pro) + " Pro · " + pct(o.users.proShare) + "</span>"
+          ) +
+          kpiCard(
+            fmt(o.users.newLast7d),
+            "Neue Geräte (7 Tage)",
+            null,
+            newDevTrendHtml
+          ) +
+          kpiCard(
+            fmt(o.users.activeLast7d),
+            "Aktive Geräte (7 Tage)",
+            "usersActive7d",
+            "<span class='trend unknown'" + hintAttr("trendUnknown") + ">kein Vergleich</span>"
+          ) +
+          kpiCard(
+            fmt(o.users.pro),
+            "Pro-Anzahl",
+            "usersProCount",
+            "<span class='trend unknown'" + hintAttr("trendUnknown") + ">kein Vergleich</span>"
+          ) +
+          kpiCard(
+            errPct + "<span class='badge " + errCls + "'>" + errBadge + "</span>",
+            "KI-Fehlerquote (7T)",
+            "aiErrorRate7d",
+            errTrendHtml,
+            errCls === "err" ? null : null
+          ) +
+          kpiCard(
+            fmt(o.ai.requestsLast24h),
+            "KI-Anfragen (24h)",
+            "aiRequests24h",
+            "<span" + hintAttr("aiRequests7d") + ">7 Tage: " + fmt(o.ai.requestsLast7d) + "</span>",
+            "gold"
+          ) +
+          kpiCard(
+            escapeHtml(posFb.val),
+            "Positives Feedback",
+            "feedbackPositive",
+            "<span" + hintAttr("feedbackWithRating7d") + ">" + escapeHtml(posFb.sub) + "</span>"
+          );
       }
 
       function activeDaysBarHtml(activeDays) {
         const n = Math.min(7, Math.max(0, Number(activeDays) || 0));
         let html = "<span class='active-days-bar' aria-label='" + n + " von 7 Tagen aktiv'>";
-        for (let i = 0; i < 7; i++) {
-          html += "<span class='" + (i < n ? "on" : "off") + "'>" + (i < n ? "●" : "○") + "</span>";
-        }
+        for (let i = 0; i < 7; i++) html += "<span class='" + (i < n ? "on" : "off") + "'>" + (i < n ? "●" : "○") + "</span>";
         return html + "</span>";
       }
 
@@ -1348,72 +1549,25 @@
         return escapeHtml(iid.length <= 8 ? iid || "—" : iid.slice(0, 8) + "…");
       }
 
-      function returningEligibleUsers(topUsers) {
-        return (topUsers || []).filter((u) => (Number(u.activeDays) || 0) >= 2);
-      }
-
-      function returningTopListsDiffer(topUsers) {
-        const collapsed = (topUsers || []).slice(0, 5);
-        const expanded = returningEligibleUsers(topUsers);
-        if (expanded.length > 5) return true;
-        if (!expanded.length) return false;
-        const cIds = collapsed.map((u) => u.installId).join("\0");
-        const eIds = expanded.map((u) => u.installId).join("\0");
-        return cIds !== eIds;
-      }
-
-      function renderReturningTopUsersTable() {
-        const top = returningTopUsersCache;
-        const el = $("returningTopUsers");
-        if (!top.length) {
-          el.innerHTML = "<p class='hint'>Keine KI-Aktivität in den letzten 7 Tagen.</p>";
-          return;
-        }
-        const eligible = returningEligibleUsers(top);
-        const visible = returningTopExpanded ? eligible : top.slice(0, 5);
-        let html = "<div class='table-wrap'><table><thead><tr><th>Name</th><th>Aktive Tage</th></tr></thead><tbody>";
-        if (!visible.length) {
-          html += "<tr><td colspan='2' class='hint'>Keine Nutzer mit 2+ aktiven Tagen.</td></tr>";
-        } else {
-          for (const u of visible) {
-            const days = Number(u.activeDays) || 0;
-            html +=
-              "<tr><td>" + returningUserLabel(u) + "</td><td>" +
-              activeDaysBarHtml(days) +
-              " <span class='hint'>(" + fmt(days) + "/7)</span></td></tr>";
-          }
-        }
-        html += "</tbody></table></div>";
-        const showToggle = returningTopExpanded || returningTopListsDiffer(top);
-        if (showToggle && eligible.length > 0) {
-          const label = returningTopExpanded
-            ? "Weniger anzeigen"
-            : "Alle anzeigen (" + fmt(eligible.length) + " Nutzer)";
-          html +=
-            "<div class='returning-top-toggle'>" +
-            "<button type='button' class='btn btn-ghost' id='btnReturningTopToggle' style='width:auto'>" +
-            escapeHtml(label) +
-            "</button></div>";
-        }
-        el.innerHTML = html;
-        const btn = $("btnReturningTopToggle");
-        if (btn) {
-          btn.onclick = () => {
-            returningTopExpanded = !returningTopExpanded;
-            renderReturningTopUsersTable();
-          };
-        }
-      }
-
       function renderReturningSection(returning) {
         const r = returning || {};
         $("returningKpiGrid").innerHTML =
           kpiCard(fmt(r.dailyUsers || 0), "Täglich (5–7 Tage)", "returningDaily", "5+ aktive Tage") +
           kpiCard(fmt(r.regularUsers || 0), "Regelmäßig (3–4 Tage)", "returningRegular", "3–4 aktive Tage") +
           kpiCard(fmt(r.casualUsers || 0), "Gelegentlich (1–2 Tage)", "returningCasual", "1–2 aktive Tage");
-        returningTopUsersCache = r.topUsers || [];
-        returningTopExpanded = false;
-        renderReturningTopUsersTable();
+        const top = r.topUsers || [];
+        const el = $("returningTopUsers");
+        if (!top.length) {
+          el.innerHTML = "<p class='hint'>Keine KI-Aktivität in den letzten 7 Tagen.</p>";
+          return;
+        }
+        let html = "<div class='table-wrap'><table><thead><tr><th>Name</th><th>Aktive Tage</th></tr></thead><tbody>";
+        for (const u of top) {
+          const days = Number(u.activeDays) || 0;
+          html += "<tr><td>" + returningUserLabel(u) + "</td><td>" + activeDaysBarHtml(days) + " <span class='hint'>(" + fmt(days) + "/7)</span></td></tr>";
+        }
+        html += "</tbody></table></div>";
+        el.innerHTML = html;
       }
 
       function renderLineChart(byDay) {
@@ -1452,18 +1606,18 @@
         if (!authenticated) return;
         showPanelErr("overviewErr", "");
         showPanelErr("returningErr", "");
-        const btn = $("btnOverview");
-        btn.disabled = true;
         $("returningKpiGrid").innerHTML = "<p class='hint'>Lade Nutzungsfrequenz …</p>";
         $("returningTopUsers").innerHTML = "<p class='hint'>—</p>";
         try {
-          const [pack, returningPack] = await Promise.all([
+          const [pack, returningPack, newDevicesTrend] = await Promise.all([
             fetchJson("/api/v1/admin/metrics/overview"),
             fetchJson("/api/v1/admin/metrics/returning"),
+            computeNewDevicesTrend(),
           ]);
           const o = pack.overview;
+          const errorRateTrend = computeErrorRateTrendFromByDay(o.ai.byDay);
           buildStatusLines(o);
-          renderKpis(o);
+          renderKpis(o, { errorRate: errorRateTrend, newDevices: newDevicesTrend });
           renderReturningSection(returningPack.returning);
           renderOverviewInsights(o);
           renderLineChart(o.ai.byDay || []);
@@ -1476,11 +1630,150 @@
             $("returningKpiGrid").innerHTML = "";
             $("returningTopUsers").innerHTML = "";
           }
-        } finally {
-          btn.disabled = false;
         }
       }
 
+      // ---------- Wachstum ----------
+      function renderGrowthChart(byDay) {
+        if (typeof Chart === "undefined") {
+          showPanelErr("growthErr", "Diagramm konnte nicht geladen werden.");
+          return;
+        }
+        destroyGrowthChart();
+        const labels = byDay.length ? byDay.map((d) => d.day) : ["(keine Daten)"];
+        const values = byDay.length ? byDay.map((d) => d.newUsers) : [0];
+        const tick = "rgba(255,255,255,0.45)";
+        const grid = "rgba(255,255,255,0.08)";
+        chGrowth = new Chart($("chGrowth").getContext("2d"), {
+          type: "bar",
+          data: {
+            labels,
+            datasets: [{ label: "Neue Geräte", data: values, backgroundColor: "rgba(200,169,110,0.65)", borderRadius: 3, maxBarThickness: 22 }],
+          },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { display: false } },
+            scales: {
+              x: { ticks: { color: tick, maxRotation: 45 }, grid: { display: false } },
+              y: { ticks: { color: tick, precision: 0 }, grid: { color: grid }, beginAtZero: true },
+            },
+          },
+        });
+      }
+
+      async function loadGrowth(days) {
+        if (!authenticated) return;
+        growthDays = days || growthDays;
+        document.querySelectorAll("#growthRange button").forEach((b) => b.classList.toggle("active", Number(b.getAttribute("data-days")) === growthDays));
+        showPanelErr("growthErr", "");
+        $("growthKpiGrid").innerHTML = "<p class='hint'>Lade Wachstumsdaten …</p>";
+        try {
+          const data = await fetchJson("/api/v1/admin/metrics/growth?days=" + growthDays);
+          const g = data.growth;
+          const avgPerDay = g.days > 0 ? g.totalNewUsers / g.days : 0;
+          $("growthKpiGrid").innerHTML =
+            kpiCard(fmt(g.totalNewUsers), "Neue Geräte im Zeitraum", "growthTotal", g.fromDate + " – " + g.toDate, "gold") +
+            kpiCard(avgPerDay.toFixed(1).replace(".", ","), "Ø pro Tag", null, growthDays + " Tage Zeitraum");
+          renderGrowthChart(g.byDay || []);
+        } catch (e) {
+          if (authenticated) {
+            showPanelErr("growthErr", String(e.message || e));
+            $("growthKpiGrid").innerHTML = "";
+            destroyGrowthChart();
+          }
+        }
+      }
+
+      // ---------- Nutzerverhalten ----------
+      const BEHAVIOR_FEATURES = [
+        { key: "extraCount", label: "Extra-Erklärung", group: "active", color: "#c8a96e" },
+        { key: "dailyVerseCount", label: "Tagesvers-Erklärung", group: "active", color: "#8fb9d4" },
+        { key: "followUpCount", label: "Folgefrage", group: "active", color: "#a993d1" },
+        { key: "takeawayCount", label: "Kernbotschaft", group: "auto", color: "#d4a84b" },
+        { key: "reflectionCount", label: "Moment zum Nachdenken", group: "auto", color: "#e07a6a" },
+      ];
+
+      function renderBehaviorChart(byDay) {
+        if (typeof Chart === "undefined") {
+          showPanelErr("behaviorErr", "Diagramm konnte nicht geladen werden.");
+          return;
+        }
+        destroyBehaviorChart();
+        const labels = byDay.length ? byDay.map((d) => d.day) : ["(keine Daten)"];
+        const tick = "rgba(255,255,255,0.45)";
+        const grid = "rgba(255,255,255,0.08)";
+        const datasets = BEHAVIOR_FEATURES.map((f) => ({
+          label: f.label,
+          data: byDay.length ? byDay.map((d) => d[f.key] || 0) : [0],
+          borderColor: f.color,
+          backgroundColor: f.color + "22",
+          borderDash: f.group === "auto" ? [5, 3] : [],
+          tension: 0.25,
+          pointRadius: 1.5,
+          fill: false,
+        }));
+        chBehavior = new Chart($("chBehavior").getContext("2d"), {
+          type: "line",
+          data: { labels, datasets },
+          options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: { legend: { labels: { color: tick, font: { size: 10 } } } },
+            scales: {
+              x: { ticks: { color: tick, maxRotation: 45 }, grid: { color: grid } },
+              y: { ticks: { color: tick, precision: 0 }, grid: { color: grid }, beginAtZero: true },
+            },
+          },
+        });
+      }
+
+      function renderBehaviorGroupTable(containerId, group, totals) {
+        const rows = BEHAVIOR_FEATURES.filter((f) => f.group === group);
+        const total = rows.reduce((s, f) => s + (Number(totals[f.key]) || 0), 0);
+        let html = "<div class='table-wrap'><table><thead><tr><th>Feature</th><th>Summe</th><th>Anteil in Gruppe</th></tr></thead><tbody>";
+        const sorted = [...rows].sort((a, b) => (Number(totals[b.key]) || 0) - (Number(totals[a.key]) || 0));
+        for (const f of sorted) {
+          const count = Number(totals[f.key]) || 0;
+          const share = total > 0 ? (count / total) * 100 : 0;
+          html +=
+            "<tr><td>" + escapeHtml(f.label) + "</td><td>" + fmt(count) + "</td>" +
+            "<td><div class='ep-bar-track' style='width:120px;display:inline-block;vertical-align:middle;margin-right:8px'>" +
+            "<div class='ep-bar-fill" + (group === "auto" ? " muted" : "") + "' style='width:" + Math.max(share, count > 0 ? 2 : 0).toFixed(1) + "%'></div></div>" +
+            share.toFixed(0) + " %</td></tr>";
+        }
+        html += "</tbody></table></div>";
+        $(containerId).innerHTML = html;
+      }
+
+      async function loadBehavior(days) {
+        if (!authenticated) return;
+        behaviorDays = days || behaviorDays;
+        document.querySelectorAll("#behaviorRange button").forEach((b) => b.classList.toggle("active", Number(b.getAttribute("data-days")) === behaviorDays));
+        showPanelErr("behaviorErr", "");
+        $("behaviorKpiGrid").innerHTML = "<p class='hint'>Lade Feature-Nutzung …</p>";
+        try {
+          const data = await fetchJson("/api/v1/admin/metrics/feature-usage?days=" + behaviorDays);
+          const f = data.featureUsage;
+          const totalAll = Object.values(f.totals || {}).reduce((s, v) => s + (Number(v) || 0), 0);
+          $("behaviorKpiGrid").innerHTML =
+            kpiCard(fmt(totalAll), "Feature-Aufrufe gesamt", null, f.fromDate + " – " + f.toDate, "gold") +
+            kpiCard(fmt(f.distinctUsers), "Unterschiedliche Geräte", "behaviorDistinct", "Mindestens eine Feature-Nutzung im Zeitraum");
+          renderBehaviorChart(f.byDay || []);
+          renderBehaviorGroupTable("behaviorTableActive", "active", f.totals || {});
+          renderBehaviorGroupTable("behaviorTableAuto", "auto", f.totals || {});
+        } catch (e) {
+          if (authenticated) {
+            showPanelErr("behaviorErr", String(e.message || e));
+            $("behaviorKpiGrid").innerHTML = "";
+            destroyBehaviorChart();
+            $("behaviorTableActive").innerHTML = "";
+            $("behaviorTableAuto").innerHTML = "";
+          }
+        }
+      }
+
+      // ---------- KI & Kosten ----------
       const KI_COST_RATES = {
         "gpt-4o-mini": { input: 0.15, output: 0.6 },
         "gpt-4o": { input: 2.5, output: 10 },
@@ -1498,9 +1791,7 @@
         const t = String(model || "").trim().toLowerCase();
         if (!t) return KI_COST_FALLBACK;
         const keys = Object.keys(KI_COST_RATES).sort((a, b) => b.length - a.length);
-        for (const k of keys) {
-          if (t === k || t.startsWith(k + "-") || t.startsWith(k + "_")) return k;
-        }
+        for (const k of keys) if (t === k || t.startsWith(k + "-") || t.startsWith(k + "_")) return k;
         return KI_COST_FALLBACK;
       }
 
@@ -1528,9 +1819,7 @@
             try {
               const data = await fetchJson("/api/v1/admin/users/" + encodeURIComponent(id));
               kiUserMeta[id] = data.user?.displayName || "";
-            } catch (_) {
-              kiUserMeta[id] = "";
-            }
+            } catch (_) { kiUserMeta[id] = ""; }
           })
         );
       }
@@ -1541,11 +1830,7 @@
         let all = [];
         let truncated = false;
         while (page < KI_EVENTS_MAX_PAGES) {
-          const qs = new URLSearchParams({
-            page: String(page),
-            pageSize: String(pageSize),
-            hours: String(params.hours),
-          });
+          const qs = new URLSearchParams({ page: String(page), pageSize: String(pageSize), hours: String(params.hours) });
           if (params.endpoint) qs.set("endpoint", params.endpoint);
           if (params.status) qs.set("status", params.status);
           if (params.installId) qs.set("installId", params.installId);
@@ -1594,13 +1879,9 @@
           return;
         }
         let html = "";
-        if (kiTruncated) {
-          html += "<p class='hint'>Daten begrenzt auf " + fmt(KI_EVENTS_MAX_PAGES * 100) + " Ereignisse — Filter enger setzen für vollständige Auswertung.</p>";
-        }
+        if (kiTruncated) html += "<p class='hint'>Daten begrenzt auf " + fmt(KI_EVENTS_MAX_PAGES * 100) + " Ereignisse — Filter enger setzen für vollständige Auswertung.</p>";
         html += "<div class='table-wrap'><table><thead><tr><th>Datum</th><th>User</th><th>Endpoint</th><th>Status</th>" +
-          thHint("Tokens", "kiColTokens") +
-          thHint("Kosten USD", "kiColCost") +
-          thHint("Latenz", "kiColLatency") +
+          thHint("Tokens", "kiColTokens") + thHint("Kosten USD", "kiColCost") + thHint("Latenz", "kiColLatency") +
           "<th>Fehlercode</th></tr></thead><tbody>";
         for (const item of items) {
           const tokens = item.totalTokens ?? ((Number(item.promptTokens) || 0) + (Number(item.completionTokens) || 0));
@@ -1612,10 +1893,8 @@
             "<td title='" + escapeHtml(item.installId || "") + "'>" + kiEventUserLabel(item) + "</td>" +
             "<td class='mono'>" + escapeHtml(item.endpoint) + "</td>" +
             "<td" + statusCls + ">" + escapeHtml(item.status || "—") + "</td>" +
-            "<td>" + fmt(tokens) + "</td>" +
-            "<td>" + cost.toFixed(6) + "</td>" +
-            "<td>" + formatLatencyMs(item.latencyMs) + "</td>" +
-            "<td class='mono'>" + errCode + "</td></tr>";
+            "<td>" + fmt(tokens) + "</td>" + "<td>" + cost.toFixed(6) + "</td>" +
+            "<td>" + formatLatencyMs(item.latencyMs) + "</td>" + "<td class='mono'>" + errCode + "</td></tr>";
         }
         html += "</tbody></table></div>";
         $("kiTable").innerHTML = html;
@@ -1626,10 +1905,7 @@
         const { slice, page, pages } = paginateSlice(kiItemsAll, kiPage, pageSize);
         kiPage = page;
         renderKiEventsTable(slice);
-        renderPagination("kiPagination", kiPage, pages, (p) => {
-          kiPage = p;
-          renderKiPage();
-        });
+        renderPagination("kiPagination", kiPage, pages, (p) => { kiPage = p; renderKiPage(); });
       }
 
       async function loadKi() {
@@ -1650,25 +1926,16 @@
           let matchedUsers = [];
           if (userQ) {
             try {
-              const userData = await fetchJson(
-                "/api/v1/admin/users?q=" + encodeURIComponent(userQ) + "&pageSize=100"
-              );
+              const userData = await fetchJson("/api/v1/admin/users?q=" + encodeURIComponent(userQ) + "&pageSize=100");
               matchedUsers = userData.users || [];
-              for (const u of matchedUsers) {
-                kiUserMeta[u.installId] = u.displayName || "";
-              }
-            } catch (_) {
-              matchedUsers = [];
-            }
+              for (const u of matchedUsers) kiUserMeta[u.installId] = u.displayName || "";
+            } catch (_) { matchedUsers = []; }
           }
 
           const fetchParams = { hours, endpoint, status };
-          if (matchedUsers.length === 1) {
-            fetchParams.installId = matchedUsers[0].installId;
-          }
+          if (matchedUsers.length === 1) fetchParams.installId = matchedUsers[0].installId;
 
           const { items: rawItems, truncated } = await fetchKiEventsPages(fetchParams);
-
           const uniqueIds = [...new Set(rawItems.map((i) => i.installId).filter(Boolean))];
           await enrichKiUserMeta(uniqueIds);
 
@@ -1692,9 +1959,35 @@
         }
       }
 
+      // ---------- Nutzer ----------
       function displayNameLabel(name) {
         const t = (name || "").trim();
         return t ? escapeHtml(t) : "—";
+      }
+
+      const USER_SORT_COLUMNS = {
+        lastSeenAt: (u) => (u.lastSeenAt ? new Date(u.lastSeenAt).getTime() : -Infinity),
+        aiCalls: (u) => u._count?.aiRequestLogs ?? 0,
+        proExpiresAt: (u) => (u.proExpiresAt ? new Date(u.proExpiresAt).getTime() : -Infinity),
+        createdAt: (u) => (u.createdAt ? new Date(u.createdAt).getTime() : -Infinity),
+      };
+
+      function applyUsersFilterSort() {
+        let list = usersAll.slice();
+        if (usersProFilter === "pro") list = list.filter((u) => u.isPro);
+        else if (usersProFilter === "free") list = list.filter((u) => !u.isPro);
+        const keyFn = USER_SORT_COLUMNS[usersSortKey] || USER_SORT_COLUMNS.lastSeenAt;
+        list.sort((a, b) => {
+          const va = keyFn(a);
+          const vb = keyFn(b);
+          return usersSortAsc ? va - vb : vb - va;
+        });
+        return list;
+      }
+
+      function sortArrowFor(key) {
+        if (key !== usersSortKey) return "";
+        return "<span class='sort-arrow'>" + (usersSortAsc ? "↑" : "↓") + "</span>";
       }
 
       function renderUserTable(users) {
@@ -1703,39 +1996,60 @@
           return;
         }
         let html = "<div class='table-wrap'><table><thead><tr><th>Name</th><th>Geräte-ID</th><th>Pro</th>" +
-          thHint("KI-Calls", "userKiCalls") +
-          "<th>Zuletzt aktiv</th><th>Erstellt</th></tr></thead><tbody>";
+          "<th class='sortable' data-sort='aiCalls'" + hintAttr("userKiCalls") + ">KI-Calls" + sortArrowFor("aiCalls") + "</th>" +
+          "<th class='sortable' data-sort='lastSeenAt'>Zuletzt aktiv" + sortArrowFor("lastSeenAt") + "</th>" +
+          "<th class='sortable' data-sort='proExpiresAt'>Pro bis" + sortArrowFor("proExpiresAt") + "</th>" +
+          "<th class='sortable' data-sort='createdAt'>Erstellt" + sortArrowFor("createdAt") + "</th>" +
+          "</tr></thead><tbody>";
         for (const u of users) {
           const kiCalls = u._count?.aiRequestLogs ?? 0;
-          html += "<tr class='clickable' data-iid='" + encodeURIComponent(u.installId) + "'><td>" + displayNameLabel(u.displayName) + "</td><td class='mono' title='" + escapeHtml(u.installId) + "'>" + escapeHtml(shortInstallId8(u.installId)) + "</td><td>" + (u.isPro ? "Pro" : "Free") + "</td><td" + hintAttr("userKiCalls") + ">" + fmt(kiCalls) + "</td><td>" + escapeHtml(fmtDate(u.lastSeenAt)) + "</td><td>" + escapeHtml(fmtDate(u.createdAt)) + "</td></tr>";
+          html += "<tr class='clickable' data-iid='" + encodeURIComponent(u.installId) + "'>" +
+            "<td>" + displayNameLabel(u.displayName) + "</td>" +
+            "<td class='mono' title='" + escapeHtml(u.installId) + "'>" + escapeHtml(shortInstallId8(u.installId)) + "</td>" +
+            "<td>" + (u.isPro ? "Pro" : "Free") + "</td>" +
+            "<td" + hintAttr("userKiCalls") + ">" + fmt(kiCalls) + "</td>" +
+            "<td>" + escapeHtml(fmtDate(u.lastSeenAt)) + "</td>" +
+            "<td>" + (u.proExpiresAt ? escapeHtml(fmtDate(u.proExpiresAt)) : "<span class='hint'>—</span>") + "</td>" +
+            "<td>" + escapeHtml(fmtDate(u.createdAt)) + "</td></tr>";
         }
         html += "</tbody></table></div>";
         $("userResults").innerHTML = html;
         document.querySelectorAll("#userResults tr.clickable").forEach((tr) => {
           tr.onclick = () => showUserDetail(decodeURIComponent(tr.getAttribute("data-iid") || ""));
         });
+        document.querySelectorAll("#userResults th.sortable").forEach((th) => {
+          th.onclick = () => {
+            const key = th.getAttribute("data-sort");
+            if (usersSortKey === key) usersSortAsc = !usersSortAsc;
+            else { usersSortKey = key; usersSortAsc = false; }
+            usersPage = 1;
+            renderUsersPage();
+          };
+        });
+      }
+
+      function renderUsersPage() {
+        const pageSize = readPageSize("usersPageSize");
+        const filtered = applyUsersFilterSort();
+        const { slice, page, pages } = paginateSlice(filtered, usersPage, pageSize);
+        usersPage = page;
+        renderUserTable(slice);
+        renderPagination("userPagination", usersPage, pages, (p) => { usersPage = p; renderUsersPage(); });
       }
 
       async function loadUsers(page) {
         if (!authenticated) return;
         usersPage = page || 1;
-        const pageSize = readPageSize("usersPageSize");
         showPanelErr("userSearchErr", "");
         $("userResults").innerHTML = "<p class='hint'>Lade Nutzer …</p>";
         $("userPagination").innerHTML = "";
         try {
-          const params = new URLSearchParams({
-            page: String(usersPage),
-            pageSize: String(pageSize),
-          });
           const q = $("userQ").value.trim();
+          const params = new URLSearchParams({ page: "1", pageSize: "500" });
           if (q) params.set("q", q);
           const data = await fetchJson("/api/v1/admin/users?" + params.toString());
-          const total = data.total || 0;
-          const pages = totalPagesFor(total, data.pageSize || pageSize);
-          usersPage = data.page || usersPage;
-          renderUserTable(data.users || []);
-          renderPagination("userPagination", usersPage, pages, (p) => loadUsers(p));
+          usersAll = data.users || [];
+          renderUsersPage();
         } catch (e) {
           if (authenticated) {
             showPanelErr("userSearchErr", String(e.message || e));
@@ -1752,10 +2066,7 @@
           hint.textContent = "Kopiert";
           hint.classList.add("show");
           window.clearTimeout(copyUserModalInstallId._t);
-          copyUserModalInstallId._t = window.setTimeout(() => {
-            hint.classList.remove("show");
-            hint.textContent = "";
-          }, 1800);
+          copyUserModalInstallId._t = window.setTimeout(() => { hint.classList.remove("show"); hint.textContent = ""; }, 1800);
         };
         if (navigator.clipboard && navigator.clipboard.writeText) {
           navigator.clipboard.writeText(installId).then(showOk).catch(() => {});
@@ -1767,22 +2078,15 @@
         ta.style.left = "-9999px";
         document.body.appendChild(ta);
         ta.select();
-        try {
-          if (document.execCommand("copy")) showOk();
-        } catch (_) {}
+        try { if (document.execCommand("copy")) showOk(); } catch (_) {}
         document.body.removeChild(ta);
       }
 
-      function utcTodayString() {
-        return new Date().toISOString().slice(0, 10);
-      }
+      function utcTodayString() { return new Date().toISOString().slice(0, 10); }
 
       function findTodayDailyUsage(dailyUsages) {
         const today = utcTodayString();
-        const row = (dailyUsages || []).find((d) => {
-          const day = (d.usageDate || "").slice(0, 10);
-          return day === today;
-        });
+        const row = (dailyUsages || []).find((d) => (d.usageDate || "").slice(0, 10) === today);
         return {
           dailyVerseCount: Number(row?.dailyVerseCount) || 0,
           extraCount: Number(row?.extraCount) || 0,
@@ -1793,8 +2097,7 @@
 
       function formatExtraUsageToday(extraCount, isPro) {
         const x = Number(extraCount) || 0;
-        if (isPro) return fmt(x);
-        return fmt(x) + " / 1";
+        return isPro ? fmt(x) : fmt(x) + " / 1";
       }
 
       function renderUserDailyUsageSection(user) {
@@ -1813,9 +2116,7 @@
       }
 
       function topFollowUpVerses(followUpUsages, limit) {
-        return [...(followUpUsages || [])]
-          .sort((a, b) => (Number(b.count) || 0) - (Number(a.count) || 0))
-          .slice(0, limit);
+        return [...(followUpUsages || [])].sort((a, b) => (Number(b.count) || 0) - (Number(a.count) || 0)).slice(0, limit);
       }
 
       function followUpQuestionLabel(count) {
@@ -1826,14 +2127,11 @@
       function renderUserFollowUpSection(followUpUsages) {
         const top = topFollowUpVerses(followUpUsages, 3);
         let body;
-        if (!top.length) {
-          body = "<p class='hint'>Noch keine Folgefragen.</p>";
-        } else {
+        if (!top.length) body = "<p class='hint'>Noch keine Folgefragen.</p>";
+        else {
           body = "<ul class='user-modal-list'>";
           for (const f of top) {
-            body +=
-              "<li" + hintAttr("userFollowUpCount") + ">" + escapeHtml(f.surahName || "—") + " Vers " + fmt(f.ayahNumber) + ": " +
-              escapeHtml(followUpQuestionLabel(f.count)) + "</li>";
+            body += "<li" + hintAttr("userFollowUpCount") + ">" + escapeHtml(f.surahName || "—") + " Vers " + fmt(f.ayahNumber) + ": " + escapeHtml(followUpQuestionLabel(f.count)) + "</li>";
           }
           body += "</ul>";
         }
@@ -1855,16 +2153,12 @@
           const logs = (u.aiRequestLogs || []).slice(0, 10);
           const kiCalls = (u.aiRequestLogs || []).length;
           const nameText = (u.displayName || "").trim() || "—";
-          const proBadge = u.isPro
-            ? "<span class='pro-badge on'>Pro</span>"
-            : "<span class='pro-badge off'>Free</span>";
+          const proBadge = u.isPro ? "<span class='pro-badge on'>Pro</span>" : "<span class='pro-badge off'>Free</span>";
+          const proUntil = u.isPro && u.proExpiresAt ? " <span class='hint'>bis " + escapeHtml(fmtDate(u.proExpiresAt)) + "</span>" : "";
           let logHtml = "";
           for (const L of logs) {
             const statusCls = L.status === "error" ? " style='color:var(--err)'" : L.status === "ok" ? " style='color:var(--ok)'" : "";
-            logHtml +=
-              "<tr><td class='mono'>" + escapeHtml(fmtDate(L.createdAt)) + "</td>" +
-              "<td class='mono'>" + escapeHtml(L.endpoint) + "</td>" +
-              "<td" + statusCls + ">" + escapeHtml(L.status || "—") + "</td></tr>";
+            logHtml += "<tr><td class='mono'>" + escapeHtml(fmtDate(L.createdAt)) + "</td><td class='mono'>" + escapeHtml(L.endpoint) + "</td><td" + statusCls + ">" + escapeHtml(L.status || "—") + "</td></tr>";
           }
           panel.innerHTML =
             "<div class='user-modal-header'>" +
@@ -1873,12 +2167,10 @@
             "<button type='button' class='user-modal-install-copy' id='userModalInstallCopy' title='Geräte-ID kopieren'>" +
             "<span class='mono user-modal-install-id'>" + escapeHtml(u.installId) + "</span>" +
             "<svg class='user-modal-copy-icon' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2' aria-hidden='true'>" +
-            "<rect x='9' y='9' width='13' height='13' rx='2'></rect>" +
-            "<path d='M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1'></path>" +
-            "</svg>" +
+            "<rect x='9' y='9' width='13' height='13' rx='2'></rect><path d='M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1'></path></svg>" +
             "</button>" +
             "<span class='user-modal-copy-ok' id='userModalCopyHint' aria-live='polite'></span>" +
-            "<div class='user-modal-meta'>" + proBadge + "</div>" +
+            "<div class='user-modal-meta'>" + proBadge + proUntil + "</div>" +
             "</div>" +
             "<button type='button' class='user-modal-close' id='userModalClose' aria-label='Schließen'>×</button>" +
             "</div>" +
@@ -1920,11 +2212,13 @@
         try {
           await fetchJson("/api/v1/admin/users/" + encodeURIComponent(selectedInstallId), { method: "PATCH", body: JSON.stringify({ isPro }) });
           showUserDetail(selectedInstallId);
+          loadUsers(usersPage);
         } catch (e) {
           if (authenticated) showPanelErr("userSearchErr", String(e.message || e));
         }
       }
 
+      // ---------- Feedback ----------
       function formatThumbRating(rating) {
         if (rating == null) return "—";
         if (rating === 1) return '<span class="thumb-rating up" title="Positiv">👍</span>';
@@ -1932,8 +2226,11 @@
         return escapeHtml(String(rating));
       }
 
-      function sortedFeedbackItems() {
-        const items = [...feedbackItems];
+      function sortedFilteredFeedbackItems() {
+        let items = feedbackItems.slice();
+        if (fbRatingValue === "1") items = items.filter((f) => f.rating === 1);
+        else if (fbRatingValue === "-1") items = items.filter((f) => f.rating === -1);
+        else if (fbRatingValue === "none") items = items.filter((f) => f.rating == null);
         items.sort((a, b) => {
           const da = new Date(a.createdAt).getTime();
           const db = new Date(b.createdAt).getTime();
@@ -1945,11 +2242,7 @@
       function feedbackDeviceCell(installId) {
         const iid = (installId || "").trim();
         if (!iid) return "<td>—</td>";
-        return (
-          "<td class='mono clickable fb-device' data-iid='" + encodeURIComponent(iid) + "' title='" + escapeHtml(iid) + "'>" +
-          escapeHtml(shortInstallId8(iid)) +
-          "</td>"
-        );
+        return "<td class='mono clickable fb-device' data-iid='" + encodeURIComponent(iid) + "' title='" + escapeHtml(iid) + "'>" + escapeHtml(shortInstallId8(iid)) + "</td>";
       }
 
       function renderFeedbackTable(items) {
@@ -1961,9 +2254,7 @@
         let html = "<div class='table-wrap'><table><thead><tr><th class='sortable' id='thFbDate'>Datum" + arrow + "</th><th>Gerät</th><th>Screen</th><th>Bewertung</th><th>Kommentar</th></tr></thead><tbody>";
         for (const f of items) {
           const comment = f.comment ? escapeHtml(f.comment) : "<span style='color:var(--text-2)'>—</span>";
-          html +=
-            "<tr><td class='mono'>" + escapeHtml(fmtDate(f.createdAt)) + "</td>" +
-            feedbackDeviceCell(f.installId) +
+          html += "<tr><td class='mono'>" + escapeHtml(fmtDate(f.createdAt)) + "</td>" + feedbackDeviceCell(f.installId) +
             "<td class='mono'>" + escapeHtml(f.screen || "—") + "</td><td>" + formatThumbRating(f.rating) + "</td><td>" + comment + "</td></tr>";
         }
         html += "</tbody></table></div>";
@@ -1976,14 +2267,11 @@
 
       function renderFeedbackPage() {
         const pageSize = readPageSize("fbPageSize");
-        const sorted = sortedFeedbackItems();
+        const sorted = sortedFilteredFeedbackItems();
         const { slice, page, pages } = paginateSlice(sorted, fbPage, pageSize);
         fbPage = page;
         renderFeedbackTable(slice);
-        renderPagination("fbPagination", fbPage, pages, (p) => {
-          fbPage = p;
-          renderFeedbackPage();
-        });
+        renderPagination("fbPagination", fbPage, pages, (p) => { fbPage = p; renderFeedbackPage(); });
       }
 
       async function loadFeedback() {
@@ -2025,33 +2313,56 @@
         }
       }
 
+      // ---------- Navigation & Events ----------
+      let loadedOnce = { growth: false, behavior: false, users: false, ki: false, feedback: false };
+
       document.querySelectorAll("#nav button").forEach((btn) => {
         btn.addEventListener("click", () => {
           const tab = btn.getAttribute("data-tab");
           document.querySelectorAll("#nav button").forEach((b) => b.classList.toggle("active", b === btn));
           document.querySelectorAll(".panel").forEach((p) => p.classList.remove("active"));
           $("panel-" + tab).classList.add("active");
-          if (tab === "users") loadUsers(1);
-          if (tab === "ki") loadKi();
-          if (tab === "feedback") loadFeedback();
+          if (tab === "growth" && !loadedOnce.growth) { loadedOnce.growth = true; loadGrowth(growthDays); }
+          if (tab === "behavior" && !loadedOnce.behavior) { loadedOnce.behavior = true; loadBehavior(behaviorDays); }
+          if (tab === "users" && !loadedOnce.users) { loadedOnce.users = true; loadUsers(1); }
+          if (tab === "ki" && !loadedOnce.ki) { loadedOnce.ki = true; loadKi(); }
+          if (tab === "feedback" && !loadedOnce.feedback) { loadedOnce.feedback = true; loadFeedback(); }
         });
       });
 
       $("btnLogin").onclick = login;
       $("loginKey").addEventListener("keydown", (e) => { if (e.key === "Enter") login(); });
       $("btnLogout").onclick = () => logout(false);
-      $("btnOverview").onclick = loadOverview;
+
+      document.querySelectorAll("#growthRange button").forEach((b) => {
+        b.onclick = () => loadGrowth(Number(b.getAttribute("data-days")));
+      });
+      document.querySelectorAll("#behaviorRange button").forEach((b) => {
+        b.onclick = () => loadBehavior(Number(b.getAttribute("data-days")));
+      });
+
       $("btnKi").onclick = loadKi;
       $("kiPageSize").onchange = () => { kiPage = 1; renderKiPage(); };
       $("kiUserFilter").addEventListener("keydown", (e) => { if (e.key === "Enter") loadKi(); });
-      $("usersPageSize").onchange = () => loadUsers(1);
+
+      $("usersPageSize").onchange = () => { usersPage = 1; renderUsersPage(); };
       $("userModalBackdrop").onclick = closeUserDetail;
       $("userQ").addEventListener("input", () => {
         clearTimeout(userSearchTimer);
         userSearchTimer = setTimeout(() => loadUsers(1), 300);
       });
+      document.querySelectorAll("[data-pro-filter]").forEach((b) => {
+        b.onclick = () => {
+          usersProFilter = b.getAttribute("data-pro-filter");
+          document.querySelectorAll("[data-pro-filter]").forEach((x) => x.classList.toggle("active", x === b));
+          usersPage = 1;
+          renderUsersPage();
+        };
+      });
+
       $("fbPageSize").onchange = () => { fbPage = 1; renderFeedbackPage(); };
       $("fbScreenFilter").onchange = loadFeedback;
+      $("fbRatingFilter").onchange = () => { fbRatingValue = $("fbRatingFilter").value; fbPage = 1; renderFeedbackPage(); };
       $("btnFeedback").onclick = loadFeedback;
 
       tryAutoLogin();
