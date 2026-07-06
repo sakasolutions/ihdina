@@ -13,6 +13,7 @@ import { getOrCreateUser } from "./user.service.js";
 import { logAiRequest } from "./usageLog.service.js";
 
 const MAX_FOLLOWUPS_PER_VERSE = 3;
+const MAX_HISTORY_CONTENT_CHARS = 4_000;
 const allowedRoles = new Set(["system", "user", "assistant"]);
 
 export type FollowUpInput = {
@@ -47,13 +48,31 @@ function validateFollowUpInput(input: FollowUpInput) {
         400
       );
     }
-    if (m.content.length > 100_000) {
+    if (m.content.length > MAX_HISTORY_CONTENT_CHARS) {
       throw new AppError(ErrorCodes.INVALID_INPUT, "Message content too long.", 400);
     }
   }
   if (!input.question?.trim()) {
     throw new AppError(ErrorCodes.INVALID_INPUT, "question is required.", 400);
   }
+  if (input.question.trim().length > MAX_HISTORY_CONTENT_CHARS) {
+    throw new AppError(ErrorCodes.INVALID_INPUT, "question is too long.", 400);
+  }
+}
+
+/** Client-`system`-Nachrichten werden verworfen; nur user/assistant gehen an OpenAI. */
+function sanitizeClientHistory(
+  history: { role: string; content: string }[]
+): OpenAI.Chat.ChatCompletionMessageParam[] {
+  const out: OpenAI.Chat.ChatCompletionMessageParam[] = [];
+  for (const m of history) {
+    if (m.role === "system") continue;
+    out.push({
+      role: m.role as "user" | "assistant",
+      content: m.content,
+    });
+  }
+  return out;
 }
 
 function questionWithLanguageHint(language: string, question: string): string {
@@ -110,20 +129,20 @@ export async function followUpVerse(input: FollowUpInput) {
     );
   }
 
-  const messages: OpenAI.Chat.ChatCompletionMessageParam[] = [
-    ...input.history.map((h) => ({
-      role: h.role as "system" | "user" | "assistant",
-      content: h.content,
-    })),
-    {
-      role: "user",
-      content: questionWithLanguageHint(input.language, input.question),
-    },
-  ];
+  const history = sanitizeClientHistory(input.history);
+  if (history.length === 0) {
+    throw new AppError(
+      ErrorCodes.INVALID_INPUT,
+      "history must contain at least one user or assistant message.",
+      400
+    );
+  }
+
+  const question = questionWithLanguageHint(input.language, input.question);
 
   let completion;
   try {
-    completion = await completeFollowUp(messages);
+    completion = await completeFollowUp({ history, question });
   } catch (e) {
     await logAiRequest({
       userId: user.id,

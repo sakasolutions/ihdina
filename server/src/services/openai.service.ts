@@ -2,9 +2,16 @@ import OpenAI from "openai";
 import { env } from "../config/env.js";
 import { AppError, ErrorCodes } from "../utils/errors.js";
 
+const _allahTerminologyRule =
+  "Verwende standardmäßig «Allah» als Bezeichnung für den Schöpfer. Schreibe nicht «Gott», außer in direkten Zitaten aus dem gegebenen Vers, der Übersetzung oder anderen ausdrücklich genannten Quellen — diese Zitate unverändert lassen.";
+
 const systemPromptExplain = `Du bist ein hilfsbereiter, islamischer Bildungs-Assistent für eine Premium-Koran-App. Deine Aufgabe ist es, Koranverse basierend auf klassischem, anerkanntem Tafsir (wie Ibn Kathir) auf Deutsch zu erklären.
-REGELN: 1. Erkläre den Kontext und die Bedeutung für das heutige Leben. 2. Du darfst NIEMALS Fiqh-Fragen beantworten, Fatwas erteilen oder Dinge als Haram/Halal deklarieren. Wenn eine Frage in diese Richtung geht, weise höflich darauf hin, dass du eine KI bist und der Nutzer einen qualifizierten Gelehrten fragen soll. 3. Antworte in klarem, respektvollem und leicht verständlichem Deutsch.
+REGELN: 1. Erkläre den Kontext und die Bedeutung für das heutige Leben. 2. Du darfst NIEMALS Fiqh-Fragen beantworten, Fatwas erteilen oder Dinge als Haram/Halal deklarieren. Wenn eine Frage in diese Richtung geht, weise höflich darauf hin, dass du eine KI bist und der Nutzer einen qualifizierten Gelehrten fragen soll. 3. Antworte in klarem, respektvollem und leicht verständlichem Deutsch. 4. ${_allahTerminologyRule}
 AUSGABE: Du antwortest ausschließlich mit EINEM gültigen JSON-Objekt (kein Markdown, kein Text außerhalb). Pflichtfelder exakt so benannt: "bedeutung", "kontext", "heute" — jeweils ein String mit kurzen Absätzen (Zeilenumbruch \\n). Keine weiteren Top-Level-Keys.`;
+
+const systemPromptFollowUp = `Du bist ein hilfsbereiter, islamischer Bildungs-Assistent für eine Premium-Koran-App. Deine Aufgabe ist es, Koranverse basierend auf klassischem, anerkanntem Tafsir (wie Ibn Kathir) auf Deutsch zu erklären.
+REGELN: 1. Erkläre den Kontext und die Bedeutung für das heutige Leben. 2. Du darfst NIEMALS Fiqh-Fragen beantworten, Fatwas erteilen oder Dinge als Haram/Halal deklarieren. Wenn eine Frage in diese Richtung geht, weise höflich darauf hin, dass du eine KI bist und der Nutzer einen qualifizierten Gelehrten fragen soll. 3. Antworte in klarem, respektvollem und leicht verständlichem Deutsch. Formatiere die Antwort mit kurzen Absätzen. 4. ${_allahTerminologyRule}
+Antworte in normalem Fließtext (kein JSON), passend zur bisherigen Konversation.`;
 
 let client: OpenAI | null = null;
 
@@ -76,10 +83,18 @@ export async function completeExplanation(params: {
   return { ...out, text: normalizeVerseExplainJsonPayload(out.text) };
 }
 
-export async function completeFollowUp(
-  messages: OpenAI.Chat.ChatCompletionMessageParam[]
-): Promise<ChatCompletionResult> {
-  return callChat(messages, { maxTokens: 600, temperature: 0.5 });
+export async function completeFollowUp(params: {
+  history: OpenAI.Chat.ChatCompletionMessageParam[];
+  question: string;
+}): Promise<ChatCompletionResult> {
+  return callChat(
+    [
+      { role: "system", content: systemPromptFollowUp },
+      ...params.history,
+      { role: "user", content: params.question },
+    ],
+    { maxTokens: 600, temperature: 0.5 }
+  );
 }
 
 const systemPromptReflection = `Du schreibst einen kurzen, warmen Nachdenk-Impuls für eine islamische Gebet-App auf Deutsch.
@@ -91,6 +106,7 @@ Regeln:
 - KEINE Khutbah, KEINE Predigt, KEIN „Ich predige…"
 - KEINE Fatwa, KEIN Halal/Haram, KEINE Rechtsauskunft
 - KEINE erfundenen Hadithe, Verse oder Gelehrtenzitate
+- ${_allahTerminologyRule}
 
 Wenn der Nutzer "friday" schreibt: Jumuʿah, Gemeinschaft, Besinnung vor dem Freitagsgebet — nicht Ersatz für die Hutbe des Imams.
 Wenn der Nutzer "daily" schreibt: allgemeiner islamischer Impuls (Dankbarkeit, Geduld, Aufrichtigkeit).
@@ -104,6 +120,7 @@ Regeln:
 - Bezogen auf den gegebenen Vers (Sure + Ayah + Übersetzung)
 - Warm, konkret, keine Predigt, keine Fatwa, keine erfundenen Zitate
 - Keine Anführungszeichen am Anfang/Ende
+- ${_allahTerminologyRule}
 
 Antworte nur mit diesem einen Satz, sonst nichts.`;
 
@@ -181,4 +198,4 @@ async function callChat(
   }
 }
 
-export { systemPromptExplain };
+export { systemPromptExplain, systemPromptFollowUp };
