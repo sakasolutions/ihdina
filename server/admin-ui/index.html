@@ -1690,8 +1690,9 @@
         { key: "extraCount", label: "Extra-Erklärung", group: "active", color: "#c8a96e" },
         { key: "dailyVerseCount", label: "Tagesvers-Erklärung", group: "active", color: "#8fb9d4" },
         { key: "followUpCount", label: "Folgefrage", group: "active", color: "#a993d1" },
+        { key: "reflectionExpandCount", label: "Moment gelesen", group: "active", color: "#e07a6a" },
         { key: "takeawayCount", label: "Kernbotschaft", group: "auto", color: "#d4a84b" },
-        { key: "reflectionCount", label: "Moment zum Nachdenken", group: "auto", color: "#e07a6a" },
+        { key: "reflectionCount", label: "Moment generiert", group: "auto", color: "#c08070" },
       ];
 
       function renderBehaviorChart(byDay) {
@@ -2092,6 +2093,7 @@
           extraCount: Number(row?.extraCount) || 0,
           takeawayCount: Number(row?.takeawayCount) || 0,
           reflectionCount: Number(row?.reflectionCount) || 0,
+          reflectionExpandCount: Number(row?.reflectionExpandCount) || 0,
         };
       }
 
@@ -2110,7 +2112,8 @@
           dtHint("Tagesvers-Erklärungen", "userDailyVerse") + "<dd>" + fmt(u.dailyVerseCount) + "</dd>" +
           dtHint("Extra-Erklärungen", "userDailyExtra", extraHint) + "<dd>" + formatExtraUsageToday(u.extraCount, user.isPro) + "</dd>" +
           dtHint("Kernbotschaften", "userDailyTakeaway") + "<dd>" + fmt(u.takeawayCount) + "</dd>" +
-          dtHint("Reflection", "userDailyReflection") + "<dd>" + fmt(u.reflectionCount) + "</dd>" +
+          dtHint("Reflection generiert", "userDailyReflection") + "<dd>" + fmt(u.reflectionCount) + "</dd>" +
+          dtHint("Moment gelesen", "userDailyReflectionExpand") + "<dd>" + fmt(u.reflectionExpandCount) + "</dd>" +
           "</dl>"
         );
       }

@@ -5,10 +5,14 @@ import 'package:flutter/material.dart';
 import '../data/prayer/notification_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/premium_bottom_nav.dart';
+import 'dua_themes_screen.dart';
 import 'home_screen.dart';
 import 'prayer_screen.dart';
 import 'quran_screen.dart';
 import 'settings_screen.dart';
+
+/// Index des Home-Tabs in der Bottom-Navigation (Mitte).
+const int kHomeTabIndex = 2;
 
 /// Root mit Body + floating Premium Bottom Nav. Body wechselt per Index.
 class RootShell extends StatefulWidget {
@@ -19,7 +23,7 @@ class RootShell extends StatefulWidget {
 }
 
 class _RootShellState extends State<RootShell> with WidgetsBindingObserver {
-  int _currentIndex = 0;
+  int _currentIndex = kHomeTabIndex;
 
   @override
   void initState() {
@@ -46,10 +50,10 @@ class _RootShellState extends State<RootShell> with WidgetsBindingObserver {
   @override
   Widget build(BuildContext context) {
     return PopScope(
-      canPop: _currentIndex == 0,
+      canPop: _currentIndex == kHomeTabIndex,
       onPopInvokedWithResult: (bool didPop, dynamic result) {
-        if (!didPop && _currentIndex != 0) {
-          setState(() => _currentIndex = 0);
+        if (!didPop && _currentIndex != kHomeTabIndex) {
+          setState(() => _currentIndex = kHomeTabIndex);
         }
       },
       child: Scaffold(
@@ -62,8 +66,9 @@ class _RootShellState extends State<RootShell> with WidgetsBindingObserver {
               IndexedStack(
                 index: _currentIndex,
                 children: const [
-                  HomeScreen(),
+                  DuaThemesScreen(),
                   QuranScreen(),
+                  HomeScreen(),
                   PrayerScreen(),
                   SettingsScreen(rootTabMode: true),
                 ],

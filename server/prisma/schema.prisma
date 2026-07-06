@@ -52,6 +52,7 @@ model DailyExplanationUsage {
   dailyVerseCount Int    @default(0)
   takeawayCount   Int    @default(0)
   reflectionCount Int    @default(0)
+  reflectionExpandCount Int @default(0)
   followUpCount   Int    @default(0) @map("follow_up_count")
 
   @@unique([userId, usageDate])

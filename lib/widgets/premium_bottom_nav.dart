@@ -6,7 +6,7 @@ import 'package:flutter/services.dart';
 /// Signature accent for selected tab (matches home, prayer, sources).
 const Color _accentChampagneGold = Color(0xFFE5C07B);
 
-/// Floating glassmorphism bottom bar: Home, Koran, Gebet, Mehr. Blur, tint, gold accent for active.
+/// Floating glassmorphism bottom bar: Dua, Koran, Home, Gebet, Mehr.
 class PremiumBottomNav extends StatelessWidget {
   const PremiumBottomNav({
     super.key,
@@ -19,7 +19,8 @@ class PremiumBottomNav extends StatelessWidget {
   final ValueChanged<int> onTap;
   final bool enableHaptics;
 
-  static const int _itemCount = 4;
+  static const int _itemCount = 5;
+  static const int _homeTabIndex = 2;
 
   @override
   Widget build(BuildContext context) {
@@ -43,6 +44,9 @@ class PremiumBottomNav extends StatelessWidget {
               children: List.generate(_itemCount, (index) => _NavItem(
                 label: _labels[index],
                 icon: _icons[index],
+                iconSize: index == _homeTabIndex
+                    ? _NavItem._homeIconSize
+                    : _NavItem._iconSize,
                 selected: currentIndex == index,
                 accentColor: _accentChampagneGold,
                 onTap: () {
@@ -59,10 +63,17 @@ class PremiumBottomNav extends StatelessWidget {
     );
   }
 
-  static const List<String> _labels = ['Home', 'Koran', 'Gebet', 'Mehr'];
+  static const List<String> _labels = [
+    'Dua',
+    'Koran',
+    'Home',
+    'Gebet',
+    'Mehr',
+  ];
   static const List<IconData> _icons = [
-    Icons.home_rounded,
+    Icons.volunteer_activism_rounded,
     Icons.menu_book_rounded,
+    Icons.home_rounded,
     Icons.schedule_rounded,
     Icons.more_horiz_rounded,
   ];
@@ -72,6 +83,7 @@ class _NavItem extends StatelessWidget {
   const _NavItem({
     required this.label,
     required this.icon,
+    required this.iconSize,
     required this.selected,
     required this.accentColor,
     required this.onTap,
@@ -79,9 +91,14 @@ class _NavItem extends StatelessWidget {
 
   final String label;
   final IconData icon;
+  final double iconSize;
   final bool selected;
   final Color accentColor;
   final VoidCallback onTap;
+
+  static const double _iconSize = 24;
+  static const double _homeIconSize = 28;
+  static const double _iconLayoutSlot = _iconSize;
 
   @override
   Widget build(BuildContext context) {
@@ -98,9 +115,9 @@ class _NavItem extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(
-                  icon,
-                  size: 24,
+                _NavIcon(
+                  icon: icon,
+                  iconSize: iconSize,
                   color: color,
                 ),
                 const SizedBox(height: 3),
@@ -116,6 +133,45 @@ class _NavItem extends StatelessWidget {
               ],
             ),
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _NavIcon extends StatelessWidget {
+  const _NavIcon({
+    required this.icon,
+    required this.iconSize,
+    required this.color,
+  });
+
+  final IconData icon;
+  final double iconSize;
+  final Color color;
+
+  @override
+  Widget build(BuildContext context) {
+    final iconWidget = Icon(
+      icon,
+      size: iconSize,
+      color: color,
+    );
+
+    if (iconSize <= _NavItem._iconLayoutSlot) {
+      return iconWidget;
+    }
+
+    return SizedBox(
+      width: _NavItem._iconLayoutSlot,
+      height: _NavItem._iconLayoutSlot,
+      child: OverflowBox(
+        maxWidth: iconSize,
+        maxHeight: iconSize,
+        child: SizedBox(
+          width: iconSize,
+          height: iconSize,
+          child: Center(child: iconWidget),
         ),
       ),
     );

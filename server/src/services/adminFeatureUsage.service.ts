@@ -8,6 +8,7 @@ export type FeatureUsageDayRow = {
   dailyVerseCount: number;
   takeawayCount: number;
   reflectionCount: number;
+  reflectionExpandCount: number;
   followUpCount: number;
 };
 
@@ -34,6 +35,7 @@ function emptyCounts(): Omit<FeatureUsageDayRow, "day"> {
     dailyVerseCount: 0,
     takeawayCount: 0,
     reflectionCount: 0,
+    reflectionExpandCount: 0,
     followUpCount: 0,
   };
 }
@@ -66,6 +68,7 @@ export async function getAdminFeatureUsage(days: number): Promise<AdminFeatureUs
         dailyVerseCount: unknown;
         takeawayCount: unknown;
         reflectionCount: unknown;
+        reflectionExpandCount: unknown;
         followUpCount: unknown;
       }[]
     >(Prisma.sql`
@@ -75,6 +78,7 @@ export async function getAdminFeatureUsage(days: number): Promise<AdminFeatureUs
         COALESCE(SUM("dailyVerseCount"), 0)::bigint AS "dailyVerseCount",
         COALESCE(SUM("takeawayCount"), 0)::bigint AS "takeawayCount",
         COALESCE(SUM("reflectionCount"), 0)::bigint AS "reflectionCount",
+        COALESCE(SUM("reflectionExpandCount"), 0)::bigint AS "reflectionExpandCount",
         COALESCE(SUM("follow_up_count"), 0)::bigint AS "followUpCount"
       FROM "DailyExplanationUsage"
       WHERE CAST("usageDate" AS TEXT) >= ${fromDate}
@@ -98,6 +102,7 @@ export async function getAdminFeatureUsage(days: number): Promise<AdminFeatureUs
       dailyVerseCount: toInt(r.dailyVerseCount),
       takeawayCount: toInt(r.takeawayCount),
       reflectionCount: toInt(r.reflectionCount),
+      reflectionExpandCount: toInt(r.reflectionExpandCount),
       followUpCount: toInt(r.followUpCount),
     });
   }
@@ -111,6 +116,7 @@ export async function getAdminFeatureUsage(days: number): Promise<AdminFeatureUs
     totals.dailyVerseCount += counts.dailyVerseCount;
     totals.takeawayCount += counts.takeawayCount;
     totals.reflectionCount += counts.reflectionCount;
+    totals.reflectionExpandCount += counts.reflectionExpandCount;
     totals.followUpCount += counts.followUpCount;
   }
 

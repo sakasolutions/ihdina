@@ -211,7 +211,7 @@ class IhdinaApiClient {
     return _parseJsonObjectResponse(res, context: 'postTakeaway');
   }
 
-  /// Kurzer Nachdenk-Impuls (Gebet-Tab). [kind]: `friday` | `daily`.
+  /// Kurzer Nachdenk-Impuls (Dua-Tab). [kind]: `friday` | `daily`.
   Future<Map<String, dynamic>> postReflectionMoment({
     required String installId,
     required String kind,
@@ -232,6 +232,21 @@ class IhdinaApiClient {
         )
         .timeout(_timeout);
     return _parseJsonObjectResponse(res, context: 'postReflectionMoment');
+  }
+
+  /// Nachdenk-Moment aufgeklappt (KPI, max. 1×/UTC-Tag).
+  Future<void> postReflectionMomentExpand({required String installId}) async {
+    final res = await http
+        .post(
+          _uri('/api/v1/reflection-moment/expand'),
+          headers: const {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          body: jsonEncode({'installId': installId}),
+        )
+        .timeout(_timeout);
+    _parseJsonObjectResponse(res, context: 'postReflectionMomentExpand');
   }
 
   Future<void> updateDisplayName(String installId, String displayName) async {

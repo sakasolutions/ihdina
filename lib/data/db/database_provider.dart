@@ -42,6 +42,7 @@ class DatabaseProvider {
     }
     await _ensureBookmarksTable(db);
     await _ensureBookmarkNotesTable(db);
+    await _ensureDuaBookmarksTable(db);
     await _ensureReadingProgressTable(db);
     await _ensureSurahReadProgressTable(db);
     await _ensureSurahReadProgressLayoutTable(db);
@@ -83,6 +84,14 @@ class DatabaseProvider {
       'body TEXT NOT NULL, '
       'updated_at INTEGER NOT NULL, '
       'PRIMARY KEY (surah_id, ayah_number))',
+    );
+  }
+
+  static Future<void> _ensureDuaBookmarksTable(Database db) async {
+    await db.execute(
+      'CREATE TABLE IF NOT EXISTS dua_bookmarks('
+      'dua_id INTEGER PRIMARY KEY, '
+      'created_at INTEGER NOT NULL)',
     );
   }
 

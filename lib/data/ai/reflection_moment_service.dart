@@ -1,10 +1,11 @@
+import 'package:flutter/foundation.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 import '../api/ihdina_api_client.dart';
 import '../../services/install_id_service.dart';
 import '../../utils/reflection_moment_fallbacks.dart';
 
-/// Kurzer Nachdenk-Impuls auf dem Gebet-Tab (täglich; Freitag mit Jumuʿah-Bezug).
+/// Kurzer Nachdenk-Impuls auf dem Dua-Tab (täglich; Freitag mit Jumuʿah-Bezug).
 ///
 /// Server: `POST /api/v1/reflection-moment` mit `kind`: `friday` | `daily`.
 /// Prompt-Richtlinien (Backend):
@@ -18,6 +19,8 @@ class ReflectionMomentService {
   static final ReflectionMomentService instance = ReflectionMomentService._();
 
   static const String _prefsPrefix = 'reflection_moment_v1_';
+  static const String _expandDayPrefix = 'reflection_moment_expand_';
+  static const String _expandTotalKey = 'reflection_moment_expand_total';
 
   static bool get isFriday => DateTime.now().weekday == DateTime.friday;
 
@@ -29,6 +32,35 @@ class ReflectionMomentService {
   static String get displaySubtitle => isFriday
       ? 'Jumuʿah · Gemeinschaft & Besinnung'
       : 'Ein Gedanke für heute';
+
+  /// KPI: einmal pro Tag beim Aufklappen (oder Freitag-Auto-Expand).
+  Future<void> recordExpand() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final date = _todayYyyyMmDdLocal();
+      final dayKey = '$_expandDayPrefix$date';
+      if (prefs.getBool(dayKey) == true) return;
+
+      await prefs.setBool(dayKey, true);
+      final total = prefs.getInt(_expandTotalKey) ?? 0;
+      await prefs.setInt(_expandTotalKey, total + 1);
+      if (kDebugMode) {
+        debugPrint('[REFLECTION] expand recorded ($date, total ${total + 1})');
+      }
+      await _syncExpandToServer();
+    } catch (_) {}
+  }
+
+  Future<void> _syncExpandToServer() async {
+    try {
+      final client = IhdinaApiClient.instance;
+      if (!client.isConfigured) return;
+      final installId = await InstallIdService.instance.getOrCreate();
+      await client.postReflectionMomentExpand(installId: installId);
+    } catch (_) {}
+  }
+
+  static bool get defaultExpanded => isFriday;
 
   Future<ReflectionMoment> fetchMoment({bool forceRefresh = false}) async {
     final prefs = await SharedPreferences.getInstance();

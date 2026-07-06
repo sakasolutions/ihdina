@@ -6,6 +6,7 @@ export type DailyUsageColumn =
   | "dailyVerseCount"
   | "takeawayCount"
   | "reflectionCount"
+  | "reflectionExpandCount"
   | "followUpCount";
 
 const USAGE_COLUMNS: readonly DailyUsageColumn[] = [
@@ -13,6 +14,7 @@ const USAGE_COLUMNS: readonly DailyUsageColumn[] = [
   "dailyVerseCount",
   "takeawayCount",
   "reflectionCount",
+  "reflectionExpandCount",
   "followUpCount",
 ] as const;
 
@@ -34,6 +36,8 @@ function columnSql(column: DailyUsageColumn): Prisma.Sql {
       return Prisma.raw(`"takeawayCount"`);
     case "reflectionCount":
       return Prisma.raw(`"reflectionCount"`);
+    case "reflectionExpandCount":
+      return Prisma.raw(`"reflectionExpandCount"`);
     case "followUpCount":
       return Prisma.raw(`"follow_up_count"`);
   }
@@ -44,6 +48,7 @@ function insertCounts(column: DailyUsageColumn): {
   dailyVerseCount: number;
   takeawayCount: number;
   reflectionCount: number;
+  reflectionExpandCount: number;
   followUpCount: number;
 } {
   return {
@@ -51,6 +56,7 @@ function insertCounts(column: DailyUsageColumn): {
     dailyVerseCount: column === "dailyVerseCount" ? 1 : 0,
     takeawayCount: column === "takeawayCount" ? 1 : 0,
     reflectionCount: column === "reflectionCount" ? 1 : 0,
+    reflectionExpandCount: column === "reflectionExpandCount" ? 1 : 0,
     followUpCount: column === "followUpCount" ? 1 : 0,
   };
 }
@@ -121,12 +127,12 @@ export async function bumpDailyUsageCount(
     await prisma.$executeRaw(
       Prisma.sql`INSERT INTO "DailyExplanationUsage" (
           "id", "userId", "usageDate",
-          "extraCount", "dailyVerseCount", "takeawayCount", "reflectionCount", "follow_up_count"
+          "extraCount", "dailyVerseCount", "takeawayCount", "reflectionCount", "reflectionExpandCount", "follow_up_count"
         )
         VALUES (
           gen_random_uuid()::text, ${userId}, ${usageDate},
           ${counts.extraCount}, ${counts.dailyVerseCount},
-          ${counts.takeawayCount}, ${counts.reflectionCount}, ${counts.followUpCount}
+          ${counts.takeawayCount}, ${counts.reflectionCount}, ${counts.reflectionExpandCount}, ${counts.followUpCount}
         )`
     );
   } catch (e) {
@@ -202,6 +208,24 @@ export async function bumpDailyReflectionCount(
   usageDate: string
 ): Promise<void> {
   return bumpDailyUsageCount(userId, usageDate, "reflectionCount");
+}
+
+export async function getDailyReflectionExpandCount(
+  userId: string,
+  usageDate: string
+): Promise<number> {
+  return getDailyUsageCount(userId, usageDate, "reflectionExpandCount");
+}
+
+/** Max. ein Aufklappen pro UTC-Tag (idempotent). */
+export async function bumpDailyReflectionExpandCount(
+  userId: string,
+  usageDate: string
+): Promise<boolean> {
+  const current = await getDailyReflectionExpandCount(userId, usageDate);
+  if (current >= 1) return false;
+  await bumpDailyUsageCount(userId, usageDate, "reflectionExpandCount");
+  return true;
 }
 
 export async function getDailyFollowUpCount(
