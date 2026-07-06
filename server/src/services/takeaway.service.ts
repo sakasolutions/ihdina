@@ -6,14 +6,15 @@ import {
   getDailyTakeawayCount,
 } from "./dailyExplanationUsageQueries.js";
 import { completeTakeaway } from "./openai.service.js";
+import { getOrCreateUser } from "./user.service.js";
 import { logAiRequest } from "./usageLog.service.js";
 
 export type TakeawayInput = {
+  installId: string;
   surahName: string;
   ayahNumber: number;
   textAr?: string;
   textDe: string;
-  installId?: string;
 };
 
 function sanitizeTakeaway(raw: string): string {
@@ -23,29 +24,23 @@ function sanitizeTakeaway(raw: string): string {
 }
 
 export async function generateTakeaway(input: TakeawayInput) {
-  let userId: string | null = null;
-  const installId = input.installId?.trim();
   const usageDate = utcDateString();
+  const user = await getOrCreateUser(input.installId);
+  const userId = user.id;
 
-  if (installId) {
-    const { getOrCreateUser } = await import("./user.service.js");
-    const user = await getOrCreateUser(installId);
-    userId = user.id;
-
-    const used = await getDailyTakeawayCount(user.id, usageDate);
-    if (used >= MAX_TAKEAWAY_PER_DAY) {
-      await logAiRequest({
-        userId,
-        endpoint: "POST /api/v1/takeaway",
-        status: "error",
-        errorCode: ErrorCodes.FREE_LIMIT_REACHED,
-      });
-      throw new AppError(
-        ErrorCodes.FREE_LIMIT_REACHED,
-        "Your daily limit for takeaways has been reached.",
-        403
-      );
-    }
+  const used = await getDailyTakeawayCount(userId, usageDate);
+  if (used >= MAX_TAKEAWAY_PER_DAY) {
+    await logAiRequest({
+      userId,
+      endpoint: "POST /api/v1/takeaway",
+      status: "error",
+      errorCode: ErrorCodes.FREE_LIMIT_REACHED,
+    });
+    throw new AppError(
+      ErrorCodes.FREE_LIMIT_REACHED,
+      "Your daily limit for takeaways has been reached.",
+      403
+    );
   }
 
   try {
@@ -55,9 +50,7 @@ export async function generateTakeaway(input: TakeawayInput) {
       textDe: input.textDe,
     });
 
-    if (userId) {
-      await bumpDailyTakeawayCount(userId, usageDate);
-    }
+    await bumpDailyTakeawayCount(userId, usageDate);
 
     await logAiRequest({
       userId,

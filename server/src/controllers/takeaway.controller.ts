@@ -7,6 +7,9 @@ function assertBody(body: unknown): asserts body is TakeawayInput {
     throw new AppError(ErrorCodes.INVALID_INPUT, "Invalid JSON body.", 400);
   }
   const b = body as Record<string, unknown>;
+  if (typeof b.installId !== "string" || !b.installId.trim()) {
+    throw new AppError(ErrorCodes.INVALID_INPUT, "installId is required.", 400);
+  }
   if (typeof b.surahName !== "string" || !b.surahName.trim()) {
     throw new AppError(ErrorCodes.INVALID_INPUT, "surahName is required.", 400);
   }
@@ -22,11 +25,11 @@ export async function takeawayHandler(req: FastifyRequest, reply: FastifyReply) 
   assertBody(req.body);
   const body = req.body as TakeawayInput & Record<string, unknown>;
   const data = await generateTakeaway({
+    installId: body.installId.trim(),
     surahName: body.surahName.trim(),
     ayahNumber: body.ayahNumber,
     textAr: typeof body.textAr === "string" ? body.textAr : "",
     textDe: body.textDe,
-    installId: typeof body.installId === "string" ? body.installId : undefined,
   });
   return reply.send({ success: true, data });
 }

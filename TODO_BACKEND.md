@@ -6,6 +6,10 @@ Vor neuen Tasks kurz prüfen, ob etwas hier betroffen ist.
 - [ ] **proExpiresAt (Admin-Pro):** Manuell gesetztes Pro via Admin-PATCH setzt nur `isPro`, kein Ablaufdatum. Betroffene User im Dashboard klären.
 - [ ] **Test-User `test-check-123`:** In Prod-DB aus manuellem `/app-opened`-Test. Bewusst liegen gelassen, bei Bedarf löschen.
 
+## Deploy-Reihenfolge
+
+- [ ] **Takeaway-Server-Fix (installId-Pflicht):** Vorbereitet (Diff vom 06.07.2026, `takeaway.service.ts` / `takeaway.controller.ts`), aber **nicht deployen**, bevor das nächste App-Update (Dua-Tab, Nav-Umbau, Version nach `1.0.2+14`) im Store live ist und von der Mehrheit der Nutzer installiert wurde. Grund: Die aktuelle Store-Version ruft Takeaway **ohne** `installId` auf — ein sofortiger Server-Fix würde bei diesen Nutzern **400** (`INVALID_INPUT`) auslösen. Reihenfolge: **erst App-Update ausrollen, dann diesen Server-Fix deployen.**
+
 ## Feature-Metriken (Dokumentation)
 
 - **Nicht vergleichbar ohne Kontext:** Takeaway (Home) und Reflection-Moment (Gebet) werden **automatisch beim Laden** des jeweiligen Tabs ausgelöst (Tab-Öffnung ≈ Generierung). Explain und Follow-up erfordern **aktive Nutzerhandlung** (Klick/Tap). `DailyExplanationUsage`-Zähler messen derzeit **API-Generierung**, nicht „gesehen“ oder „interagiert“.
