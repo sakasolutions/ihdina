@@ -45,8 +45,10 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
   double _arabicFontSize = 28;
   double _arabicLineHeight = 1.8;
   PrayerTimesResult? _prayerResult;
-  /// Wenn true: lateinische Umschrift statt deutscher Übersetzung unter dem Arabischen (nur Kartenmodus).
-  bool _showTransliteration = false;
+  /// Globaler Anzeigemodus für alle Karten im PageView.
+  VerseCardContentMode _cardContentMode = VerseCardContentMode.arabicAndGerman;
+  /// Inkrementiert bei jedem Tap-Cycle — steuert Flip nur auf der aktiven Karte.
+  int _cardContentModeRevision = 0;
   /// `cards` = Standard; `page` = Seitenlesen (Beta).
   String _readerLayout = 'cards';
   /// Nur Seitenmodus: `arabic` oder `german`.
@@ -473,7 +475,7 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
                             style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w500, color: Colors.white),
                           ),
                           subtitle: Text(
-                            'Arabisch und Übersetzung, Vers für Vers',
+                            'Tippen zum Wechseln zwischen Arabisch, Lautschrift und Übersetzung',
                             style: GoogleFonts.inter(fontSize: 12, height: 1.35, color: Colors.white.withOpacity(0.5)),
                           ),
                           trailing: _readerLayout == 'cards'
@@ -596,29 +598,6 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
                             });
                           },
                         ),
-                        if (_readerLayout == 'cards') ...[
-                          Padding(
-                            padding: const EdgeInsets.fromLTRB(16, 6, 16, 4),
-                            child: Text(
-                              'Unter dem Vers (nur Karten)',
-                              style: GoogleFonts.inter(
-                                fontSize: 11,
-                                fontWeight: FontWeight.w600,
-                                letterSpacing: 0.35,
-                                color: Colors.white.withOpacity(0.45),
-                              ),
-                            ),
-                          ),
-                          Center(
-                            child: _TransliterationToggle(
-                              showTransliteration: _showTransliteration,
-                              onChanged: (value) {
-                                setState(() => _showTransliteration = value);
-                                setModal(() {});
-                              },
-                            ),
-                          ),
-                        ],
                       ] else ...[
                         Padding(
                           padding: const EdgeInsets.fromLTRB(4, 6, 8, 0),
@@ -705,6 +684,13 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
 
   void _onAudioStateChanged() {
     if (mounted) setState(() {});
+  }
+
+  void _onCardContentModeTap() {
+    setState(() {
+      _cardContentMode = nextVerseCardContentMode(_cardContentMode);
+      _cardContentModeRevision++;
+    });
   }
 
   /// Global „Weiterlesen“ + pro-Sure-Merker je Lesemodus (Karten / Seite).
@@ -1169,6 +1155,7 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
                                     children: [
                                       PageView.builder(
                                         controller: _pageController!,
+                                        physics: const PageScrollPhysics(),
                                         onPageChanged: (index) {
                                           setState(() => _currentVerseIndex = index);
                                           HapticFeedback.lightImpact();
@@ -1177,14 +1164,21 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
                                         itemCount: verses.length,
                                         itemBuilder: (context, index) {
                                           final verse = verses[index];
+                                          final isActive = index == _currentVerseIndex;
                                           return SingleChildScrollView(
+                                            physics: isActive
+                                                ? const ClampingScrollPhysics()
+                                                : const NeverScrollableScrollPhysics(),
                                             padding: const EdgeInsets.fromLTRB(24, 16, 24, 150),
                                             child: QuranVerseReaderTile(
                                               verse: verse,
+                                              contentMode: _cardContentMode,
+                                              contentModeRevision: _cardContentModeRevision,
+                                              animateFlip: isActive,
+                                              onContentModeTap: _onCardContentModeTap,
                                               isBookmarked: _bookmarkedAyahNumbers.contains(verse.ayah),
                                               arabicFontSize: _arabicFontSize,
                                               arabicLineHeight: _arabicLineHeight,
-                                              showTransliteration: _showTransliteration,
                                               isPlaying: _playingAyahNumber == verse.ayah,
                                               isLoading: _loadingAyahNumber == verse.ayah,
                                               showJumpHighlight: _jumpHighlightAyah == verse.ayah,
@@ -1226,77 +1220,6 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
             ),
           ],
         ),
-        ),
-      ),
-    );
-  }
-}
-
-class _TransliterationToggle extends StatelessWidget {
-  const _TransliterationToggle({
-    required this.showTransliteration,
-    required this.onChanged,
-  });
-
-  final bool showTransliteration;
-  final ValueChanged<bool> onChanged;
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.25),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withOpacity(0.1), width: 1),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          _Segment(
-            label: 'DE',
-            selected: !showTransliteration,
-            onTap: () => onChanged(false),
-          ),
-          _Segment(
-            label: "A'",
-            selected: showTransliteration,
-            onTap: () => onChanged(true),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _Segment extends StatelessWidget {
-  const _Segment({required this.label, required this.selected, required this.onTap});
-
-  final String label;
-  final bool selected;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        borderRadius: BorderRadius.circular(18),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-          decoration: BoxDecoration(
-            color: selected ? const Color(0xFFE5C07B).withOpacity(0.25) : Colors.transparent,
-            borderRadius: BorderRadius.circular(18),
-          ),
-          child: Text(
-            label,
-            style: GoogleFonts.inter(
-              fontSize: 13,
-              fontWeight: FontWeight.w600,
-              color: selected ? const Color(0xFFE5C07B) : Colors.white70,
-            ),
-          ),
         ),
       ),
     );
