@@ -56,7 +56,6 @@ class QuranVerseReaderTile extends StatelessWidget {
   final VoidCallback onPlayTap;
 
   static const Color _accentChampagneGold = Color(0xFFE5C07B);
-
   static const List<VerseCardContentMode> _allModes = VerseCardContentMode.values;
 
   @override
@@ -65,7 +64,134 @@ class QuranVerseReaderTile extends StatelessWidget {
     final framed = audioActive || showJumpHighlight;
     final arabicHeight = (arabicLineHeight + 0.12).clamp(1.75, 2.35);
 
-    final playBookmarkRow = SizedBox(
+    Widget card = animateFlip
+        ? _FlippingCardPanel(
+            key: ValueKey('flip-card-${verse.ayah}'),
+            mode: contentMode,
+            modeRevision: contentModeRevision,
+            onContentTap: onContentModeTap,
+            cardFaceBuilder: (displayMode, onContentTap) => _buildCardFace(
+              mode: displayMode,
+              arabicHeight: arabicHeight,
+              onContentTap: onContentTap,
+            ),
+          )
+        : _buildCardFace(
+            mode: contentMode,
+            arabicHeight: arabicHeight,
+            onContentTap: onContentModeTap,
+          );
+
+    if (!framed) {
+      return card;
+    }
+
+    return Container(
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(24),
+        color: _accentChampagneGold.withOpacity(0.042),
+        border: Border.all(
+          color: _accentChampagneGold.withOpacity(0.22),
+          width: 1,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: _accentChampagneGold.withOpacity(0.08),
+            blurRadius: 10,
+            spreadRadius: 0,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: card,
+    );
+  }
+
+  Widget _buildCardFace({
+    required VerseCardContentMode mode,
+    required double arabicHeight,
+    required VoidCallback onContentTap,
+  }) {
+    return GlassCard(
+      borderRadius: 22,
+      child: Padding(
+        padding: const EdgeInsets.fromLTRB(22, 30, 22, 28),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.stretch,
+          children: [
+            Material(
+              color: Colors.transparent,
+              child: InkWell(
+                onTap: onContentTap,
+                splashColor: Colors.white.withOpacity(0.06),
+                highlightColor: Colors.white.withOpacity(0.03),
+                child: _VerseCardContentPanel(
+                  verse: verse,
+                  mode: mode,
+                  arabicFontSize: arabicFontSize,
+                  arabicHeight: arabicHeight,
+                  availableModes: _allModes,
+                ),
+              ),
+            ),
+            const SizedBox(height: 22),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Material(
+                  color: Colors.transparent,
+                  child: InkWell(
+                    onTap: onVerstehenTap,
+                    borderRadius: BorderRadius.circular(14),
+                    splashColor: Colors.white.withOpacity(0.06),
+                    highlightColor: Colors.white.withOpacity(0.04),
+                    child: Ink(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(14),
+                        color: Colors.white.withOpacity(0.045),
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.09),
+                          width: 1,
+                        ),
+                      ),
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.auto_awesome,
+                              size: 16,
+                              color: _accentChampagneGold.withOpacity(0.92),
+                            ),
+                            const SizedBox(width: 9),
+                            Text(
+                              'Verstehen',
+                              style: GoogleFonts.inter(
+                                fontSize: 14,
+                                fontWeight: FontWeight.w600,
+                                letterSpacing: 0.15,
+                                color: Colors.white.withOpacity(0.82),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                ),
+                _playBookmarkRow(),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _playBookmarkRow() {
+    return SizedBox(
       height: 32,
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -150,165 +276,29 @@ class QuranVerseReaderTile extends StatelessWidget {
         ],
       ),
     );
-
-    final contentPanel = animateFlip
-        ? _FlippingContentPanel(
-            key: ValueKey('flip-${verse.ayah}'),
-            mode: contentMode,
-            modeRevision: contentModeRevision,
-            onTap: onContentModeTap,
-            childBuilder: (displayMode) => _VerseCardContentPanel(
-              verse: verse,
-              mode: displayMode,
-              arabicFontSize: arabicFontSize,
-              arabicHeight: arabicHeight,
-              availableModes: _allModes,
-            ),
-          )
-        : _StaticContentPanel(
-            key: ValueKey('static-${verse.ayah}-$contentModeRevision'),
-            onTap: onContentModeTap,
-            child: _VerseCardContentPanel(
-              verse: verse,
-              mode: contentMode,
-              arabicFontSize: arabicFontSize,
-              arabicHeight: arabicHeight,
-              availableModes: _allModes,
-            ),
-          );
-
-    final tileContent = GlassCard(
-      borderRadius: 22,
-      child: Padding(
-        padding: const EdgeInsets.fromLTRB(22, 30, 22, 28),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.stretch,
-          children: [
-            contentPanel,
-            const SizedBox(height: 22),
-            Row(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: onVerstehenTap,
-                    borderRadius: BorderRadius.circular(14),
-                    splashColor: Colors.white.withOpacity(0.06),
-                    highlightColor: Colors.white.withOpacity(0.04),
-                    child: Ink(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(14),
-                        color: Colors.white.withOpacity(0.045),
-                        border: Border.all(
-                          color: Colors.white.withOpacity(0.09),
-                          width: 1,
-                        ),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(
-                              Icons.auto_awesome,
-                              size: 16,
-                              color: _accentChampagneGold.withOpacity(0.92),
-                            ),
-                            const SizedBox(width: 9),
-                            Text(
-                              'Verstehen',
-                              style: GoogleFonts.inter(
-                                fontSize: 14,
-                                fontWeight: FontWeight.w600,
-                                letterSpacing: 0.15,
-                                color: Colors.white.withOpacity(0.82),
-                              ),
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                playBookmarkRow,
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-
-    if (!framed) {
-      return tileContent;
-    }
-
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(24),
-        color: _accentChampagneGold.withOpacity(0.042),
-        border: Border.all(
-          color: _accentChampagneGold.withOpacity(0.22),
-          width: 1,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: _accentChampagneGold.withOpacity(0.08),
-            blurRadius: 10,
-            spreadRadius: 0,
-            offset: const Offset(0, 2),
-          ),
-        ],
-      ),
-      child: tileContent,
-    );
   }
 }
 
-class _StaticContentPanel extends StatelessWidget {
-  const _StaticContentPanel({
-    super.key,
-    required this.onTap,
-    required this.child,
-  });
-
-  final VoidCallback onTap;
-  final Widget child;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: onTap,
-        splashColor: Colors.white.withOpacity(0.06),
-        highlightColor: Colors.white.withOpacity(0.03),
-        child: child,
-      ),
-    );
-  }
-}
-
-class _FlippingContentPanel extends StatefulWidget {
-  const _FlippingContentPanel({
+/// Dreht die komplette [GlassCard] (Hülle + Inhalt + Buttons) um die Y-Achse.
+class _FlippingCardPanel extends StatefulWidget {
+  const _FlippingCardPanel({
     super.key,
     required this.mode,
     required this.modeRevision,
-    required this.onTap,
-    required this.childBuilder,
+    required this.onContentTap,
+    required this.cardFaceBuilder,
   });
 
   final VerseCardContentMode mode;
   final int modeRevision;
-  final VoidCallback onTap;
-  final Widget Function(VerseCardContentMode displayMode) childBuilder;
+  final VoidCallback onContentTap;
+  final Widget Function(VerseCardContentMode mode, VoidCallback onContentTap) cardFaceBuilder;
 
   @override
-  State<_FlippingContentPanel> createState() => _FlippingContentPanelState();
+  State<_FlippingCardPanel> createState() => _FlippingCardPanelState();
 }
 
-class _FlippingContentPanelState extends State<_FlippingContentPanel>
+class _FlippingCardPanelState extends State<_FlippingCardPanel>
     with SingleTickerProviderStateMixin {
   static const Duration _flipDuration = Duration(milliseconds: 300);
 
@@ -335,8 +325,8 @@ class _FlippingContentPanelState extends State<_FlippingContentPanel>
   }
 
   void _startFlip(VerseCardContentMode fromMode, VerseCardContentMode toMode) {
-    _fromFace = widget.childBuilder(fromMode);
-    _toFace = widget.childBuilder(toMode);
+    _fromFace = widget.cardFaceBuilder(fromMode, _handleContentTap);
+    _toFace = widget.cardFaceBuilder(toMode, _handleContentTap);
     _tapLocked = true;
     _controller
       ..stop()
@@ -348,7 +338,7 @@ class _FlippingContentPanelState extends State<_FlippingContentPanel>
   }
 
   @override
-  void didUpdateWidget(covariant _FlippingContentPanel oldWidget) {
+  void didUpdateWidget(covariant _FlippingCardPanel oldWidget) {
     super.didUpdateWidget(oldWidget);
     if (widget.modeRevision != _handledRevision) {
       _handledRevision = widget.modeRevision;
@@ -356,15 +346,15 @@ class _FlippingContentPanelState extends State<_FlippingContentPanel>
         _startFlip(oldWidget.mode, widget.mode);
       }
     } else if (oldWidget.mode != widget.mode && !_controller.isAnimating) {
-      _fromFace = widget.childBuilder(widget.mode);
+      _fromFace = widget.cardFaceBuilder(widget.mode, _handleContentTap);
       _toFace = _fromFace;
       _controller.value = 0;
     }
   }
 
-  void _handleTap() {
+  void _handleContentTap() {
     if (_tapLocked) return;
-    widget.onTap();
+    widget.onContentTap();
   }
 
   @override
@@ -376,55 +366,28 @@ class _FlippingContentPanelState extends State<_FlippingContentPanel>
 
   @override
   Widget build(BuildContext context) {
-    final fromFace = _fromFace ?? widget.childBuilder(widget.mode);
+    final fromFace = _fromFace ?? widget.cardFaceBuilder(widget.mode, _handleContentTap);
     final toFace = _toFace ?? fromFace;
 
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: _handleTap,
-        splashColor: Colors.white.withOpacity(0.06),
-        highlightColor: Colors.white.withOpacity(0.03),
-        child: RepaintBoundary(
-          child: AnimatedBuilder(
-            animation: _turns,
-            builder: (context, _) {
-              final angle = _turns.value * math.pi;
-              final pastHalf = _turns.value >= 0.5;
+    return RepaintBoundary(
+      child: AnimatedBuilder(
+        animation: _turns,
+        builder: (context, _) {
+          final angle = _turns.value * math.pi;
+          final pastHalf = _turns.value >= 0.5;
 
-              Widget flipChild = Transform(
-                alignment: Alignment.center,
-                transform: Matrix4.identity()
-                  ..setEntry(3, 2, 0.0008)
-                  ..rotateY(angle),
-                child: Transform(
-                  alignment: Alignment.center,
-                  transform: Matrix4.identity()..rotateY(pastHalf ? math.pi : 0),
-                  child: pastHalf ? toFace : fromFace,
-                ),
-              );
-
-              if (_controller.isAnimating) {
-                flipChild = ShaderMask(
-                  shaderCallback: (bounds) => const RadialGradient(
-                    center: Alignment.center,
-                    radius: 1.12,
-                    colors: [
-                      Color(0xFFFFFFFF),
-                      Color(0xF2FFFFFF),
-                      Color(0x00FFFFFF),
-                    ],
-                    stops: [0.0, 0.8, 1.0],
-                  ).createShader(bounds),
-                  blendMode: BlendMode.dstIn,
-                  child: flipChild,
-                );
-              }
-
-              return flipChild;
-            },
-          ),
-        ),
+          return Transform(
+            alignment: Alignment.center,
+            transform: Matrix4.identity()
+              ..setEntry(3, 2, 0.0008)
+              ..rotateY(angle),
+            child: Transform(
+              alignment: Alignment.center,
+              transform: Matrix4.identity()..rotateY(pastHalf ? math.pi : 0),
+              child: pastHalf ? toFace : fromFace,
+            ),
+          );
+        },
       ),
     );
   }
