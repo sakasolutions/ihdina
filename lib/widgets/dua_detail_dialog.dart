@@ -27,6 +27,7 @@ Future<void> showDuaDetailDialog(
   return showDialog<void>(
     context: context,
     barrierColor: Colors.transparent,
+    useSafeArea: false,
     builder: (dialogContext) => _DuaDetailDialog(
       entry: entry,
       listIndex: listIndex,
@@ -96,12 +97,16 @@ class _DuaDetailDialogState extends State<_DuaDetailDialog> {
 
   @override
   Widget build(BuildContext context) {
-    final maxHeight = MediaQuery.sizeOf(context).height * 0.84;
+    final size = MediaQuery.sizeOf(context);
+    final maxHeight = size.height * 0.84;
 
     return Dialog(
       backgroundColor: Colors.transparent,
       insetPadding: EdgeInsets.zero,
-      child: SizedBox.expand(
+      clipBehavior: Clip.none,
+      child: SizedBox(
+        width: size.width,
+        height: size.height,
         child: Stack(
           fit: StackFit.expand,
           children: [
@@ -109,10 +114,12 @@ class _DuaDetailDialogState extends State<_DuaDetailDialog> {
               child: GestureDetector(
                 behavior: HitTestBehavior.opaque,
                 onTap: () => Navigator.pop(context),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
-                  child: ColoredBox(
-                    color: Colors.black.withOpacity(0.42),
+                child: ClipRect(
+                  child: BackdropFilter(
+                    filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
+                    child: ColoredBox(
+                      color: Colors.black.withOpacity(0.42),
+                    ),
                   ),
                 ),
               ),

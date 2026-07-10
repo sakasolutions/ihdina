@@ -90,7 +90,7 @@ void main() {
     await tester.pumpAndSettle();
 
     expect(find.text('Hinweise'), findsWidgets);
-    expect(find.textContaining('überlieferte Formel rezitierst du auf Arabisch'),
+    expect(find.textContaining('überliefert und werden traditionell auf Arabisch'),
         findsOneWidget);
     expect(find.textContaining('Anleitung mit eingebettetem Sprechtext'),
         findsOneWidget);

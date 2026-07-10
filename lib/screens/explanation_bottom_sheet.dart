@@ -13,11 +13,12 @@ import '../data/ai/related_ayah_ref.dart';
 import '../data/api/ihdina_api_client.dart';
 import '../data/quran/quran_repository.dart';
 import '../models/surah.dart';
-import '../services/app_feedback_service.dart';
 import '../services/install_id_service.dart';
 import '../services/revenuecat_service.dart';
 import '../data/tts/tts_pronunciation_repository.dart';
 import '../services/tts_service.dart';
+import '../widgets/ai_content_footer.dart';
+import '../widgets/ayah_preview_bottom_sheet.dart';
 import '../widgets/local_dictation_icon_button.dart';
 import '../widgets/local_tts_play_control.dart';
 import '../widgets/local_speech_privacy_caption.dart';
@@ -33,18 +34,38 @@ const bool _kExplanationSheetRefinedUi = true;
 /// Nur mit [_kExplanationSheetRefinedUi]: `0` = Verstehen einklappbar, `1` = Lesen | Verstehen zwei Schritte (aktueller Standard).
 const int _kVerstehenUxVariant = 1;
 
+/// Angehängte `Quelle:`-Zeile am Ende von [heute] extrahieren und aus dem Fließtext entfernen.
+({String heute, String? tafsirSource}) splitTafsirSourceFromHeute(String heute) {
+  final trimmed = heute.trimRight();
+  final match = RegExp(
+    r'(?:\r?\n\r?\n?|\A)Quelle:\s*(.+)\s*$',
+    dotAll: true,
+  ).firstMatch(trimmed);
+  if (match == null) {
+    return (heute: heute, tafsirSource: null);
+  }
+  final source = match.group(1)?.trim();
+  if (source == null || source.isEmpty) {
+    return (heute: heute, tafsirSource: null);
+  }
+  final body = trimmed.substring(0, match.start).trimRight();
+  return (heute: body, tafsirSource: source);
+}
+
 /// Strukturierte Vers-Erklärung (JSON vom Backend im Feld `text`).
 class VerseCards {
   VerseCards({
     required this.bedeutung,
     required this.kontext,
     required this.heute,
+    this.tafsirSource,
     this.relatedAyahs = const [],
   });
 
   final String bedeutung;
   final String kontext;
   final String heute;
+  final String? tafsirSource;
   final List<RelatedAyahRef> relatedAyahs;
 }
 
@@ -150,12 +171,21 @@ class ChatMessage {
     required this.isUser,
     required this.text,
     this.relatedAyahs,
+    this.followUpQuestion,
   });
 
   final bool isUser;
   final String text;
   /// Chips unter einer Assistant-Folgeantwort (Server-Feld `relatedAyahs`).
   final List<RelatedAyahRef>? relatedAyahs;
+  /// Gesetz bei KI-Folgeantworten — steuert Disclaimer/Feedback in [_MessageBubble].
+  final String? followUpQuestion;
+}
+
+String _truncateForFeedbackContext(String raw, {int maxLen = 40}) {
+  final t = raw.replaceAll(RegExp(r'\s+'), ' ').trim();
+  if (t.length <= maxLen) return t;
+  return '${t.substring(0, maxLen).trim()}…';
 }
 
 /// Verse data for AI explanation. If all are provided, the sheet will call the AI.
@@ -256,6 +286,9 @@ class _ExplanationBottomSheetContentState
   /// Normalisierte Sure-Namen (EN/AR) → Sure-ID für Linkify („Sure An-Nisa, Vers 1“).
   Map<String, int>? _surahNameToId;
 
+  /// Sure-ID → Ayah-Anzahl für Linkify-Validierung (nackte `45:18`-Referenzen).
+  Map<int, int>? _surahAyahCountById;
+
   /// Verbleibende Follow-ups laut letzter Server-Antwort; `null` = noch keine Follow-up-Antwort in dieser Session.
   int? _remainingFollowUps;
   /// Verbleibende Folgefragen heute (Free); `null` = Pro oder noch unbekannt.
@@ -348,9 +381,9 @@ class _ExplanationBottomSheetContentState
   }
 
   static const List<String> _quickQuestions = [
-    'Welche Schlüsselbegriffe im Vers muss ich verstehen?',
-    'Gibt es einen authentischen Hadith mit Bezug (kurz + Quelle)?',
-    'Was missverstehen viele an diesem Vers?',
+    'Was sagt der angebundene Tafsir zu diesem Vers?',
+    'Was sollte man bei diesem Vers nicht falsch verstehen?',
+    'Wie hängt dieser Vers mit den Versen davor und danach zusammen?',
   ];
 
   String _uiLanguageTag() {
@@ -380,6 +413,22 @@ class _ExplanationBottomSheetContentState
     r'(?<!\[)(Sure|Surah|Sura)\s+([^,\n]+?)\s*,\s*(?:Vers|Aya|Ayah)\s*(\d{1,3})',
     caseSensitive: false,
   );
+
+  /// „45:18“ / „(45:18)“ / „2:255“ — erst nach den Sure-Regexen; nicht in Markdown-Links/URLs.
+  static final RegExp _ayahBareColonRegex = RegExp(
+    r'(?<!\[)(?<![:\/])(?<!\w)(\d{1,3}):(\d{1,3})\b',
+  );
+
+  bool _isValidAyahRef(int surahId, int ayahNumber) {
+    if (surahId < 1 || surahId > 114 || ayahNumber < 1) return false;
+    final maxAyahs = _surahAyahCountById?[surahId];
+    if (maxAyahs != null && ayahNumber > maxAyahs) return false;
+    return true;
+  }
+
+  String _markdownAyahLink(String label, int surahId, int ayahNumber) {
+    return '[$label](quran://$surahId:$ayahNumber)';
+  }
 
   static String _normalizeSurahLookupKey(String raw) {
     var t = raw.toLowerCase().trim();
@@ -420,10 +469,13 @@ class _ExplanationBottomSheetContentState
           );
         }
       }
+      final heuteRaw = m['heute']?.toString() ?? '';
+      final heuteSplit = splitTafsirSourceFromHeute(heuteRaw);
       return VerseCards(
         bedeutung: m['bedeutung']?.toString() ?? raw,
         kontext: m['kontext']?.toString() ?? '',
-        heute: m['heute']?.toString() ?? '',
+        heute: heuteSplit.heute,
+        tafsirSource: heuteSplit.tafsirSource,
         relatedAyahs: refs,
       );
     } catch (_) {
@@ -447,6 +499,7 @@ class _ExplanationBottomSheetContentState
       bedeutung: cards.bedeutung,
       kontext: cards.kontext,
       heute: cards.heute,
+      tafsirSource: cards.tafsirSource,
       relatedAyahs: merged,
     );
   }
@@ -476,6 +529,22 @@ class _ExplanationBottomSheetContentState
     );
   }
 
+  Future<void> _openAyahPreview(int surahId, int ayahNumber) async {
+    if (!mounted) return;
+    await showAyahPreviewBottomSheet(
+      context: context,
+      surahId: surahId,
+      ayahNumber: ayahNumber,
+      onOpenVerse: () {
+        unawaited(
+          _openRelatedAyah(
+            RelatedAyahRef(surahId: surahId, ayahNumber: ayahNumber),
+          ),
+        );
+      },
+    );
+  }
+
   Future<void> _openAyahFromHref(String href) async {
     final h = href.trim();
     final m = RegExp(r'^quran://(\d{1,3}):(\d{1,3})$').firstMatch(h);
@@ -487,7 +556,7 @@ class _ExplanationBottomSheetContentState
     if (surahId == null || ayahNumber == null) {
       return;
     }
-    await _openRelatedAyah(RelatedAyahRef(surahId: surahId, ayahNumber: ayahNumber));
+    await _openAyahPreview(surahId, ayahNumber);
   }
 
   String _linkifyAyahReferences(String text) {
@@ -497,11 +566,11 @@ class _ExplanationBottomSheetContentState
       if (surahId == null || ayahNumber == null) {
         return m.group(0) ?? '';
       }
-      if (surahId < 1 || surahId > 114 || ayahNumber < 1) {
+      if (!_isValidAyahRef(surahId, ayahNumber)) {
         return m.group(0) ?? '';
       }
       final label = m.group(0) ?? '';
-      return '[$label](quran://$surahId:$ayahNumber)';
+      return _markdownAyahLink(label, surahId, ayahNumber);
     });
 
     t = t.replaceAllMapped(_ayahParenSurahAyahRegex, (m) {
@@ -510,11 +579,11 @@ class _ExplanationBottomSheetContentState
       if (surahId == null || ayahNumber == null) {
         return m.group(0) ?? '';
       }
-      if (surahId < 1 || surahId > 114 || ayahNumber < 1) {
+      if (!_isValidAyahRef(surahId, ayahNumber)) {
         return m.group(0) ?? '';
       }
       final label = m.group(0) ?? '';
-      return '[$label](quran://$surahId:$ayahNumber)';
+      return _markdownAyahLink(label, surahId, ayahNumber);
     });
 
     t = t.replaceAllMapped(_ayahShortColonRegex, (m) {
@@ -523,11 +592,11 @@ class _ExplanationBottomSheetContentState
       if (surahId == null || ayahNumber == null) {
         return m.group(0) ?? '';
       }
-      if (surahId < 1 || surahId > 114 || ayahNumber < 1) {
+      if (!_isValidAyahRef(surahId, ayahNumber)) {
         return m.group(0) ?? '';
       }
       final label = m.group(0) ?? '';
-      return '[$label](quran://$surahId:$ayahNumber)';
+      return _markdownAyahLink(label, surahId, ayahNumber);
     });
 
     final nameMap = _surahNameToId;
@@ -546,10 +615,26 @@ class _ExplanationBottomSheetContentState
         if (sid == null) {
           return m.group(0) ?? '';
         }
+        if (!_isValidAyahRef(sid, ayahNumber)) {
+          return m.group(0) ?? '';
+        }
         final label = m.group(0) ?? '';
-        return '[$label](quran://$sid:$ayahNumber)';
+        return _markdownAyahLink(label, sid, ayahNumber);
       });
     }
+
+    t = t.replaceAllMapped(_ayahBareColonRegex, (m) {
+      final surahId = int.tryParse(m.group(1) ?? '');
+      final ayahNumber = int.tryParse(m.group(2) ?? '');
+      if (surahId == null || ayahNumber == null) {
+        return m.group(0) ?? '';
+      }
+      if (!_isValidAyahRef(surahId, ayahNumber)) {
+        return m.group(0) ?? '';
+      }
+      final label = m.group(0) ?? '';
+      return _markdownAyahLink(label, surahId, ayahNumber);
+    });
 
     return t;
   }
@@ -558,7 +643,9 @@ class _ExplanationBottomSheetContentState
     QuranRepository.instance.getAllSurahs().then((surahs) {
       if (!mounted) return;
       final m = <String, int>{};
+      final counts = <int, int>{};
       for (final s in surahs) {
+        counts[s.id] = s.ayahCount;
         void addKey(String raw) {
           final k = _normalizeSurahLookupKey(raw);
           if (k.isNotEmpty) {
@@ -569,7 +656,10 @@ class _ExplanationBottomSheetContentState
         addKey(s.nameEn);
         addKey(s.nameAr);
       }
-      setState(() => _surahNameToId = m);
+      setState(() {
+        _surahNameToId = m;
+        _surahAyahCountById = counts;
+      });
     });
   }
 
@@ -799,6 +889,7 @@ class _ExplanationBottomSheetContentState
             text: result.text,
             relatedAyahs:
                 result.relatedAyahs.isEmpty ? null : result.relatedAyahs,
+            followUpQuestion: q,
           ),
         );
         _isLoadingFollowUp = false;
@@ -1077,6 +1168,8 @@ class _ExplanationBottomSheetContentState
           message: m,
           onTapLink: _openAyahFromHref,
           linkifyAyahReferences: _linkifyAyahReferences,
+          surahName: widget.params.surahName,
+          ayahNumber: widget.params.ayahNumber,
         ),
         if (!m.isUser && (m.relatedAyahs?.isNotEmpty ?? false))
           Builder(
@@ -1483,7 +1576,7 @@ class _ExplanationBottomSheetContentState
         : i == 1
             ? c.kontext
             : c.heute;
-    return _buildVerseExplainCard(body);
+    return _buildVerseExplainCard(body, tafsirSource: c.tafsirSource);
   }
 
   Widget _buildExplanationTabPills() {
@@ -1611,51 +1704,44 @@ class _ExplanationBottomSheetContentState
     );
   }
 
-  Widget _buildExplanationFeedbackRow() {
-    return Row(
-      children: [
-        Expanded(
-          child: Text(
-            'War die Erklärung hilfreich?',
-            style: GoogleFonts.inter(
-              fontSize: 13,
-              fontWeight: FontWeight.w500,
-              color: Colors.white.withOpacity(0.72),
-            ),
-          ),
-        ),
-        IconButton(
-          tooltip: 'Ja',
-          onPressed: () => _submitVerseExplanationFeedback(1),
-          icon: Icon(
-            Icons.thumb_up_outlined,
-            color: _accentChampagneGold,
-            size: 22,
-          ),
-        ),
-        IconButton(
-          tooltip: 'Nein',
-          onPressed: () => _submitVerseExplanationFeedback(-1),
-          icon: Icon(
-            Icons.thumb_down_outlined,
-            color: Colors.white54,
-            size: 22,
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildVerseExplainCard(String body) {
+  Widget _buildVerseExplainCard(String body, {String? tafsirSource}) {
     final keyboardOpen = MediaQuery.viewInsetsOf(context).bottom > 0;
     final showFeedback =
         _cards != null && !_verseExplanationFeedbackSent && !keyboardOpen;
+
+    final sn = widget.params.surahName;
+    final an = widget.params.ayahNumber;
+    final feedbackContext =
+        (sn != null && an != null) ? 'Sure $sn, Vers $an' : null;
 
     final markdown = _MarkdownSection(
       text: _linkifyAyahReferences(body),
       textColor: Colors.white,
       onTapLink: _openAyahFromHref,
     );
+    final sourceCaption = tafsirSource != null && tafsirSource.trim().isNotEmpty
+        ? Padding(
+            padding: const EdgeInsets.only(top: 10),
+            child: AiSourceCaption(source: tafsirSource),
+          )
+        : null;
+    const disclaimer = Padding(
+      padding: EdgeInsets.only(top: 10),
+      child: AiDisclaimerCaption(),
+    );
+    Widget? feedback;
+    if (showFeedback) {
+      feedback = Padding(
+        padding: const EdgeInsets.only(top: 14),
+        child: AiInlineFeedbackRow(
+          screen: 'ai_verse_explanation',
+          context: feedbackContext,
+          onSent: () {
+            if (mounted) setState(() => _verseExplanationFeedbackSent = true);
+          },
+        ),
+      );
+    }
     if (_kExplanationSheetRefinedUi) {
       return Padding(
         padding: const EdgeInsets.fromLTRB(4, 2, 4, 0),
@@ -1664,10 +1750,9 @@ class _ExplanationBottomSheetContentState
           mainAxisSize: MainAxisSize.min,
           children: [
             markdown,
-            if (showFeedback) ...[
-              const SizedBox(height: 14),
-              _buildExplanationFeedbackRow(),
-            ],
+            if (sourceCaption != null) sourceCaption,
+            disclaimer,
+            if (feedback != null) feedback,
           ],
         ),
       );
@@ -1686,10 +1771,9 @@ class _ExplanationBottomSheetContentState
             mainAxisSize: MainAxisSize.min,
             children: [
               markdown,
-              if (showFeedback) ...[
-                const SizedBox(height: 14),
-                _buildExplanationFeedbackRow(),
-              ],
+              if (sourceCaption != null) sourceCaption,
+              disclaimer,
+              if (feedback != null) feedback,
             ],
           ),
         ),
@@ -2023,7 +2107,7 @@ class _ExplanationBottomSheetContentState
                 color: Colors.transparent,
                 child: InkWell(
                   borderRadius: BorderRadius.circular(20),
-                  onTap: () => _openRelatedAyah(ref),
+                  onTap: () => _openAyahPreview(ref.surahId, ref.ayahNumber),
                   child: Ink(
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     decoration: BoxDecoration(
@@ -2046,31 +2130,6 @@ class _ExplanationBottomSheetContentState
         ],
       ),
     );
-  }
-
-  Future<void> _submitVerseExplanationFeedback(int rating) async {
-    if (_verseExplanationFeedbackSent) return;
-    final sn = widget.params.surahName;
-    final an = widget.params.ayahNumber;
-    final ctx = (sn != null && an != null) ? 'Sure $sn, Vers $an' : null;
-    final ok = await AppFeedbackService.send(
-      rating: rating,
-      screen: 'ai_verse_explanation',
-      context: ctx,
-    );
-    if (!mounted) return;
-    if (ok) {
-      setState(() => _verseExplanationFeedbackSent = true);
-      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-        const SnackBar(content: Text('Danke für dein Feedback!')),
-      );
-    } else {
-      ScaffoldMessenger.maybeOf(context)?.showSnackBar(
-        const SnackBar(
-          content: Text('Konnte nicht senden. Bitte später erneut versuchen.'),
-        ),
-      );
-    }
   }
 
   /// Tastatur, laufende Antwort oder bestehender Chat: Footer nicht zuklappen (Eingabe muss erreichbar bleiben).
@@ -2251,14 +2310,33 @@ class _MessageBubble extends StatelessWidget {
     required this.message,
     required this.onTapLink,
     required this.linkifyAyahReferences,
+    this.surahName,
+    this.ayahNumber,
   });
 
   final ChatMessage message;
   final Future<void> Function(String href) onTapLink;
   final String Function(String text) linkifyAyahReferences;
+  final String? surahName;
+  final int? ayahNumber;
+
+  String? _followUpFeedbackContext() {
+    final q = message.followUpQuestion;
+    if (q == null || q.isEmpty) return null;
+    final verse = (surahName != null && ayahNumber != null)
+        ? 'Sure $surahName, Vers $ayahNumber'
+        : null;
+    final shortQ = _truncateForFeedbackContext(q);
+    if (verse != null) return '$verse · Frage: $shortQ';
+    return 'Frage: $shortQ';
+  }
 
   @override
   Widget build(BuildContext context) {
+    final showAiFooter =
+        !message.isUser && message.followUpQuestion != null;
+    final feedbackContext = _followUpFeedbackContext();
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Align(
@@ -2289,12 +2367,7 @@ class _MessageBubble extends StatelessWidget {
                     ),
             ),
             child: Padding(
-              padding: EdgeInsets.fromLTRB(
-                message.isUser ? 16 : 16,
-                12,
-                16,
-                12,
-              ),
+              padding: const EdgeInsets.fromLTRB(16, 12, 16, 12),
               child: message.isUser
                   ? Text(
                       message.text,
@@ -2304,9 +2377,29 @@ class _MessageBubble extends StatelessWidget {
                         height: 1.5,
                       ),
                     )
-                  : _MarkdownSection(
-                      text: linkifyAyahReferences(message.text),
-                      onTapLink: onTapLink,
+                  : Column(
+                      crossAxisAlignment: CrossAxisAlignment.stretch,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        _MarkdownSection(
+                          text: linkifyAyahReferences(message.text),
+                          onTapLink: onTapLink,
+                        ),
+                        if (showAiFooter) ...[
+                          const Padding(
+                            padding: EdgeInsets.only(top: 10),
+                            child: AiDisclaimerCaption(),
+                          ),
+                          Padding(
+                            padding: const EdgeInsets.only(top: 10),
+                            child: AiInlineFeedbackRow(
+                              screen: 'ai_follow_up',
+                              context: feedbackContext,
+                              prompt: 'War die Antwort hilfreich?',
+                            ),
+                          ),
+                        ],
+                      ],
                     ),
             ),
           ),

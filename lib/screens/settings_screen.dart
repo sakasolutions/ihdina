@@ -6,7 +6,7 @@ import 'package:geocoding/geocoding.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_fonts/google_fonts.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import '../main.dart' show appRestartNotifier;
+import '../main.dart' show appRestartNotifier, prayerSettingsRefreshNotifier;
 import '../app_keys.dart';
 import '../data/api/ihdina_api_client.dart';
 import '../data/prayer/notification_service.dart';
@@ -108,6 +108,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final TextEditingController _displayNameController = TextEditingController();
   bool _savingDisplayName = false;
   bool _supportExpanded = false;
+  MadhabOption? _madhabDraft;
+  bool _madhabApplying = false;
 
   @override
   void initState() {
@@ -649,7 +651,39 @@ class _SettingsScreenState extends State<SettingsScreen> {
         _notificationsEnabled = results[1] as bool;
         _dailyAyahReminderEnabled = results[2] as bool;
         _surahIntroAutoShow = results[3] as bool;
+        _madhabDraft = null;
       });
+    }
+  }
+
+  bool get _madhabHasPendingChanges {
+    if (_prayerSettings == null || _madhabDraft == null) return false;
+    return _madhabDraft != _prayerSettings!.madhab;
+  }
+
+  Future<void> _applyMadhab() async {
+    if (_prayerSettings == null || _madhabDraft == null || !_madhabHasPendingChanges) return;
+    setState(() => _madhabApplying = true);
+    try {
+      final updated = _prayerSettings!.copyWith(madhab: _madhabDraft!);
+      await SettingsRepository.instance.setPrayerSettings(updated);
+      if (!mounted) return;
+      setState(() {
+        _prayerSettings = updated;
+        _madhabDraft = null;
+      });
+      await _loadPrayerTimes();
+      prayerSettingsRefreshNotifier.value++;
+      if (mounted && _notificationsEnabled && _prayerResult != null) {
+        await NotificationService.instance.schedulePrayerNotifications(_prayerResult!, updated);
+      }
+      if (mounted) {
+        rootScaffoldMessengerKey.currentState?.showSnackBar(
+          SnackBar(content: Text('Asr-Berechnung: ${updated.madhab.displayName}')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _madhabApplying = false);
     }
   }
 
@@ -857,6 +891,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
               color: Colors.white.withOpacity(0.92),
             ),
           ),
+          if (s.method == PrayerMethodOption.turkiye) ...[
+            const SizedBox(height: 14),
+            _settingsHelpSectionLabel('Diyanet'),
+            const SizedBox(height: 8),
+            Text(
+              'Bei Diyanet-Zeiten in Ihdina bitte Standard belassen. Die Berechnung ist damit auf Moscheezeiten abgestimmt. Hanafi würde Asr später anzeigen und eher abweichen.',
+              style: GoogleFonts.inter(
+                fontSize: 13,
+                height: 1.45,
+                color: Colors.white.withOpacity(0.72),
+              ),
+            ),
+          ],
         ],
       ),
     );
@@ -1347,7 +1394,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           ),
                           const SizedBox(height: 8),
                           DropdownButtonFormField<MadhabOption>(
-                            value: _prayerSettings!.madhab,
+                            value: _madhabDraft ?? _prayerSettings!.madhab,
                             dropdownColor: const Color(0xFF0A2E28),
                             icon: const Icon(Icons.arrow_drop_down, color: Colors.white70, size: 22),
                             decoration: _settingsDropdownDecoration(),
@@ -1361,13 +1408,54 @@ class _SettingsScreenState extends State<SettingsScreen> {
                                       ),
                                     ))
                                 .toList(),
-                            onChanged: (v) async {
-                              if (v == null) return;
-                              final updated = _prayerSettings!.copyWith(madhab: v);
-                              await SettingsRepository.instance.setPrayerSettings(updated);
-                              if (mounted) setState(() => _prayerSettings = updated);
-                            },
+                            onChanged: _madhabApplying
+                                ? null
+                                : (v) {
+                                    if (v == null) return;
+                                    setState(() => _madhabDraft = v);
+                                  },
                           ),
+                          if (_prayerSettings!.method == PrayerMethodOption.turkiye) ...[
+                            const SizedBox(height: 6),
+                            Text(
+                              'Bei Diyanet-Zeiten Standard beibehalten. Entspricht den Moscheezeiten.',
+                              style: GoogleFonts.inter(
+                                fontSize: 11,
+                                height: 1.3,
+                                color: Colors.white.withOpacity(0.45),
+                              ),
+                            ),
+                          ],
+                          if (_madhabHasPendingChanges) ...[
+                            const SizedBox(height: 10),
+                            Align(
+                              alignment: Alignment.centerRight,
+                              child: FilledButton(
+                                onPressed: _madhabApplying ? null : _applyMadhab,
+                                style: FilledButton.styleFrom(
+                                  backgroundColor: _accentChampagneGold,
+                                  foregroundColor: const Color(0xFF0A2E28),
+                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                  minimumSize: Size.zero,
+                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                  textStyle: GoogleFonts.inter(
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
+                                child: _madhabApplying
+                                    ? const SizedBox(
+                                        width: 16,
+                                        height: 16,
+                                        child: CircularProgressIndicator(
+                                          strokeWidth: 2,
+                                          color: Color(0xFF0A2E28),
+                                        ),
+                                      )
+                                    : const Text('Übernehmen'),
+                              ),
+                            ),
+                          ],
                         ],
                       ),
                     ),

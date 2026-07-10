@@ -11,9 +11,16 @@ import { completeFollowUp } from "./openai.service.js";
 import { extractRelatedAyahsFromText } from "../utils/relatedAyahsFromText.js";
 import { getOrCreateUser } from "./user.service.js";
 import { logAiRequest } from "./usageLog.service.js";
+import { getFollowUpAnswerPolicy } from "./questionAnswerPolicy.service.js";
+import { routeQuestion } from "./questionRouter.service.js";
+import { buildVerifiedQuranPromptContext } from "./verifiedQuranPromptContext.service.js";
+import { buildTafsirPromptContext } from "./tafsirContext.service.js";
 
 const MAX_FOLLOWUPS_PER_VERSE = 3;
 const MAX_HISTORY_CONTENT_CHARS = 4_000;
+const AN_NISA_4_34_SENSITIVE_FOLLOWUP_TEXT =
+  "Dieser Vers berührt ein sehr sensibles Thema rund um Verantwortung, Ehekonflikt und Gewalt. Ihdina gibt hierzu keine praktische Handlungsempfehlung und keine religiös-rechtliche Einzelfallentscheidung. Für eine belastbare Auslegung dieses Themenbereichs ist eine qualifizierte, vertrauenswürdige religiöse Anlaufstelle notwendig. Gewalt, Drohung oder Zwang dürfen nicht durch eine App-Antwort religiös legitimiert oder relativiert werden.";
+
 const allowedRoles = new Set(["system", "user", "assistant"]);
 
 export type FollowUpInput = {
@@ -82,28 +89,48 @@ function questionWithLanguageHint(language: string, question: string): string {
   return `(Antworte in ${language.trim()}.) ${q}`;
 }
 
+function extractTafsirSourceFromTrustedContext(trustedContext: string): string | null {
+  if (!trustedContext.includes("ANGEBUNDENER TAFSIR ZUM AUSGEWÄHLTEN VERS")) {
+    return null;
+  }
+
+  const match = trustedContext.match(/^Quelle:\s*(.+)$/m);
+  const source = match?.[1]?.trim();
+
+  return source && source.length > 0 ? source : null;
+}
+
+function appendTafsirSourceToText(text: string, trustedContext: string): string {
+  const source = extractTafsirSourceFromTrustedContext(trustedContext);
+
+  if (!source || text.includes(source)) {
+    return text;
+  }
+
+  return `${text.trim()}\n\nQuelle: ${source}`;
+}
+
+function normalizeSensitiveVerseName(raw: string): string {
+  return raw
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "");
+}
+
+function isAnNisa4_34Input(input: FollowUpInput): boolean {
+  const surah = normalizeSensitiveVerseName(input.surahName);
+  return input.ayahNumber === 34 && (surah === "annisa" || surah === "nisa");
+}
+
 export async function followUpVerse(input: FollowUpInput) {
   validateFollowUpInput(input);
 
   const user = await getOrCreateUser(input.installId);
   const usageDate = utcDateString();
 
-  if (!user.isPro) {
-    const dailyUsed = await getDailyFollowUpCount(user.id, usageDate);
-    if (dailyUsed >= MAX_FREE_FOLLOWUPS_PER_DAY) {
-      await logAiRequest({
-        userId: user.id,
-        endpoint: "POST /api/v1/follow-up",
-        status: "error",
-        errorCode: ErrorCodes.FREE_FOLLOWUP_LIMIT_REACHED,
-      });
-      throw new AppError(
-        ErrorCodes.FREE_FOLLOWUP_LIMIT_REACHED,
-        "Daily free follow-up limit reached.",
-        403
-      );
-    }
-  }
+  const route = routeQuestion(input.question);
+  const policy = getFollowUpAnswerPolicy(route);
 
   const existing = await prisma.followUpUsage.findUnique({
     where: {
@@ -115,6 +142,84 @@ export async function followUpVerse(input: FollowUpInput) {
     },
   });
   const current = existing?.count ?? 0;
+
+  const dailyUsed = user.isPro
+    ? null
+    : await getDailyFollowUpCount(user.id, usageDate);
+
+  /**
+   * Safety, Quellen und absichtliche Provokation werden bewusst ohne Modell
+   * beantwortet. Sie zählen nicht als verbrauchte Folgefrage und bleiben auch
+   * verfügbar, wenn das normale Kontingent bereits ausgeschöpft ist.
+   */
+  if (policy.fixedResponse) {
+    await logAiRequest({
+      userId: user.id,
+      endpoint: "POST /api/v1/follow-up",
+      status: "ok",
+      model: "rule-based",
+    });
+
+    return {
+      text: policy.fixedResponse,
+      isPro: user.isPro,
+      remainingFollowUpsForVerse: Math.max(
+        0,
+        MAX_FOLLOWUPS_PER_VERSE - current
+      ),
+      remainingFollowUpsToday: user.isPro
+        ? null
+        : Math.max(0, MAX_FREE_FOLLOWUPS_PER_DAY - (dailyUsed ?? 0)),
+      relatedAyahs: [],
+    };
+  }
+
+  if (isAnNisa4_34Input(input)) {
+    const tafsirContext = buildTafsirPromptContext({
+      surahName: input.surahName,
+      ayahNumber: input.ayahNumber,
+    });
+
+    const text = appendTafsirSourceToText(
+      AN_NISA_4_34_SENSITIVE_FOLLOWUP_TEXT,
+      tafsirContext
+    );
+
+    await logAiRequest({
+      userId: user.id,
+      endpoint: "POST /api/v1/follow-up",
+      status: "ok",
+      model: "rule-based-sensitive-verse",
+    });
+
+    return {
+      text,
+      isPro: user.isPro,
+      remainingFollowUpsForVerse: Math.max(
+        0,
+        MAX_FOLLOWUPS_PER_VERSE - current
+      ),
+      remainingFollowUpsToday: user.isPro
+        ? null
+        : Math.max(0, MAX_FREE_FOLLOWUPS_PER_DAY - (dailyUsed ?? 0)),
+      relatedAyahs: [],
+    };
+  }
+
+  if (!user.isPro && (dailyUsed ?? 0) >= MAX_FREE_FOLLOWUPS_PER_DAY) {
+    await logAiRequest({
+      userId: user.id,
+      endpoint: "POST /api/v1/follow-up",
+      status: "error",
+      errorCode: ErrorCodes.FREE_FOLLOWUP_LIMIT_REACHED,
+    });
+    throw new AppError(
+      ErrorCodes.FREE_FOLLOWUP_LIMIT_REACHED,
+      "Daily free follow-up limit reached.",
+      403
+    );
+  }
+
   if (current >= MAX_FOLLOWUPS_PER_VERSE) {
     await logAiRequest({
       userId: user.id,
@@ -138,21 +243,49 @@ export async function followUpVerse(input: FollowUpInput) {
     );
   }
 
+  const verifiedContext = buildVerifiedQuranPromptContext({
+    surahName: input.surahName,
+    ayahNumber: input.ayahNumber,
+    includeContextWindow: policy.useContextWindow,
+  });
+
+  const tafsirContext = buildTafsirPromptContext({
+    surahName: input.surahName,
+    ayahNumber: input.ayahNumber,
+  });
+
+  const trustedFollowUpContext = [
+    verifiedContext.promptContext,
+    "",
+    tafsirContext,
+  ].join("\n");
+
   const question = questionWithLanguageHint(input.language, input.question);
 
   let completion;
   try {
-    completion = await completeFollowUp({ history, question });
+    completion = await completeFollowUp({
+      history,
+      question,
+      trustedContext: trustedFollowUpContext,
+      policyInstructions: policy.modelInstructions,
+    });
   } catch (e) {
     await logAiRequest({
       userId: user.id,
       endpoint: "POST /api/v1/follow-up",
       status: "error",
-      errorCode: e instanceof AppError ? e.code : ErrorCodes.AI_TEMPORARILY_UNAVAILABLE,
+      errorCode: e instanceof AppError
+        ? e.code
+        : ErrorCodes.AI_TEMPORARILY_UNAVAILABLE,
     });
     throw e;
   }
-  const text = completion.text;
+
+  const text = appendTafsirSourceToText(
+    completion.text,
+    trustedFollowUpContext
+  );
 
   await prisma.followUpUsage.upsert({
     where: {
@@ -196,7 +329,11 @@ export async function followUpVerse(input: FollowUpInput) {
     },
   });
   const used = after?.count ?? 0;
-  const remainingFollowUpsForVerse = Math.max(0, MAX_FOLLOWUPS_PER_VERSE - used);
+
+  const remainingFollowUpsForVerse = Math.max(
+    0,
+    MAX_FOLLOWUPS_PER_VERSE - used
+  );
 
   const remainingFollowUpsToday = user.isPro
     ? null

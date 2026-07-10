@@ -91,6 +91,15 @@ class SourcesScreen extends StatelessWidget {
                     ),
                     const SizedBox(height: 20),
                     _SourceCard(
+                      icon: Icons.library_books_outlined,
+                      title: 'Tafsir / Erklärungskontext',
+                      body:
+                          'Ihdina nutzt für die Vers-Erklärungen serverseitig angebundene Tafsir-Daten. Die KI wählt diese Quelle nicht selbst aus, sondern erhält zum jeweiligen Vers den passenden Tafsir-Kontext.\n\nDie Erklärung bleibt KI-generiert und ersetzt keine Fatwa oder Gelehrtenmeinung.',
+                      attribution:
+                          "Tafsīr Al-Qur'ān Al-Karīm, Muhammad Ibn Ahmad Ibn Rassoul, IB Verlag, 41. Auflage, 2008",
+                    ),
+                    const SizedBox(height: 20),
+                    _SourceCard(
                       icon: Icons.auto_awesome,
                       title: 'KI-Erklärungen & Tafsir',
                       body: 'Die Erklärungen zu den Versen werden von einer künstlichen Intelligenz generiert. Die KI ist strikt angewiesen, sich ausschließlich auf klassische und authentische sunnitische Tafsir-Werke (wie Tafsir Ibn Kathir) zu stützen.\n\nHinweis: Da die Antworten maschinell zusammengefasst werden, können Fehler nicht zu 100 % ausgeschlossen werden. Für komplexe theologische Fragen (Fiqh) konsultiere bitte stets gelehrte Personen.',
@@ -127,6 +136,7 @@ class _SourceCard extends StatelessWidget {
     required this.icon,
     required this.title,
     required this.body,
+    this.attribution,
     this.linkText,
     this.linkUrl,
   });
@@ -134,6 +144,7 @@ class _SourceCard extends StatelessWidget {
   final IconData icon;
   final String title;
   final String body;
+  final String? attribution;
   final String? linkText;
   final String? linkUrl;
 
@@ -176,6 +187,17 @@ class _SourceCard extends StatelessWidget {
                 color: Colors.white.withOpacity(0.9),
               ),
             ),
+            if (attribution != null && attribution!.trim().isNotEmpty) ...[
+              const SizedBox(height: 14),
+              Text(
+                'Quelle: ${attribution!.trim()}',
+                style: GoogleFonts.inter(
+                  fontSize: 14,
+                  height: 1.45,
+                  color: Colors.white.withOpacity(0.75),
+                ),
+              ),
+            ],
             if (linkText != null && linkUrl != null) ...[
               const SizedBox(height: 14),
               InkWell(

@@ -8,6 +8,7 @@ import '../data/reading/reading_progress.dart';
 import '../data/quran/quran_repository.dart';
 import '../data/ai/takeaway_service.dart';
 import '../data/prayer/notification_service.dart';
+import '../main.dart' show prayerSettingsRefreshNotifier;
 import '../data/prayer/prayer_models.dart';
 import '../data/prayer/prayer_times_repository.dart';
 import '../prayer/prayer_type.dart';
@@ -97,6 +98,7 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
   @override
   void initState() {
     super.initState();
+    prayerSettingsRefreshNotifier.addListener(_onPrayerSettingsRefresh);
     _homeDailyPackFuture = _loadHomeDailyPack();
     _loadLastRead();
     _loadPrayerTimes();
@@ -105,9 +107,14 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
 
   @override
   void dispose() {
+    prayerSettingsRefreshNotifier.removeListener(_onPrayerSettingsRefresh);
     _prayerTimer?.cancel();
     _mainScrollController.dispose();
     super.dispose();
+  }
+
+  void _onPrayerSettingsRefresh() {
+    _loadPrayerTimes();
   }
 
   Future<_HomeDailyPack> _loadHomeDailyPack() async {

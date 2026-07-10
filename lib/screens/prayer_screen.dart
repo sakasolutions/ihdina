@@ -6,6 +6,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../data/prayer/prayer_models.dart';
 import '../data/prayer/prayer_times_repository.dart';
 import '../data/settings/settings_repository.dart';
+import '../main.dart' show prayerSettingsRefreshNotifier;
 import '../prayer/prayer_type.dart';
 import '../theme/app_theme.dart';
 import '../theme/hero_theme.dart';
@@ -43,6 +44,7 @@ class _PrayerScreenState extends State<PrayerScreen> {
   @override
   void initState() {
     super.initState();
+    prayerSettingsRefreshNotifier.addListener(_onPrayerSettingsRefresh);
     _load();
     _refreshTimer = Timer.periodic(const Duration(minutes: 1), (_) => _load());
     _countdownTimer = Timer.periodic(const Duration(seconds: 1), (_) {
@@ -52,9 +54,14 @@ class _PrayerScreenState extends State<PrayerScreen> {
 
   @override
   void dispose() {
+    prayerSettingsRefreshNotifier.removeListener(_onPrayerSettingsRefresh);
     _refreshTimer?.cancel();
     _countdownTimer?.cancel();
     super.dispose();
+  }
+
+  void _onPrayerSettingsRefresh() {
+    _load();
   }
 
   Future<void> _load() async {

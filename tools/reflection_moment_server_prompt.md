@@ -38,6 +38,7 @@ Regeln:
 - KEINE Khutbah, KEINE Predigt, KEIN „Ich predige…“
 - KEINE Fatwa, KEIN Halal/Haram, KEINE Rechtsauskunft
 - KEINE erfundenen Hadithe, Verse oder Gelehrtenzitate
+- Verwende standardmäßig «Allah» als Bezeichnung für den Schöpfer. Schreibe nicht «Gott», außer in direkten Zitaten aus dem gegebenen Vers, der Übersetzung oder anderen ausdrücklich genannten Quellen — diese Zitate unverändert lassen
 - Bei Tiefe: freundlich auf Moschee/Gelehrte verweisen (nicht zitieren)
 
 Wenn `kind` = `friday`:

@@ -1,5 +1,3 @@
-import 'dart:math' as math;
-
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
@@ -279,7 +277,7 @@ class QuranVerseReaderTile extends StatelessWidget {
   }
 }
 
-/// Dreht die komplette [GlassCard] (Hülle + Inhalt + Buttons) um die Y-Achse.
+/// Wechselt die komplette [GlassCard] per Pseudo-Flip (scaleX, kein 3D-Ghost).
 class _FlippingCardPanel extends StatefulWidget {
   const _FlippingCardPanel({
     super.key,
@@ -303,7 +301,7 @@ class _FlippingCardPanelState extends State<_FlippingCardPanel>
   static const Duration _flipDuration = Duration(milliseconds: 300);
 
   late final AnimationController _controller;
-  late final Animation<double> _turns;
+  late final Animation<double> _progress;
   int _handledRevision = 0;
   bool _tapLocked = false;
   Widget? _fromFace;
@@ -314,7 +312,7 @@ class _FlippingCardPanelState extends State<_FlippingCardPanel>
     super.initState();
     _handledRevision = widget.modeRevision;
     _controller = AnimationController(vsync: this, duration: _flipDuration);
-    _turns = CurvedAnimation(parent: _controller, curve: Curves.easeInOut);
+    _progress = CurvedAnimation(parent: _controller, curve: Curves.easeInOut);
     _controller.addStatusListener(_onAnimationStatus);
   }
 
@@ -371,20 +369,23 @@ class _FlippingCardPanelState extends State<_FlippingCardPanel>
 
     return RepaintBoundary(
       child: AnimatedBuilder(
-        animation: _turns,
+        animation: _progress,
         builder: (context, _) {
-          final angle = _turns.value * math.pi;
-          final pastHalf = _turns.value >= 0.5;
+          final t = _progress.value;
+          final pastHalf = t >= 0.5;
+          final scaleX = (pastHalf ? (t - 0.5) * 2 : (1 - t * 2)).clamp(0.0, 1.0);
+          // Bei schmaler Card zusätzlich ausblenden — verhindert milchigen Streifen
+          // aus der halbtransparenten GlassCard in der Drehmitte.
+          final face = pastHalf ? toFace : fromFace;
 
-          return Transform(
-            alignment: Alignment.center,
-            transform: Matrix4.identity()
-              ..setEntry(3, 2, 0.0008)
-              ..rotateY(angle),
-            child: Transform(
-              alignment: Alignment.center,
-              transform: Matrix4.identity()..rotateY(pastHalf ? math.pi : 0),
-              child: pastHalf ? toFace : fromFace,
+          return ClipRect(
+            child: Opacity(
+              opacity: scaleX,
+              child: Transform(
+                alignment: Alignment.center,
+                transform: Matrix4.identity()..scale(scaleX == 0 ? 0.001 : scaleX, 1.0, 1.0),
+                child: face,
+              ),
             ),
           );
         },

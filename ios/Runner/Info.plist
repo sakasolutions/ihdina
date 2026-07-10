@@ -27,7 +27,7 @@
 		<key>LSRequiresIPhoneOS</key>
 		<true/>
 		<key>NSLocationWhenInUseUsageDescription</key>
-		<string>Ihdina benötigt deinen Standort, um die exakten Gebetszeiten für deine aktuelle Stadt zu berechnen.</string>
+		<string>Ihdina nutzt deinen Standort, um Gebetszeiten und die Qibla-Richtung für deinen aktuellen Ort zu berechnen.</string>
 		<key>NSMicrophoneUsageDescription</key>
 		<string>Ihdina nutzt das Mikrofon nur für Spracheingabe; die Erkennung erfolgt auf dem Gerät, ohne unsere Server.</string>
 		<key>NSSpeechRecognitionUsageDescription</key>

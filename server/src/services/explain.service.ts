@@ -14,6 +14,9 @@ import {
 import { completeExplanation } from "./openai.service.js";
 import { getOrCreateUser } from "./user.service.js";
 import { logAiRequest } from "./usageLog.service.js";
+import { VERSE_EXPLANATION_POLICY } from "./verseExplanationPolicy.service.js";
+import { buildVerifiedQuranPromptContext } from "./verifiedQuranPromptContext.service.js";
+import { buildTafsirPromptContext } from "./tafsirContext.service.js";
 
 export type ExplainInput = {
   installId: string;
@@ -65,11 +68,20 @@ export async function explainVerse(input: ExplainInput) {
 
   let completion;
   try {
-    completion = await completeExplanation({
+    const verifiedContext = buildVerifiedQuranPromptContext({
       surahName: input.surahName,
       ayahNumber: input.ayahNumber,
-      textAr: input.textAr,
-      textDe: input.textDe,
+      includeContextWindow: true,
+    });
+
+    const tafsirContext = buildTafsirPromptContext({
+      surahName: input.surahName,
+      ayahNumber: input.ayahNumber,
+    });
+
+    completion = await completeExplanation({
+      trustedContext: [verifiedContext.promptContext, "", tafsirContext].join("\n"),
+      policyInstructions: VERSE_EXPLANATION_POLICY,
     });
   } catch (e) {
     await logAiRequest({

@@ -7,9 +7,10 @@ abstract final class DuaGuidanceCopy {
 
   /// Detailansicht: Rezitation vs. Übersetzung.
   static const String detailRecitation =
-      'Persönliche Bittgebete darfst du in deiner Sprache sprechen. '
-      'Diese überlieferte Formel rezitierst du auf Arabisch; die deutsche Übersetzung dient dem Verstehen. '
-      'Bei Unsicherheit frage vertrauenswürdige Gelehrte.';
+      'Diese Bittgebete sind überliefert und werden traditionell auf Arabisch gesprochen. '
+      'Die deutsche Übersetzung hilft beim Verstehen. '
+      'Für eigene, freie Bittgebete in deiner Sprache gibt es unter Gelehrten einen breiten Konsens, dass das erlaubt ist. '
+      'Bei Unsicherheit frage bitte jemanden mit fundiertem Wissen.';
 
   /// Detailansicht, solange [DuaEntry.transliteration] leer ist.
   static const String detailTransliterationSoon =

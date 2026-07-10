@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 import '../data/ai/reflection_moment_service.dart';
+import 'ai_content_footer.dart';
 import 'glass_card.dart';
 
 const Color _accentGold = Color(0xFFE5C07B);
@@ -79,7 +80,7 @@ class _CollapsibleReflectionMomentSectionState
   }
 }
 
-class _ReflectionMomentCard extends StatelessWidget {
+class _ReflectionMomentCard extends StatefulWidget {
   const _ReflectionMomentCard({
     required this.moment,
     required this.expanded,
@@ -91,7 +92,18 @@ class _ReflectionMomentCard extends StatelessWidget {
   final VoidCallback onToggle;
 
   @override
+  State<_ReflectionMomentCard> createState() => _ReflectionMomentCardState();
+}
+
+class _ReflectionMomentCardState extends State<_ReflectionMomentCard> {
+  bool _feedbackSent = false;
+
+  @override
   Widget build(BuildContext context) {
+    final moment = widget.moment;
+    final expanded = widget.expanded;
+    final onToggle = widget.onToggle;
+
     return Material(
       color: Colors.transparent,
       child: InkWell(
@@ -179,17 +191,22 @@ class _ReflectionMomentCard extends StatelessWidget {
                       color: Colors.white.withOpacity(0.9),
                     ),
                   ),
-                  const SizedBox(height: 12),
-                  Text(
-                    'Keine Predigt · keine Rechtsauskunft · bei Tiefe Gelehrte fragen',
-                    textAlign: TextAlign.center,
-                    style: GoogleFonts.inter(
-                      fontSize: 9,
-                      fontWeight: FontWeight.w500,
-                      letterSpacing: 0.2,
-                      color: Colors.white.withOpacity(0.28),
-                    ),
+                  const Padding(
+                    padding: EdgeInsets.only(top: 12),
+                    child: AiDisclaimerCaption(),
                   ),
+                  if (!_feedbackSent)
+                    Padding(
+                      padding: const EdgeInsets.only(top: 10),
+                      child: AiInlineFeedbackRow(
+                        screen: 'ai_reflection_moment',
+                        context: moment.isFriday ? 'friday' : 'daily',
+                        prompt: 'War der Impuls hilfreich?',
+                        onSent: () {
+                          if (mounted) setState(() => _feedbackSent = true);
+                        },
+                      ),
+                    ),
                 ],
               ],
             ),

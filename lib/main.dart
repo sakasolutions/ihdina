@@ -13,6 +13,9 @@ import 'screens/bootstrap_screen.dart';
 
 final appRestartNotifier = ValueNotifier<int>(0);
 
+/// Leichter Refresh für Home/Gebet nach Gebetseinstellungen (ohne MaterialApp-Rebuild).
+final prayerSettingsRefreshNotifier = ValueNotifier<int>(0);
+
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
   // Security: never require API keys in release builds.

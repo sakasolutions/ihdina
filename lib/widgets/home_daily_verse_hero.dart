@@ -4,6 +4,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../data/daily_hadith/daily_hadith_entry.dart';
 import '../theme/app_theme.dart';
 import '../utils/daily_verse_takeaway.dart';
+import 'ai_content_footer.dart';
 import 'glass_card.dart';
 import 'home_daily_pack_sunna_section.dart';
 import 'home_verse_secondary_actions.dart';
@@ -251,6 +252,8 @@ class HomeDailyVerseHero extends StatelessWidget {
   }
 
   Widget _buildLegacyTakeawayBlock(String takeawayLine, bool soft) {
+    final feedbackContext =
+        '${displaySureNameForHome(surahNameEn)}, Vers $ayahNumber';
     return Container(
       padding: const EdgeInsets.only(top: 14),
       decoration: BoxDecoration(
@@ -302,6 +305,16 @@ class HomeDailyVerseHero extends StatelessWidget {
                   color: Colors.white.withOpacity(soft ? 0.78 : 0.94),
                 ),
               ),
+            ),
+          ),
+          const Padding(
+            padding: EdgeInsets.only(top: 10),
+            child: AiDisclaimerCaption(),
+          ),
+          Padding(
+            padding: const EdgeInsets.only(top: 10),
+            child: _TakeawayFeedbackOnce(
+              feedbackContext: feedbackContext,
             ),
           ),
         ],
@@ -625,6 +638,33 @@ class _MehrVerstehenGlassButtonState extends State<_MehrVerstehenGlassButton>
             ),
           ),
         );
+      },
+    );
+  }
+}
+
+/// Einmaliges Daumen-Feedback pro Tagesvers-Hero (Takeaway-Bereich).
+class _TakeawayFeedbackOnce extends StatefulWidget {
+  const _TakeawayFeedbackOnce({required this.feedbackContext});
+
+  final String feedbackContext;
+
+  @override
+  State<_TakeawayFeedbackOnce> createState() => _TakeawayFeedbackOnceState();
+}
+
+class _TakeawayFeedbackOnceState extends State<_TakeawayFeedbackOnce> {
+  bool _sent = false;
+
+  @override
+  Widget build(BuildContext context) {
+    if (_sent) return const SizedBox.shrink();
+    return AiInlineFeedbackRow(
+      screen: 'ai_takeaway',
+      context: widget.feedbackContext,
+      prompt: 'War der Impuls hilfreich?',
+      onSent: () {
+        if (mounted) setState(() => _sent = true);
       },
     );
   }
