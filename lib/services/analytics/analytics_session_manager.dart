@@ -16,7 +16,7 @@ class AnalyticsSessionManager {
   String? _sessionId;
   DateTime? _lastActivity;
 
-  Future<void> ensureLoaded() async {
+  Future<void> ensureLoaded({DateTime? now}) async {
     _prefs ??= await SharedPreferences.getInstance();
     _sessionId ??= _prefs!.getString(_sessionIdKey);
     if (_lastActivity == null) {
@@ -24,7 +24,7 @@ class AnalyticsSessionManager {
       _lastActivity =
           ms == null ? null : DateTime.fromMillisecondsSinceEpoch(ms);
     }
-    _maybeRotateSession(DateTime.now().toUtc());
+    _maybeRotateSession((now ?? DateTime.now()).toUtc());
   }
 
   String currentSessionId({DateTime? now}) {
@@ -36,8 +36,8 @@ class AnalyticsSessionManager {
 
   /// Aktivität melden (nicht bei jedem Widget-Rebuild — nur bei echten Events/Resume).
   Future<void> recordActivity({DateTime? now}) async {
-    await ensureLoaded();
     final t = (now ?? DateTime.now()).toUtc();
+    await ensureLoaded(now: t);
     _maybeRotateSession(t);
     _lastActivity = t;
     await _prefs!.setInt(_lastActivityKey, t.millisecondsSinceEpoch);
