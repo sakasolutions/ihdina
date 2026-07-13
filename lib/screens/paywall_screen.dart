@@ -130,7 +130,6 @@ class _PaywallScreenState extends State<PaywallScreen> {
       return;
     }
 
-    final packageId = package.identifier;
     unawaited(AnalyticsService.instance.trackPurchaseStarted(packageId: packageId));
 
     final outcome = await RevenueCatService.purchasePackageWithOutcome(package);
