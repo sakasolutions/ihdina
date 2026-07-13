@@ -13,13 +13,18 @@ echo "==> Verifikation auf: ${DATABASE_URL}"
 echo "==> Tabellen vorhanden?"
 npx tsx -e "
 import { PrismaClient } from '@prisma/client';
-const p = new PrismaClient();
-const tables = await p.\$queryRaw\`
-  SELECT table_name FROM information_schema.tables
-  WHERE table_schema = 'public' AND table_type = 'BASE TABLE'
-  ORDER BY table_name\`;
-console.log(tables);
-await p.\$disconnect();
+(async () => {
+  const p = new PrismaClient();
+  try {
+    const tables = await p.\$queryRaw\`
+      SELECT table_name FROM information_schema.tables
+      WHERE table_schema = 'public' AND table_type = 'BASE TABLE'
+      ORDER BY table_name\`;
+    console.log(tables);
+  } finally {
+    await p.\$disconnect();
+  }
+})();
 "
 
 echo "==> Backfill firstAppOpenAt…"
