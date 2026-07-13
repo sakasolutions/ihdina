@@ -4,6 +4,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { env } from "./config/env.js";
 import { registerAdminRoutes } from "./routes/admin.routes.js";
+import { registerAdminV2Ui } from "./routes/adminV2Ui.routes.js";
 import { registerV1Routes } from "./routes/v1.routes.js";
 import { AppError, ErrorCodes, errorPayload } from "./utils/errors.js";
 
@@ -30,6 +31,15 @@ export async function buildApp() {
   app.setErrorHandler((err, req, reply) => {
     if (err instanceof AppError) {
       return reply.status(err.httpStatus).send(errorPayload(err.code, err.message));
+    }
+    const statusCode =
+      err && typeof err === "object" && "statusCode" in err
+        ? Number((err as { statusCode: number }).statusCode)
+        : undefined;
+    if (statusCode === 429) {
+      return reply.status(429).send(
+        errorPayload(ErrorCodes.RATE_LIMIT_EXCEEDED, "Too many analytics requests. Retry later.")
+      );
     }
     req.log.error(err);
     return reply
@@ -62,6 +72,7 @@ export async function buildApp() {
         return reply.status(404).type("text/plain").send("Admin UI (index.html) nicht gefunden.");
       }
     });
+    await registerAdminV2Ui(app);
   }
 
   return app;

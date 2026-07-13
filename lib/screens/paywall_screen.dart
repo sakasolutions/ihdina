@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:math' show min;
 
 import 'package:flutter/material.dart';
@@ -7,6 +8,8 @@ import 'package:intl/intl.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+import '../services/analytics/analytics_constants.dart';
+import '../services/analytics/analytics_service.dart';
 import '../services/revenuecat_service.dart';
 import '../theme/app_theme.dart';
 import '../theme/hero_theme.dart';
@@ -27,7 +30,13 @@ const String _proYearlyPackageId = 'pro_annual';
 
 /// Paywall: Kauf-/Restore über [handlePurchase] / RevenueCat (Logik unverändert).
 class PaywallScreen extends StatefulWidget {
-  const PaywallScreen({super.key});
+  const PaywallScreen({
+    super.key,
+    this.analyticsTrigger = AnalyticsPaywallTrigger.other,
+  });
+
+  /// Server-`trigger` für `paywall_viewed`.
+  final String analyticsTrigger;
 
   @override
   State<PaywallScreen> createState() => _PaywallScreenState();
@@ -37,6 +46,8 @@ class _PaywallScreenState extends State<PaywallScreen> {
   bool isLoading = false;
   bool isRestoring = false;
   bool _yearlySelected = true;
+  bool _paywallViewedTracked = false;
+  bool _userSelectedPackage = false;
   List<Package> _packages = [];
   bool _packagesLoading = true;
 
@@ -44,6 +55,16 @@ class _PaywallScreenState extends State<PaywallScreen> {
   void initState() {
     super.initState();
     _loadPackages();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (_paywallViewedTracked) return;
+      _paywallViewedTracked = true;
+      unawaited(
+        AnalyticsService.instance.trackScreenViewed(screen: AnalyticsScreens.paywall),
+      );
+      unawaited(
+        AnalyticsService.instance.trackPaywallViewed(trigger: widget.analyticsTrigger),
+      );
+    });
   }
 
   Future<void> _loadPackages() async {
@@ -64,17 +85,20 @@ class _PaywallScreenState extends State<PaywallScreen> {
   }
 
   String get _monthlyPriceString =>
-      _packageByIdentifier(_proMonthlyPackageId)?.storeProduct.priceString ?? '—';
+      _packageByIdentifier(_proMonthlyPackageId)?.storeProduct.priceString ??
+      '—';
 
   String get _yearlyPriceString =>
-      _packageByIdentifier(_proYearlyPackageId)?.storeProduct.priceString ?? '—';
+      _packageByIdentifier(_proYearlyPackageId)?.storeProduct.priceString ??
+      '—';
 
   String get _yearlyPerMonthLabel {
     final annual = _packageByIdentifier(_proYearlyPackageId);
     if (annual == null) return '—';
     final perMonth = annual.storeProduct.price / 12;
     final currency = annual.storeProduct.currencyCode;
-    final formatted = NumberFormat.simpleCurrency(name: currency).format(perMonth);
+    final formatted =
+        NumberFormat.simpleCurrency(name: currency).format(perMonth);
     return 'entspricht nur $formatted / Monat';
   }
 
@@ -98,22 +122,41 @@ class _PaywallScreenState extends State<PaywallScreen> {
       if (mounted) {
         setState(() => isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Angebot nicht verfügbar. Bitte später erneut versuchen.')),
+          const SnackBar(
+              content: Text(
+                  'Angebot nicht verfügbar. Bitte später erneut versuchen.')),
         );
       }
       return;
     }
 
-    final success = await RevenueCatService.purchasePackage(package);
+    final packageId = package.identifier;
+    unawaited(AnalyticsService.instance.trackPurchaseStarted(packageId: packageId));
+
+    final outcome = await RevenueCatService.purchasePackageWithOutcome(package);
 
     if (!mounted) return;
     setState(() => isLoading = false);
 
-    if (success) {
+    if (outcome == PurchaseOutcome.success) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(content: Text('Willkommen bei Ihdina Pro!')),
       );
       Navigator.of(context).pop();
+    } else if (outcome == PurchaseOutcome.cancelled) {
+      unawaited(
+        AnalyticsService.instance.trackPurchaseCancelled(
+          packageId: packageId,
+          reason: 'user_cancelled',
+        ),
+      );
+    } else {
+      unawaited(
+        AnalyticsService.instance.trackPurchaseFailed(
+          packageId: packageId,
+          errorCode: 'store_error',
+        ),
+      );
     }
   }
 
@@ -134,8 +177,18 @@ class _PaywallScreenState extends State<PaywallScreen> {
     }
   }
 
+  void _onPackageTapped(bool yearly) {
+    setState(() => _yearlySelected = yearly);
+    _userSelectedPackage = true;
+    final id = yearly ? _proYearlyPackageId : _proMonthlyPackageId;
+    unawaited(AnalyticsService.instance.trackPackageSelected(packageId: id));
+  }
+
   void _onPurchaseTap() {
     final id = _yearlySelected ? _proYearlyPackageId : _proMonthlyPackageId;
+    if (!_userSelectedPackage) {
+      unawaited(AnalyticsService.instance.trackPackageSelected(packageId: id));
+    }
     handlePurchase(id);
   }
 
@@ -181,9 +234,7 @@ class _PaywallScreenState extends State<PaywallScreen> {
                           width: layoutW,
                           child: _PaywallPremiumCard(
                             yearlySelected: _yearlySelected,
-                            onYearlySelected: (yearly) {
-                              setState(() => _yearlySelected = yearly);
-                            },
+                            onYearlySelected: _onPackageTapped,
                             isLoading: isLoading,
                             isRestoring: isRestoring,
                             packagesLoading: _packagesLoading,
@@ -288,7 +339,8 @@ class _PaywallPremiumCard extends StatelessWidget {
                             decoration: BoxDecoration(
                               color: Colors.white.withOpacity(0.1),
                               shape: BoxShape.circle,
-                              border: Border.all(color: Colors.white.withOpacity(0.15)),
+                              border: Border.all(
+                                  color: Colors.white.withOpacity(0.15)),
                             ),
                             child: const Icon(
                               Icons.close_rounded,
@@ -404,15 +456,19 @@ class _PaywallPremiumCard extends StatelessWidget {
                 const SizedBox(height: 10),
                 Center(
                   child: TextButton(
-                    onPressed: (isLoading || isRestoring) ? null : () => onRestore(),
+                    onPressed:
+                        (isLoading || isRestoring) ? null : () => onRestore(),
                     style: TextButton.styleFrom(
                       foregroundColor: Colors.white.withOpacity(0.24),
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                      padding: const EdgeInsets.symmetric(
+                          horizontal: 8, vertical: 4),
                       minimumSize: Size.zero,
                       tapTargetSize: MaterialTapTargetSize.shrinkWrap,
                     ),
                     child: Text(
-                      isRestoring ? 'Wiederherstellen…' : 'Käufe wiederherstellen',
+                      isRestoring
+                          ? 'Wiederherstellen…'
+                          : 'Käufe wiederherstellen',
                       style: GoogleFonts.inter(
                         fontSize: 10,
                         fontWeight: FontWeight.w500,
@@ -436,7 +492,9 @@ class _PaywallPremiumCard extends StatelessWidget {
                         ),
                       ),
                     ),
-                    Text('·', style: const TextStyle(color: Colors.white24, fontSize: 11)),
+                    Text('·',
+                        style: const TextStyle(
+                            color: Colors.white24, fontSize: 11)),
                     TextButton(
                       onPressed: () => launchUrl(
                         Uri.parse('https://ihdina.app/agb'),
@@ -453,10 +511,10 @@ class _PaywallPremiumCard extends StatelessWidget {
                   ],
                 ),
               ],
+            ),
           ),
         ),
       ),
-    ),
     );
   }
 }
@@ -835,7 +893,8 @@ class _BreathingCtaState extends State<_BreathingCta>
                 borderRadius: BorderRadius.circular(ctaRadius),
                 boxShadow: [
                   BoxShadow(
-                    color: const Color(0xFFE6C48A).withOpacity(_glow.value * 0.35),
+                    color:
+                        const Color(0xFFE6C48A).withOpacity(_glow.value * 0.35),
                     blurRadius: 22,
                     spreadRadius: -4,
                     offset: const Offset(0, 4),
@@ -870,7 +929,8 @@ class _BreathingCtaState extends State<_BreathingCta>
                 borderRadius: BorderRadius.circular(ctaRadius),
               ),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 22, vertical: 14),
                 child: Center(
                   child: widget.isLoading
                       ? const SizedBox(

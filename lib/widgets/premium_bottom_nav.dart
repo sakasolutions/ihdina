@@ -41,21 +41,23 @@ class PremiumBottomNav extends StatelessWidget {
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-              children: List.generate(_itemCount, (index) => _NavItem(
-                label: _labels[index],
-                icon: _icons[index],
-                iconSize: index == _homeTabIndex
-                    ? _NavItem._homeIconSize
-                    : _NavItem._iconSize,
-                selected: currentIndex == index,
-                accentColor: _accentChampagneGold,
-                onTap: () {
-                  if (enableHaptics) {
-                    HapticFeedback.lightImpact();
-                  }
-                  onTap(index);
-                },
-              )),
+              children: List.generate(
+                  _itemCount,
+                  (index) => _NavItem(
+                        label: _labels[index],
+                        icon: _icons[index],
+                        iconSize: index == _homeTabIndex
+                            ? _NavItem._homeIconSize
+                            : _NavItem._iconSize,
+                        selected: currentIndex == index,
+                        accentColor: _accentChampagneGold,
+                        onTap: () {
+                          if (enableHaptics) {
+                            HapticFeedback.lightImpact();
+                          }
+                          onTap(index);
+                        },
+                      )),
             ),
           ),
         ),

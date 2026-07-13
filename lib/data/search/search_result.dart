@@ -14,6 +14,7 @@ class SearchResult {
   final String surahNameEn;
   final String surahNameAr;
   final String textAr;
+
   /// German translation (optional, set by offline verse search).
   final String? textDe;
 

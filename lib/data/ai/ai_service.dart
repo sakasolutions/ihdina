@@ -29,7 +29,9 @@ String get aiUnavailableMessage => _aiUnavailableMessage;
 
 /// Thrown when the daily limit for AI explanations is reached.
 class AIRateLimitException implements Exception {
-  AIRateLimitException([this.message = 'Tägliches Limit für KI-Erklärungen erreicht. Bitte versuche es morgen wieder.']);
+  AIRateLimitException(
+      [this.message =
+          'Tägliches Limit für KI-Erklärungen erreicht. Bitte versuche es morgen wieder.']);
   final String message;
   @override
   String toString() => message;
@@ -47,9 +49,10 @@ class AIServiceException implements Exception {
 const String _allahTerminologyRule =
     'Verwende standardmäßig «Allah» als Bezeichnung für den Schöpfer. Schreibe nicht «Gott», außer in direkten Zitaten aus dem gegebenen Vers, der Übersetzung oder anderen ausdrücklich genannten Quellen — diese Zitate unverändert lassen.';
 
-const String aiSystemPrompt = r'''Du bist ein hilfsbereiter, islamischer Bildungs-Assistent für eine Premium-Koran-App. Deine Aufgabe ist es, Koranverse basierend auf klassischem, anerkanntem Tafsir (wie Ibn Kathir) auf Deutsch zu erklären. 
+const String aiSystemPrompt =
+    r'''Du bist ein hilfsbereiter, islamischer Bildungs-Assistent für eine Premium-Koran-App. Deine Aufgabe ist es, Koranverse basierend auf klassischem, anerkanntem Tafsir (wie Ibn Kathir) auf Deutsch zu erklären. 
 REGELN: 1. Erkläre den Kontext und die Bedeutung für das heutige Leben. 2. Du darfst NIEMALS Fiqh-Fragen beantworten, Fatwas erteilen oder Dinge als Haram/Halal deklarieren. Wenn eine Frage in diese Richtung geht, weise höflich darauf hin, dass du eine KI bist und der Nutzer einen qualifizierten Gelehrten fragen soll. 3. Antworte in klarem, respektvollem und leicht verständlichem Deutsch. Formatiere die Antwort mit kurzen Absätzen. 4. ''' +
-    _allahTerminologyRule;
+        _allahTerminologyRule;
 
 const String _cacheKeyPrefix = 'ai_exp_';
 
@@ -71,6 +74,7 @@ class AiFollowUpResult {
 
   final String text;
   final int remainingFollowUpsForVerse;
+
   /// `null` = Pro (unbegrenzt); sonst verbleibende Folgefragen heute (Free).
   final int? remainingFollowUpsToday;
   final List<RelatedAyahRef> relatedAyahs;
@@ -253,9 +257,8 @@ class AIService {
         throw AIServiceException('Leere Antwort vom Server.');
       }
       final remRaw = data['remainingFollowUpsForVerse'];
-      final remaining = remRaw is int
-          ? remRaw
-          : (remRaw is num ? remRaw.toInt() : 0);
+      final remaining =
+          remRaw is int ? remRaw : (remRaw is num ? remRaw.toInt() : 0);
       final remTodayRaw = data['remainingFollowUpsToday'];
       final int? remainingToday = remTodayRaw == null
           ? null

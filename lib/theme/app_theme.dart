@@ -6,8 +6,10 @@ class AppColors {
 
   /// Logo-Emerald: heller Akzent (oben).
   static const Color emeraldLight = Color(0xFF1E6B52);
+
   /// Logo-Emerald: mittlerer Ton.
   static const Color emeraldMedium = Color(0xFF13382D);
+
   /// Logo-Emerald: tiefer Schatten.
   static const Color emeraldDark = Color(0xFF081A15);
 

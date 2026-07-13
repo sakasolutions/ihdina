@@ -90,7 +90,8 @@ class _QuranScreenState extends State<QuranScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final heroPhase = DynamicHeroTheme.phaseFromPrayer(_prayerResult?.nextPrayerType);
+    final heroPhase =
+        DynamicHeroTheme.phaseFromPrayer(_prayerResult?.nextPrayerType);
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -104,91 +105,97 @@ class _QuranScreenState extends State<QuranScreen> {
           child: Stack(
             fit: StackFit.expand,
             children: [
-            Positioned.fill(
-              child: Opacity(
-                opacity: 0.1,
-                child: Image.asset(
-                  DynamicHeroTheme.backgroundAsset(heroPhase),
-                  fit: BoxFit.cover,
-                  width: double.infinity,
-                  height: double.infinity,
-                  errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+              Positioned.fill(
+                child: Opacity(
+                  opacity: 0.1,
+                  child: Image.asset(
+                    DynamicHeroTheme.backgroundAsset(heroPhase),
+                    fit: BoxFit.cover,
+                    width: double.infinity,
+                    height: double.infinity,
+                    errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                  ),
                 ),
               ),
-            ),
-            SafeArea(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(_outerPadding, 20, _outerPadding, 0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      Text(
-                        'Koran',
-                        style: GoogleFonts.playfairDisplay(
-                          fontSize: 28,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.white,
-                          shadows: const [
-                            Shadow(color: Colors.black45, blurRadius: 4),
-                          ],
-                        ),
-                      ),
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
+              SafeArea(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(
+                          _outerPadding, 20, _outerPadding, 0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
-                          Padding(
-                            padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 4),
-                            child: IconButton(
-                              icon: Icon(
-                                Icons.search_rounded,
-                                size: 26,
-                                color: Colors.white,
-                              ),
-                              tooltip: 'Suche',
-                              onPressed: () => Navigator.push(
-                                context,
-                                MaterialPageRoute<void>(builder: (_) => const SearchScreen()),
-                              ),
-                              style: IconButton.styleFrom(
-                                minimumSize: const Size(52, 52),
-                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                              ),
+                          Text(
+                            'Koran',
+                            style: GoogleFonts.playfairDisplay(
+                              fontSize: 28,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                              shadows: const [
+                                Shadow(color: Colors.black45, blurRadius: 4),
+                              ],
                             ),
                           ),
-                          IconButton(
-                            icon: Icon(
-                              Icons.bookmark_border_rounded,
-                              size: 24,
-                              color: Colors.white,
-                            ),
-                            tooltip: 'Sammlung',
-                            onPressed: () => Navigator.push(
-                              context,
-                              MaterialPageRoute<void>(builder: (_) => const MyVersesScreen()),
-                            ),
-                            style: IconButton.styleFrom(
-                              minimumSize: const Size(48, 48),
-                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                            ),
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Padding(
+                                padding: const EdgeInsets.symmetric(
+                                    horizontal: 2, vertical: 4),
+                                child: IconButton(
+                                  icon: Icon(
+                                    Icons.search_rounded,
+                                    size: 26,
+                                    color: Colors.white,
+                                  ),
+                                  tooltip: 'Suche',
+                                  onPressed: () => Navigator.push(
+                                    context,
+                                    MaterialPageRoute<void>(
+                                        builder: (_) => const SearchScreen()),
+                                  ),
+                                  style: IconButton.styleFrom(
+                                    minimumSize: const Size(52, 52),
+                                    tapTargetSize:
+                                        MaterialTapTargetSize.shrinkWrap,
+                                  ),
+                                ),
+                              ),
+                              IconButton(
+                                icon: Icon(
+                                  Icons.bookmark_border_rounded,
+                                  size: 24,
+                                  color: Colors.white,
+                                ),
+                                tooltip: 'Sammlung',
+                                onPressed: () => Navigator.push(
+                                  context,
+                                  MaterialPageRoute<void>(
+                                      builder: (_) => const MyVersesScreen()),
+                                ),
+                                style: IconButton.styleFrom(
+                                  minimumSize: const Size(48, 48),
+                                  tapTargetSize:
+                                      MaterialTapTargetSize.shrinkWrap,
+                                ),
+                              ),
+                            ],
                           ),
                         ],
                       ),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(height: _sectionGap),
+                    Expanded(
+                      child: _buildList(),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: _sectionGap),
-                Expanded(
-                  child: _buildList(),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
-        ),
         ),
       ),
     );
@@ -237,7 +244,8 @@ class _QuranScreenState extends State<QuranScreen> {
             child: QuranContinueReadingCard(
               surahName: continueSurah!.nameDe,
               ayahNumber: _lastRead!.ayahNumber,
-              onTap: () => _openReader(continueSurah!, initialAyah: _lastRead!.ayahNumber),
+              onTap: () => _openReader(continueSurah!,
+                  initialAyah: _lastRead!.ayahNumber),
             ),
           );
         }
@@ -282,7 +290,8 @@ class _QuranScreenState extends State<QuranScreen> {
                       : null,
                 ),
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                   child: Row(
                     children: [
                       Container(
@@ -345,7 +354,8 @@ class _QuranScreenState extends State<QuranScreen> {
                               if ((_bookmarkCounts[surah.number] ?? 0) > 1) ...[
                                 const SizedBox(width: 4),
                                 Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                  padding: const EdgeInsets.symmetric(
+                                      horizontal: 6, vertical: 2),
                                   decoration: BoxDecoration(
                                     color: Colors.white.withOpacity(0.15),
                                     borderRadius: BorderRadius.circular(10),
@@ -363,7 +373,8 @@ class _QuranScreenState extends State<QuranScreen> {
                             ],
                           ),
                         ),
-                      Icon(Icons.chevron_right_rounded, color: Colors.white54, size: 24),
+                      Icon(Icons.chevron_right_rounded,
+                          color: Colors.white54, size: 24),
                     ],
                   ),
                 ),

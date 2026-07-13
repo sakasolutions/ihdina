@@ -12,6 +12,17 @@ import {
   adminUsageEventsHandler,
   adminUserDetailHandler,
 } from "../controllers/admin.controller.js";
+import {
+  adminAnalyticsActivationHandler,
+  adminAnalyticsActivityHandler,
+  adminAnalyticsAiQualityHandler,
+  adminAnalyticsCoreUsageHandler,
+  adminAnalyticsCostsHandler,
+  adminAnalyticsFeedbackHandler,
+  adminAnalyticsLimitsHandler,
+  adminAnalyticsOverviewHandler,
+  adminAnalyticsRetentionHandler,
+} from "../controllers/adminAnalytics.controller.js";
 import { requireAdmin } from "../middleware/adminAuth.js";
 
 export async function registerAdminRoutes(app: FastifyInstance) {
@@ -27,4 +38,13 @@ export async function registerAdminRoutes(app: FastifyInstance) {
   app.get("/users", adminListUsersHandler);
   app.get("/users/:installId", adminUserDetailHandler);
   app.patch("/users/:installId", adminSetProHandler);
+  app.get("/analytics/overview", adminAnalyticsOverviewHandler);
+  app.get("/analytics/activity", adminAnalyticsActivityHandler);
+  app.get("/analytics/activation", adminAnalyticsActivationHandler);
+  app.get("/analytics/retention", adminAnalyticsRetentionHandler);
+  app.get("/analytics/core-usage", adminAnalyticsCoreUsageHandler);
+  app.get("/analytics/ai-quality", adminAnalyticsAiQualityHandler);
+  app.get("/analytics/limits", adminAnalyticsLimitsHandler);
+  app.get("/analytics/costs", adminAnalyticsCostsHandler);
+  app.get("/analytics/feedback", adminAnalyticsFeedbackHandler);
 }

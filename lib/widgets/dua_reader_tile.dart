@@ -23,6 +23,7 @@ class DuaReaderTile extends StatelessWidget {
   final int listIndex;
   final double arabicFontSize;
   final double arabicLineHeight;
+
   /// Ohne [GlassCard]-Hülle — z. B. in einem opaken Dialog-Shell.
   final bool embedded;
   final bool isBookmarked;
@@ -132,7 +133,8 @@ class DuaReaderTile extends StatelessWidget {
                     child: Material(
                       color: Colors.transparent,
                       child: InkWell(
-                        onTap: () => showDuaGuidanceDialog(context, entry: entry),
+                        onTap: () =>
+                            showDuaGuidanceDialog(context, entry: entry),
                         borderRadius: BorderRadius.circular(14),
                         splashColor: Colors.white.withOpacity(0.06),
                         highlightColor: Colors.white.withOpacity(0.04),

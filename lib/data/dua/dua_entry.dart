@@ -25,8 +25,10 @@ class DuaEntry {
   final String sourceRaw;
   final DuaType type;
   final List<String> situation;
+
   /// Morgen/Abend-Variante, z. B. `morgen` | `abend`.
   final String? variant;
+
   /// Hisnul-Muslim-Quellnummer bei aufgeteilten Morgen/Abend-Paaren.
   final int? sourceNumber;
 

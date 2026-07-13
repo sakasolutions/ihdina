@@ -76,11 +76,13 @@ class _AyahPreviewSheetState extends State<_AyahPreviewSheet> {
         return;
       }
 
-      final ayah = ayahs.where((a) => a.ayahNumber == widget.ayahNumber).firstOrNull;
+      final ayah =
+          ayahs.where((a) => a.ayahNumber == widget.ayahNumber).firstOrNull;
       if (ayah == null) {
         setState(() {
           _loading = false;
-          _error = 'Vers ${widget.ayahNumber} wurde in dieser Sure nicht gefunden.';
+          _error =
+              'Vers ${widget.ayahNumber} wurde in dieser Sure nicht gefunden.';
         });
         return;
       }

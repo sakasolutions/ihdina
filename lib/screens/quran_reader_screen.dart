@@ -22,12 +22,15 @@ import '../models/surah.dart';
 import '../models/verse.dart';
 import '../services/audio_service.dart';
 import '../services/media_playback_coordinator.dart';
+import '../services/analytics/analytics_constants.dart';
+import '../services/analytics/analytics_service.dart';
 import 'explanation_bottom_sheet.dart';
 
 /// Reader: ayahs from QuranRepository only. Bookmark toggle per verse.
 /// [initialAyahNumber] wählt den Startvers. Darstellung: Karten (Standard) oder Seitenlesen (Beta) aus den Einstellungen.
 class QuranReaderScreen extends StatefulWidget {
-  const QuranReaderScreen({super.key, required this.surah, this.initialAyahNumber});
+  const QuranReaderScreen(
+      {super.key, required this.surah, this.initialAyahNumber});
 
   final Surah surah;
   final int? initialAyahNumber;
@@ -45,17 +48,23 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
   double _arabicFontSize = 28;
   double _arabicLineHeight = 1.8;
   PrayerTimesResult? _prayerResult;
+
   /// Globaler Anzeigemodus für alle Karten im PageView.
   VerseCardContentMode _cardContentMode = VerseCardContentMode.arabicAndGerman;
+
   /// Inkrementiert bei jedem Tap-Cycle — steuert Flip nur auf der aktiven Karte.
   int _cardContentModeRevision = 0;
+
   /// `cards` = Standard; `page` = Seitenlesen (Beta).
   String _readerLayout = 'cards';
+
   /// Nur Seitenmodus: `arabic` oder `german`.
   String _pageScript = 'arabic';
   final GlobalKey<QuranPrintedPageReaderState> _printedReaderKey = GlobalKey();
+
   /// Letzter Vers auf der aktuellen Druckseite (Footer + Sprung-Dialog).
   int _printedFocusAyah = 1;
+
   /// Startvers für den Seiten-Reader (einmal pro _load / beim Umschalten).
   int? _printedSeedAyah;
 
@@ -76,12 +85,16 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
 
   int? get _loadingAyahNumber {
     final s = AudioService.instance.state.value;
-    return s.isLoading && s.surahId == widget.surah.number ? s.ayahNumber : null;
+    return s.isLoading && s.surahId == widget.surah.number
+        ? s.ayahNumber
+        : null;
   }
 
   void _onPlayVerse(int ayahNumber) {
     final s = AudioService.instance.state.value;
-    if (s.surahId == widget.surah.number && s.ayahNumber == ayahNumber && (s.isPlaying || s.isLoading)) {
+    if (s.surahId == widget.surah.number &&
+        s.ayahNumber == ayahNumber &&
+        (s.isPlaying || s.isLoading)) {
       AudioService.instance.stop();
     } else {
       _persistReadingPosition(ayahNumber);
@@ -96,6 +109,13 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
     _load();
     _loadPrayerTimes();
     AudioService.instance.state.addListener(_onAudioStateChanged);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(
+        AnalyticsService.instance.trackScreenViewed(
+          screen: AnalyticsScreens.surahReader,
+        ),
+      );
+    });
     Future<void>.delayed(const Duration(seconds: 2), () {
       if (mounted) setState(() => _showSwipeHint = false);
     });
@@ -227,7 +247,8 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
                       ),
                       Text(
                         '${sheetFont.clamp(20, 40).toInt()}',
-                        style: GoogleFonts.inter(fontSize: 12, color: Colors.white60),
+                        style: GoogleFonts.inter(
+                            fontSize: 12, color: Colors.white60),
                       ),
                       const SizedBox(height: 16),
                       Text(
@@ -255,7 +276,8 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
                       ),
                       Text(
                         sheetLineHeight.clamp(1.2, 2.4).toStringAsFixed(1),
-                        style: GoogleFonts.inter(fontSize: 12, color: Colors.white60),
+                        style: GoogleFonts.inter(
+                            fontSize: 12, color: Colors.white60),
                       ),
                       const SizedBox(height: 14),
                       Directionality(
@@ -310,7 +332,8 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
                   if (_readerLayout == 'page') {
                     seed = _printedFocusAyah.clamp(lo, hi);
                   } else {
-                    final saved = await SurahReadProgressRepository.instance.getAyahForSurah(
+                    final saved = await SurahReadProgressRepository.instance
+                        .getAyahForSurah(
                       widget.surah.number,
                       readerLayout: 'page',
                     );
@@ -350,7 +373,8 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
 
               Widget thickDivider() => Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Divider(height: 1, color: Colors.white.withOpacity(0.1)),
+                    child: Divider(
+                        height: 1, color: Colors.white.withOpacity(0.1)),
                   );
 
               Widget pageScriptBigChoice({
@@ -370,16 +394,22 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
                       child: Ink(
                         decoration: BoxDecoration(
                           borderRadius: BorderRadius.circular(16),
-                          color: Colors.white.withOpacity(selected ? 0.07 : 0.035),
+                          color:
+                              Colors.white.withOpacity(selected ? 0.07 : 0.035),
                           border: Border.all(
-                            color: selected ? gold.withOpacity(0.55) : Colors.white.withOpacity(0.1),
+                            color: selected
+                                ? gold.withOpacity(0.55)
+                                : Colors.white.withOpacity(0.1),
                             width: selected ? 1.5 : 1,
                           ),
                         ),
-                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 16, vertical: 14),
                         child: Row(
                           children: [
-                            Icon(icon, color: Colors.white.withOpacity(0.82), size: 26),
+                            Icon(icon,
+                                color: Colors.white.withOpacity(0.82),
+                                size: 26),
                             const SizedBox(width: 14),
                             Expanded(
                               child: Column(
@@ -405,7 +435,9 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
                                 ],
                               ),
                             ),
-                            if (selected) const Icon(Icons.check_rounded, color: gold, size: 22),
+                            if (selected)
+                              const Icon(Icons.check_rounded,
+                                  color: gold, size: 22),
                           ],
                         ),
                       ),
@@ -469,27 +501,37 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
                         ),
                         sectionLabel('LESEMODUS'),
                         ListTile(
-                          leading: Icon(Icons.view_agenda_rounded, color: Colors.white.withOpacity(0.75)),
+                          leading: Icon(Icons.view_agenda_rounded,
+                              color: Colors.white.withOpacity(0.75)),
                           title: Text(
                             'Karten (Standard)',
-                            style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w500, color: Colors.white),
+                            style: GoogleFonts.inter(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.white),
                           ),
                           subtitle: Text(
                             'Tippen zum Wechseln zwischen Arabisch, Lautschrift und Übersetzung',
-                            style: GoogleFonts.inter(fontSize: 12, height: 1.35, color: Colors.white.withOpacity(0.5)),
+                            style: GoogleFonts.inter(
+                                fontSize: 12,
+                                height: 1.35,
+                                color: Colors.white.withOpacity(0.5)),
                           ),
                           trailing: _readerLayout == 'cards'
                               ? const Icon(Icons.check_rounded, color: gold)
                               : null,
                           onTap: () async {
-                            await SettingsRepository.instance.setQuranReaderLayout('cards');
+                            await SettingsRepository.instance
+                                .setQuranReaderLayout('cards');
                             if (!mounted) return;
                             if (!sheetContext.mounted) return;
                             Navigator.pop(sheetContext);
                             final v = _verses;
                             var newIndex = _currentVerseIndex;
                             if (v != null && v.isNotEmpty) {
-                              final saved = await SurahReadProgressRepository.instance.getAyahForSurah(
+                              final saved = await SurahReadProgressRepository
+                                  .instance
+                                  .getAyahForSurah(
                                 widget.surah.number,
                                 readerLayout: 'cards',
                               );
@@ -502,7 +544,8 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
                             setState(() {
                               _readerLayout = 'cards';
                               if (v != null && v.isNotEmpty) {
-                                _currentVerseIndex = newIndex.clamp(0, v.length - 1);
+                                _currentVerseIndex =
+                                    newIndex.clamp(0, v.length - 1);
                               }
                             });
                             WidgetsBinding.instance.addPostFrameCallback((_) {
@@ -515,18 +558,27 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
                           },
                         ),
                         ListTile(
-                          leading: Icon(Icons.menu_book_rounded, color: Colors.white.withOpacity(0.75)),
+                          leading: Icon(Icons.menu_book_rounded,
+                              color: Colors.white.withOpacity(0.75)),
                           title: Text(
                             'Seitenlesen (Beta)',
-                            style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w500, color: Colors.white),
+                            style: GoogleFonts.inter(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.white),
                           ),
                           subtitle: Text(
                             _readerLayout == 'page'
                                 ? 'Aktiv · ${_pageScript == 'arabic' ? 'Arabisch' : 'Deutsch'} · tippen zum Wechseln'
                                 : 'Wie gedruckt blättern, eine Sprache pro Seite',
-                            style: GoogleFonts.inter(fontSize: 12, height: 1.35, color: Colors.white.withOpacity(0.5)),
+                            style: GoogleFonts.inter(
+                                fontSize: 12,
+                                height: 1.35,
+                                color: Colors.white.withOpacity(0.5)),
                           ),
-                          trailing: _readerLayout == 'page' ? const Icon(Icons.check_rounded, color: gold) : null,
+                          trailing: _readerLayout == 'page'
+                              ? const Icon(Icons.check_rounded, color: gold)
+                              : null,
                           onTap: () => setModal(() => readerToolsSubpage = 1),
                         ),
                         thickDivider(),
@@ -535,27 +587,33 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
                           enabled: verses != null,
                           leading: Icon(
                             Icons.format_list_numbered_rounded,
-                            color: verses != null ? Colors.white70 : Colors.white30,
+                            color: verses != null
+                                ? Colors.white70
+                                : Colors.white30,
                           ),
                           title: Text(
                             'Zu Vers springen',
                             style: GoogleFonts.inter(
                               fontSize: 15,
                               fontWeight: FontWeight.w500,
-                              color: verses != null ? Colors.white : Colors.white38,
+                              color: verses != null
+                                  ? Colors.white
+                                  : Colors.white38,
                             ),
                           ),
                           onTap: verses == null
                               ? null
                               : () {
                                   Navigator.pop(sheetContext);
-                                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                                  WidgetsBinding.instance
+                                      .addPostFrameCallback((_) {
                                     if (mounted) _showJumpToVerseDialog();
                                   });
                                 },
                         ),
                         ListTile(
-                          leading: Icon(Icons.info_outline_rounded, color: Colors.white.withOpacity(0.7)),
+                          leading: Icon(Icons.info_outline_rounded,
+                              color: Colors.white.withOpacity(0.7)),
                           title: Text(
                             'Einordnung vor dem Lesen',
                             style: GoogleFonts.inter(
@@ -582,7 +640,8 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
                         thickDivider(),
                         sectionLabel('SCHRIFT'),
                         ListTile(
-                          leading: Icon(Icons.format_size_rounded, color: Colors.white.withOpacity(0.7)),
+                          leading: Icon(Icons.format_size_rounded,
+                              color: Colors.white.withOpacity(0.7)),
                           title: Text(
                             'Arabische Schrift & Zeilenabstand',
                             style: GoogleFonts.inter(
@@ -604,8 +663,11 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
                           child: Row(
                             children: [
                               IconButton(
-                                onPressed: () => setModal(() => readerToolsSubpage = 0),
-                                icon: Icon(Icons.arrow_back_ios_new_rounded, size: 18, color: Colors.white.withOpacity(0.85)),
+                                onPressed: () =>
+                                    setModal(() => readerToolsSubpage = 0),
+                                icon: Icon(Icons.arrow_back_ios_new_rounded,
+                                    size: 18,
+                                    color: Colors.white.withOpacity(0.85)),
                               ),
                               Expanded(
                                 child: Text(
@@ -696,7 +758,8 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
   /// Global „Weiterlesen“ + pro-Sure-Merker je Lesemodus (Karten / Seite).
   void _persistReadingPosition(int ayahNumber) {
     final sid = widget.surah.number;
-    unawaited(ReadingProgressRepository.instance.setLastRead(surahId: sid, ayahNumber: ayahNumber));
+    unawaited(ReadingProgressRepository.instance
+        .setLastRead(surahId: sid, ayahNumber: ayahNumber));
     unawaited(
       SurahReadProgressRepository.instance.setAyahForSurah(
         surahId: sid,
@@ -741,12 +804,16 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
               ayah: a.ayahNumber,
               ar: a.textAr,
               de: translation.getTranslation(surahId, a.ayahNumber),
-              transliteration: a.textTranslit?.isNotEmpty == true ? a.textTranslit : null,
+              transliteration:
+                  a.textTranslit?.isNotEmpty == true ? a.textTranslit : null,
             ))
         .toList();
     final int? targetAyah = widget.initialAyahNumber ??
-        await SurahReadProgressRepository.instance.getAyahForSurah(surahId, readerLayout: layout);
-    final initialListIndex = targetAyah == null ? -1 : verses.indexWhere((v) => v.ayah == targetAyah);
+        await SurahReadProgressRepository.instance
+            .getAyahForSurah(surahId, readerLayout: layout);
+    final initialListIndex = targetAyah == null
+        ? -1
+        : verses.indexWhere((v) => v.ayah == targetAyah);
     final initialIndex = verses.isEmpty
         ? 0
         : (initialListIndex < 0
@@ -766,8 +833,10 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
       _printedSeedAyah = ayahAtOpen;
       _printedFocusAyah = ayahAtOpen;
     });
-    await ReadingProgressRepository.instance.setLastRead(surahId: surahId, ayahNumber: ayahAtOpen);
-    WidgetsBinding.instance.addPostFrameCallback((_) => _tryAutoShowSurahIntro());
+    await ReadingProgressRepository.instance
+        .setLastRead(surahId: surahId, ayahNumber: ayahAtOpen);
+    WidgetsBinding.instance
+        .addPostFrameCallback((_) => _tryAutoShowSurahIntro());
   }
 
   void _onPrintedPageCommit(int lastAyahOnPage) {
@@ -788,7 +857,8 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
     if (!mounted || body == null) return;
     final auto = await SettingsRepository.instance.getSurahIntroAutoShow();
     if (!auto) return;
-    final shown = await SettingsRepository.instance.getSurahIntroAutoShownSurahIds();
+    final shown =
+        await SettingsRepository.instance.getSurahIntroAutoShownSurahIds();
     if (shown.contains(id)) return;
     if (!mounted) return;
 
@@ -808,7 +878,8 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
   }
 
   Future<void> _openSurahIntroManual() async {
-    final body = await SurahIntroRepository.instance.getIntroDe(widget.surah.number);
+    final body =
+        await SurahIntroRepository.instance.getIntroDe(widget.surah.number);
     if (!mounted) return;
     if (body == null) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -837,11 +908,13 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
       context,
       verseTitle: '${widget.surah.nameDe}, Vers ${verse.ayah}',
       surahName: widget.surah.nameDe,
+      surahNumber: widget.surah.number,
       ayahNumber: verse.ayah,
       textAr: verse.ar,
       textDe: verse.de,
       isFreeDailyVerse: false,
       showVerseHeader: false,
+      entrySource: AnalyticsVerseEntrySource.reader,
     );
   }
 
@@ -861,10 +934,14 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
     final wasBookmarked = _bookmarkedAyahNumbers.contains(ayahNumber);
     if (wasBookmarked) {
       await repo.removeBookmark(surahId, ayahNumber);
-      if (mounted) setState(() => _bookmarkedAyahNumbers = _bookmarkedAyahNumbers..remove(ayahNumber));
+      if (mounted)
+        setState(() => _bookmarkedAyahNumbers = _bookmarkedAyahNumbers
+          ..remove(ayahNumber));
     } else {
       await repo.addBookmark(surahId, ayahNumber);
-      if (mounted) setState(() => _bookmarkedAyahNumbers = _bookmarkedAyahNumbers..add(ayahNumber));
+      if (mounted)
+        setState(() =>
+            _bookmarkedAyahNumbers = _bookmarkedAyahNumbers..add(ayahNumber));
     }
     if (!mounted) return;
     HapticFeedback.lightImpact();
@@ -923,11 +1000,13 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
                               hintText: '1 – ${verses.length}',
                               hintStyle: const TextStyle(color: Colors.white38),
                               enabledBorder: OutlineInputBorder(
-                                borderSide: const BorderSide(color: Colors.white24),
+                                borderSide:
+                                    const BorderSide(color: Colors.white24),
                                 borderRadius: BorderRadius.circular(10),
                               ),
                               focusedBorder: OutlineInputBorder(
-                                borderSide: const BorderSide(color: Color(0xFFE5C07B)),
+                                borderSide:
+                                    const BorderSide(color: Color(0xFFE5C07B)),
                                 borderRadius: BorderRadius.circular(10),
                               ),
                             ),
@@ -971,7 +1050,8 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
                               WidgetsBinding.instance.addPostFrameCallback((_) {
                                 if (!mounted) return;
                                 _printedReaderKey.currentState?.jumpToAyah(n);
-                                final idx = verses.indexWhere((v) => v.ayah == n);
+                                final idx =
+                                    verses.indexWhere((v) => v.ayah == n);
                                 setState(() {
                                   _printedFocusAyah = n;
                                   if (idx >= 0) _currentVerseIndex = idx;
@@ -1014,7 +1094,8 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
   Widget build(BuildContext context) {
     final surah = widget.surah;
     final verses = _verses;
-    final heroPhase = DynamicHeroTheme.phaseFromPrayer(_prayerResult?.nextPrayerType);
+    final heroPhase =
+        DynamicHeroTheme.phaseFromPrayer(_prayerResult?.nextPrayerType);
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -1064,162 +1145,192 @@ class _QuranReaderScreenState extends State<QuranReaderScreen> {
           child: Stack(
             fit: StackFit.expand,
             children: [
-            Positioned.fill(
-              child: Opacity(
-                opacity: 0.1,
-                child: Image.asset(
-                  DynamicHeroTheme.backgroundAsset(heroPhase),
-                  fit: BoxFit.cover,
-                  width: double.infinity,
-                  height: double.infinity,
-                  errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+              Positioned.fill(
+                child: Opacity(
+                  opacity: 0.1,
+                  child: Image.asset(
+                    DynamicHeroTheme.backgroundAsset(heroPhase),
+                    fit: BoxFit.cover,
+                    width: double.infinity,
+                    height: double.infinity,
+                    errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                  ),
                 ),
               ),
-            ),
-            SafeArea(
-              child: verses == null
-                  ? const Center(
-                      child: CircularProgressIndicator(color: Colors.white70),
-                    )
-                  : _readerLayout == 'page'
-                      ? Column(
-                          crossAxisAlignment: CrossAxisAlignment.stretch,
-                          children: [
-                            Expanded(
-                              child: QuranPrintedPageReader(
-                                key: _printedReaderKey,
-                                verses: verses,
-                                useArabicScript: _pageScript == 'arabic',
-                                arabicFontSize: _arabicFontSize,
-                                arabicLineHeight: _arabicLineHeight,
-                                surahNameDe: surah.nameDe,
-                                bookmarkedAyahNumbers: _bookmarkedAyahNumbers,
-                                onVerstehenTap: (v) => _onVerseTap(0, v),
-                                onPlayTap: (v) => _onPlayVerse(v.ayah),
-                                onBookmarkTap: (v) => _toggleBookmark(v.ayah),
-                                onPageCommit: _onPrintedPageCommit,
-                                initialAyah: widget.initialAyahNumber ?? _printedSeedAyah,
-                                playingAyah: _playingAyahNumber,
-                                loadingAyah: _loadingAyahNumber,
-                                showSwipeHint: _showSwipeHint,
-                              ),
-                            ),
-                            Padding(
-                              padding: const EdgeInsets.only(bottom: 100),
-                              child: Center(
-                                child: Container(
-                                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                                  decoration: BoxDecoration(
-                                    color: Colors.black.withOpacity(0.3),
-                                    borderRadius: BorderRadius.circular(20),
-                                    border: Border.all(color: Colors.white.withOpacity(0.1)),
-                                  ),
-                                  child: Text(
-                                    'Bis Vers $_printedFocusAyah · ${verses.length} Verse',
-                                    style: GoogleFonts.inter(
-                                      fontSize: 12,
-                                      color: Colors.white.withOpacity(0.7),
-                                      fontWeight: FontWeight.w500,
-                                    ),
-                                  ),
+              SafeArea(
+                child: verses == null
+                    ? const Center(
+                        child: CircularProgressIndicator(color: Colors.white70),
+                      )
+                    : _readerLayout == 'page'
+                        ? Column(
+                            crossAxisAlignment: CrossAxisAlignment.stretch,
+                            children: [
+                              Expanded(
+                                child: QuranPrintedPageReader(
+                                  key: _printedReaderKey,
+                                  verses: verses,
+                                  useArabicScript: _pageScript == 'arabic',
+                                  arabicFontSize: _arabicFontSize,
+                                  arabicLineHeight: _arabicLineHeight,
+                                  surahNameDe: surah.nameDe,
+                                  bookmarkedAyahNumbers: _bookmarkedAyahNumbers,
+                                  onVerstehenTap: (v) => _onVerseTap(0, v),
+                                  onPlayTap: (v) => _onPlayVerse(v.ayah),
+                                  onBookmarkTap: (v) => _toggleBookmark(v.ayah),
+                                  onPageCommit: _onPrintedPageCommit,
+                                  initialAyah: widget.initialAyahNumber ??
+                                      _printedSeedAyah,
+                                  playingAyah: _playingAyahNumber,
+                                  loadingAyah: _loadingAyahNumber,
+                                  showSwipeHint: _showSwipeHint,
                                 ),
                               ),
-                            ),
-                          ],
-                        )
-                      : (_pageController == null
-                          ? const Center(child: CircularProgressIndicator(color: Colors.white70))
-                          : Column(
-                              crossAxisAlignment: CrossAxisAlignment.stretch,
-                              children: [
-                                Visibility(
-                                  visible: _showSwipeHint,
-                                  maintainSize: false,
-                                  maintainAnimation: false,
-                                  maintainState: false,
-                                  child: Center(
+                              Padding(
+                                padding: const EdgeInsets.only(bottom: 100),
+                                child: Center(
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                        horizontal: 14, vertical: 6),
+                                    decoration: BoxDecoration(
+                                      color: Colors.black.withOpacity(0.3),
+                                      borderRadius: BorderRadius.circular(20),
+                                      border: Border.all(
+                                          color: Colors.white.withOpacity(0.1)),
+                                    ),
                                     child: Text(
-                                      '← Wischen zum Blättern →',
-                                      textAlign: TextAlign.center,
+                                      'Bis Vers $_printedFocusAyah · ${verses.length} Verse',
                                       style: GoogleFonts.inter(
                                         fontSize: 12,
-                                        color: Colors.white.withOpacity(0.5),
+                                        color: Colors.white.withOpacity(0.7),
+                                        fontWeight: FontWeight.w500,
                                       ),
                                     ),
                                   ),
                                 ),
-                                const SizedBox(height: 8),
-                                Expanded(
-                                  child: Stack(
-                                    fit: StackFit.expand,
-                                    children: [
-                                      PageView.builder(
-                                        controller: _pageController!,
-                                        physics: const PageScrollPhysics(),
-                                        onPageChanged: (index) {
-                                          setState(() => _currentVerseIndex = index);
-                                          HapticFeedback.lightImpact();
-                                          _persistReadingPosition(verses[index].ayah);
-                                        },
-                                        itemCount: verses.length,
-                                        itemBuilder: (context, index) {
-                                          final verse = verses[index];
-                                          final isActive = index == _currentVerseIndex;
-                                          return SingleChildScrollView(
-                                            physics: isActive
-                                                ? const ClampingScrollPhysics()
-                                                : const NeverScrollableScrollPhysics(),
-                                            padding: const EdgeInsets.fromLTRB(24, 16, 24, 150),
-                                            child: QuranVerseReaderTile(
-                                              verse: verse,
-                                              contentMode: _cardContentMode,
-                                              contentModeRevision: _cardContentModeRevision,
-                                              animateFlip: isActive,
-                                              onContentModeTap: _onCardContentModeTap,
-                                              isBookmarked: _bookmarkedAyahNumbers.contains(verse.ayah),
-                                              arabicFontSize: _arabicFontSize,
-                                              arabicLineHeight: _arabicLineHeight,
-                                              isPlaying: _playingAyahNumber == verse.ayah,
-                                              isLoading: _loadingAyahNumber == verse.ayah,
-                                              showJumpHighlight: _jumpHighlightAyah == verse.ayah,
-                                              onVerstehenTap: () => _onVerseTap(index, verse),
-                                              onBookmarkTap: () => _toggleBookmark(verse.ayah),
-                                              onPlayTap: () => _onPlayVerse(verse.ayah),
-                                            ),
-                                          );
-                                        },
+                              ),
+                            ],
+                          )
+                        : (_pageController == null
+                            ? const Center(
+                                child: CircularProgressIndicator(
+                                    color: Colors.white70))
+                            : Column(
+                                crossAxisAlignment: CrossAxisAlignment.stretch,
+                                children: [
+                                  Visibility(
+                                    visible: _showSwipeHint,
+                                    maintainSize: false,
+                                    maintainAnimation: false,
+                                    maintainState: false,
+                                    child: Center(
+                                      child: Text(
+                                        '← Wischen zum Blättern →',
+                                        textAlign: TextAlign.center,
+                                        style: GoogleFonts.inter(
+                                          fontSize: 12,
+                                          color: Colors.white.withOpacity(0.5),
+                                        ),
                                       ),
-                                      Positioned(
-                                        bottom: 100,
-                                        left: 0,
-                                        right: 0,
-                                        child: Center(
-                                          child: Container(
-                                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                                            decoration: BoxDecoration(
-                                              color: Colors.black.withOpacity(0.3),
-                                              borderRadius: BorderRadius.circular(20),
-                                              border: Border.all(color: Colors.white.withOpacity(0.1)),
-                                            ),
-                                            child: Text(
-                                              'Vers ${verses[_currentVerseIndex].ayah} / ${verses.length}',
-                                              style: GoogleFonts.inter(
-                                                fontSize: 12,
-                                                color: Colors.white.withOpacity(0.7),
-                                                fontWeight: FontWeight.w500,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 8),
+                                  Expanded(
+                                    child: Stack(
+                                      fit: StackFit.expand,
+                                      children: [
+                                        PageView.builder(
+                                          controller: _pageController!,
+                                          physics: const PageScrollPhysics(),
+                                          onPageChanged: (index) {
+                                            setState(() =>
+                                                _currentVerseIndex = index);
+                                            HapticFeedback.lightImpact();
+                                            _persistReadingPosition(
+                                                verses[index].ayah);
+                                          },
+                                          itemCount: verses.length,
+                                          itemBuilder: (context, index) {
+                                            final verse = verses[index];
+                                            final isActive =
+                                                index == _currentVerseIndex;
+                                            return SingleChildScrollView(
+                                              physics: isActive
+                                                  ? const ClampingScrollPhysics()
+                                                  : const NeverScrollableScrollPhysics(),
+                                              padding:
+                                                  const EdgeInsets.fromLTRB(
+                                                      24, 16, 24, 150),
+                                              child: QuranVerseReaderTile(
+                                                verse: verse,
+                                                contentMode: _cardContentMode,
+                                                contentModeRevision:
+                                                    _cardContentModeRevision,
+                                                animateFlip: isActive,
+                                                onContentModeTap:
+                                                    _onCardContentModeTap,
+                                                isBookmarked:
+                                                    _bookmarkedAyahNumbers
+                                                        .contains(verse.ayah),
+                                                arabicFontSize: _arabicFontSize,
+                                                arabicLineHeight:
+                                                    _arabicLineHeight,
+                                                isPlaying: _playingAyahNumber ==
+                                                    verse.ayah,
+                                                isLoading: _loadingAyahNumber ==
+                                                    verse.ayah,
+                                                showJumpHighlight:
+                                                    _jumpHighlightAyah ==
+                                                        verse.ayah,
+                                                onVerstehenTap: () =>
+                                                    _onVerseTap(index, verse),
+                                                onBookmarkTap: () =>
+                                                    _toggleBookmark(verse.ayah),
+                                                onPlayTap: () =>
+                                                    _onPlayVerse(verse.ayah),
+                                              ),
+                                            );
+                                          },
+                                        ),
+                                        Positioned(
+                                          bottom: 100,
+                                          left: 0,
+                                          right: 0,
+                                          child: Center(
+                                            child: Container(
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      horizontal: 14,
+                                                      vertical: 6),
+                                              decoration: BoxDecoration(
+                                                color: Colors.black
+                                                    .withOpacity(0.3),
+                                                borderRadius:
+                                                    BorderRadius.circular(20),
+                                                border: Border.all(
+                                                    color: Colors.white
+                                                        .withOpacity(0.1)),
+                                              ),
+                                              child: Text(
+                                                'Vers ${verses[_currentVerseIndex].ayah} / ${verses.length}',
+                                                style: GoogleFonts.inter(
+                                                  fontSize: 12,
+                                                  color: Colors.white
+                                                      .withOpacity(0.7),
+                                                  fontWeight: FontWeight.w500,
+                                                ),
                                               ),
                                             ),
                                           ),
                                         ),
-                                      ),
-                                    ],
+                                      ],
+                                    ),
                                   ),
-                                ),
-                              ],
-                            )),
-            ),
-          ],
-        ),
+                                ],
+                              )),
+              ),
+            ],
+          ),
         ),
       ),
     );

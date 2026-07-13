@@ -125,7 +125,8 @@ class _CitySearchScreenState extends State<CitySearchScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final heroPhase = DynamicHeroTheme.phaseFromPrayer(_prayerResult?.nextPrayerType);
+    final heroPhase =
+        DynamicHeroTheme.phaseFromPrayer(_prayerResult?.nextPrayerType);
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -260,7 +261,8 @@ class _CitySearchScreenState extends State<CitySearchScreen> {
                 enabledBorder: border,
                 focusedBorder: border,
                 disabledBorder: border,
-                contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                contentPadding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
               ),
               style: GoogleFonts.inter(fontSize: 15, color: Colors.white),
               autofocus: true,
@@ -320,7 +322,8 @@ class _CitySearchScreenState extends State<CitySearchScreen> {
             child: GlassCard(
               borderRadius: 22,
               child: Padding(
-                padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
+                padding:
+                    const EdgeInsets.symmetric(vertical: 12, horizontal: 14),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [

@@ -34,7 +34,9 @@ class CitySearchResult {
   String get displayLabel {
     final parts = <String>[name];
     if (adminName1 != null && adminName1!.isNotEmpty) parts.add(adminName1!);
-    parts.add(countryCode != null && countryCode!.isNotEmpty ? countryCode! : countryName);
+    parts.add(countryCode != null && countryCode!.isNotEmpty
+        ? countryCode!
+        : countryName);
     return parts.join(', ');
   }
 

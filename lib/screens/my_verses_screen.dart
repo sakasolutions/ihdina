@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -12,6 +14,8 @@ import '../services/media_playback_coordinator.dart';
 import '../theme/app_theme.dart';
 import '../theme/hero_theme.dart';
 import '../widgets/bookmark_note_sheet.dart';
+import '../services/analytics/analytics_constants.dart';
+import '../services/analytics/analytics_service.dart';
 import 'explanation_bottom_sheet.dart';
 import 'quran_reader_screen.dart';
 
@@ -90,6 +94,13 @@ class _MyVersesScreenState extends State<MyVersesScreen> {
     super.initState();
     AudioService.instance.state.addListener(_onAudioStateChanged);
     _load();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(
+        AnalyticsService.instance.trackScreenViewed(
+          screen: AnalyticsScreens.bookmarks,
+        ),
+      );
+    });
   }
 
   @override
@@ -141,16 +152,19 @@ class _MyVersesScreenState extends State<MyVersesScreen> {
       context,
       verseTitle: '${item.surahNameEn}, Vers ${item.ayahNumber}',
       surahName: item.surahNameEn,
+      surahNumber: item.surahId,
       ayahNumber: item.ayahNumber,
       textAr: item.ayahTextAr ?? '',
       textDe: item.ayahTextDe ?? '',
       isFreeDailyVerse: false,
       showVerseHeader: false,
+      entrySource: AnalyticsVerseEntrySource.bookmark,
     );
   }
 
   Future<void> _toggleBookmark(BookmarkItem item) async {
-    await BookmarkRepository.instance.removeBookmark(item.surahId, item.ayahNumber);
+    await BookmarkRepository.instance
+        .removeBookmark(item.surahId, item.ayahNumber);
     if (!mounted) {
       return;
     }
@@ -275,7 +289,8 @@ class _MyVersesScreenState extends State<MyVersesScreen> {
       );
     }
     if (_items == null) {
-      return const Center(child: CircularProgressIndicator(color: Colors.white70));
+      return const Center(
+          child: CircularProgressIndicator(color: Colors.white70));
     }
     final list = _items!;
     if (list.isEmpty) {
@@ -285,7 +300,8 @@ class _MyVersesScreenState extends State<MyVersesScreen> {
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Icon(Icons.bookmark_outline, size: 48, color: Colors.white54),
+              const Icon(Icons.bookmark_outline,
+                  size: 48, color: Colors.white54),
               const SizedBox(height: 16),
               Text(
                 'Deine Sammlung ist noch leer',
@@ -497,7 +513,9 @@ class _SurahBookmarksExpansion extends StatelessWidget {
           subtitle: Padding(
             padding: const EdgeInsets.only(top: 6, right: 28),
             child: Text(
-              s.verses.length == 1 ? '1 Vers in der Sammlung' : '${s.verses.length} Verse in der Sammlung',
+              s.verses.length == 1
+                  ? '1 Vers in der Sammlung'
+                  : '${s.verses.length} Verse in der Sammlung',
               style: GoogleFonts.inter(
                 fontSize: 11,
                 height: 1.3,
@@ -544,10 +562,12 @@ class _CompactBookmarkRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final audio = AudioService.instance.state.value;
-    final isPlaying =
-        audio.surahId == item.surahId && audio.ayahNumber == item.ayahNumber && audio.isPlaying;
-    final isLoading =
-        audio.surahId == item.surahId && audio.ayahNumber == item.ayahNumber && audio.isLoading;
+    final isPlaying = audio.surahId == item.surahId &&
+        audio.ayahNumber == item.ayahNumber &&
+        audio.isPlaying;
+    final isLoading = audio.surahId == item.surahId &&
+        audio.ayahNumber == item.ayahNumber &&
+        audio.isLoading;
     final de = (item.ayahTextDe ?? '').trim();
     final snippet = de.isNotEmpty ? de : 'Tippe für den vollen Vers im Leser.';
     final noteTrim = (item.noteBody ?? '').trim();
@@ -609,14 +629,19 @@ class _CompactBookmarkRow extends StatelessWidget {
                         style: GoogleFonts.inter(
                           fontSize: 13,
                           height: 1.35,
-                          color: Colors.white.withOpacity(de.isNotEmpty ? 0.78 : 0.42),
-                          fontStyle: de.isNotEmpty ? FontStyle.normal : FontStyle.italic,
+                          color: Colors.white
+                              .withOpacity(de.isNotEmpty ? 0.78 : 0.42),
+                          fontStyle: de.isNotEmpty
+                              ? FontStyle.normal
+                              : FontStyle.italic,
                         ),
                       ),
                       if (hasNote) ...[
                         const SizedBox(height: 4),
                         Text(
-                          noteTrim.contains('\n') ? '${noteTrim.split('\n').first} …' : noteTrim,
+                          noteTrim.contains('\n')
+                              ? '${noteTrim.split('\n').first} …'
+                              : noteTrim,
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: GoogleFonts.inter(
@@ -638,7 +663,9 @@ class _CompactBookmarkRow extends StatelessWidget {
                     padding: EdgeInsets.zero,
                     onPressed: () => onEditNote(item),
                     icon: Icon(
-                      hasNote ? Icons.edit_note_rounded : Icons.edit_note_outlined,
+                      hasNote
+                          ? Icons.edit_note_rounded
+                          : Icons.edit_note_outlined,
                       size: 22,
                       color: hasNote
                           ? _accentChampagneGold.withOpacity(0.95)
@@ -679,7 +706,9 @@ class _CompactBookmarkRow extends StatelessWidget {
                           padding: EdgeInsets.zero,
                           onPressed: () => onPlay(item),
                           icon: Icon(
-                            isPlaying ? Icons.stop_circle_outlined : Icons.play_circle_outline_rounded,
+                            isPlaying
+                                ? Icons.stop_circle_outlined
+                                : Icons.play_circle_outline_rounded,
                             size: 22,
                             color: isPlaying
                                 ? _accentChampagneGold

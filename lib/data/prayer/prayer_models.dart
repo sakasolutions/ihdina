@@ -128,11 +128,15 @@ class PrayerSettings {
       locationLabel: locationLabel ?? this.locationLabel,
       method: method ?? this.method,
       madhab: madhab ?? this.madhab,
-      adjustmentMinutesFajr: adjustmentMinutesFajr ?? this.adjustmentMinutesFajr,
-      adjustmentMinutesDhuhr: adjustmentMinutesDhuhr ?? this.adjustmentMinutesDhuhr,
+      adjustmentMinutesFajr:
+          adjustmentMinutesFajr ?? this.adjustmentMinutesFajr,
+      adjustmentMinutesDhuhr:
+          adjustmentMinutesDhuhr ?? this.adjustmentMinutesDhuhr,
       adjustmentMinutesAsr: adjustmentMinutesAsr ?? this.adjustmentMinutesAsr,
-      adjustmentMinutesMaghrib: adjustmentMinutesMaghrib ?? this.adjustmentMinutesMaghrib,
-      adjustmentMinutesIsha: adjustmentMinutesIsha ?? this.adjustmentMinutesIsha,
+      adjustmentMinutesMaghrib:
+          adjustmentMinutesMaghrib ?? this.adjustmentMinutesMaghrib,
+      adjustmentMinutesIsha:
+          adjustmentMinutesIsha ?? this.adjustmentMinutesIsha,
       useDeviceLocation: useDeviceLocation ?? this.useDeviceLocation,
     );
   }

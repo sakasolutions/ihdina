@@ -7,12 +7,14 @@ import '../db/database_provider.dart';
 class SurahReadProgressRepository {
   SurahReadProgressRepository._();
 
-  static final SurahReadProgressRepository instance = SurahReadProgressRepository._();
+  static final SurahReadProgressRepository instance =
+      SurahReadProgressRepository._();
 
   Future<Database> get _db => DatabaseProvider.instance.database;
 
   /// [readerLayout]: `cards` oder `page` (wie [SettingsRepository.getQuranReaderLayout]).
-  Future<int?> getAyahForSurah(int surahId, {required String readerLayout}) async {
+  Future<int?> getAyahForSurah(int surahId,
+      {required String readerLayout}) async {
     final db = await _db;
     final rows = await db.query(
       'surah_read_progress_layout',

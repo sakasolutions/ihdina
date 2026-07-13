@@ -140,6 +140,11 @@ export function surahNameToId(): ReadonlyMap<string, number> {
   m.set(normalizeSurahLookupKey("Al-Tawbah"), 9);
   m.set(normalizeSurahLookupKey("Baqarah"), 2);
   m.set(normalizeSurahLookupKey("Al Imran"), 3);
+  // Schreibweisen aus der App-DB (tools/generate_db.dart)
+  m.set(normalizeSurahLookupKey("Al-Anbya"), 21);
+  m.set(normalizeSurahLookupKey("As-Saf"), 61);
+  m.set(normalizeSurahLookupKey("Al-Layl"), 92);
+  m.set(normalizeSurahLookupKey("Ad-Duhaa"), 93);
   _map = m;
   return _map;
 }

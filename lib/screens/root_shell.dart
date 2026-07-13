@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 
+import '../services/analytics/analytics_constants.dart';
+import '../services/analytics/analytics_service.dart';
 import '../data/prayer/notification_service.dart';
 import '../theme/app_theme.dart';
 import '../widgets/premium_bottom_nav.dart';
@@ -25,10 +27,25 @@ class RootShell extends StatefulWidget {
 class _RootShellState extends State<RootShell> with WidgetsBindingObserver {
   int _currentIndex = kHomeTabIndex;
 
+  static const _tabScreens = <String>[
+    AnalyticsScreens.dua,
+    AnalyticsScreens.quran,
+    AnalyticsScreens.home,
+    AnalyticsScreens.prayer,
+    AnalyticsScreens.settings,
+  ];
+
   @override
   void initState() {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(
+        AnalyticsService.instance.trackScreenViewed(
+          screen: _tabScreens[_currentIndex],
+        ),
+      );
+    });
   }
 
   @override
@@ -41,9 +58,13 @@ class _RootShellState extends State<RootShell> with WidgetsBindingObserver {
   void didChangeAppLifecycleState(AppLifecycleState state) {
     super.didChangeAppLifecycleState(state);
     if (state == AppLifecycleState.resumed) {
+      AnalyticsService.instance.onAppResumed();
       unawaited(
-        NotificationService.instance.maybeReschedulePrayerNotificationsOnAppResume(),
+        NotificationService.instance
+            .maybeReschedulePrayerNotificationsOnAppResume(),
       );
+    } else if (state == AppLifecycleState.paused) {
+      AnalyticsService.instance.onAppPaused();
     }
   }
 
@@ -81,7 +102,17 @@ class _RootShellState extends State<RootShell> with WidgetsBindingObserver {
                   top: false,
                   child: PremiumBottomNav(
                     currentIndex: _currentIndex,
-                    onTap: (index) => setState(() => _currentIndex = index),
+                    onTap: (index) {
+                      if (index == _currentIndex) return;
+                      final prev = _tabScreens[_currentIndex];
+                      setState(() => _currentIndex = index);
+                      unawaited(
+                        AnalyticsService.instance.trackScreenViewed(
+                          screen: _tabScreens[index],
+                          previousScreen: prev,
+                        ),
+                      );
+                    },
                     enableHaptics: false,
                   ),
                 ),

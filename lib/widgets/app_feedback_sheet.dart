@@ -132,11 +132,13 @@ class _FeedbackSheetBodyState extends State<_FeedbackSheetBody> {
                   fillColor: Colors.white.withOpacity(0.06),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.white.withOpacity(0.15)),
+                    borderSide:
+                        BorderSide(color: Colors.white.withOpacity(0.15)),
                   ),
                   enabledBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.white.withOpacity(0.15)),
+                    borderSide:
+                        BorderSide(color: Colors.white.withOpacity(0.15)),
                   ),
                   focusedBorder: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
@@ -214,10 +216,14 @@ class _Thumb extends StatelessWidget {
           child: Ink(
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             decoration: BoxDecoration(
-              color: selected ? _gold.withOpacity(0.22) : Colors.white.withOpacity(0.06),
+              color: selected
+                  ? _gold.withOpacity(0.22)
+                  : Colors.white.withOpacity(0.06),
               borderRadius: BorderRadius.circular(16),
               border: Border.all(
-                color: selected ? _gold.withOpacity(0.7) : Colors.white.withOpacity(0.12),
+                color: selected
+                    ? _gold.withOpacity(0.7)
+                    : Colors.white.withOpacity(0.12),
               ),
             ),
             child: Icon(

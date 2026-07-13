@@ -50,7 +50,8 @@ class DailyHadithService {
     await prefs.setString(_keyDate, todayStr);
     await prefs.setInt(_keyHadithId, pick.entry.id);
     await prefs.setInt(_keyRotationIndex, nextRotationIndex);
-    await _appendRecentHistory(prefs, todayStr, pick.entry.id, lib.noRepeatDays);
+    await _appendRecentHistory(
+        prefs, todayStr, pick.entry.id, lib.noRepeatDays);
 
     return pick.entry;
   }
@@ -144,7 +145,8 @@ class DailyHadithService {
       return _PickResult(entry: lib.entries.first, rotationIndex: 0);
     }
 
-    bool matches(DailyHadithEntry e, {required bool friday, required bool ramadan}) {
+    bool matches(DailyHadithEntry e,
+        {required bool friday, required bool ramadan}) {
       if (recentIds.contains(e.id)) return false;
       if (friday && !e.fridayOk) return false;
       if (ramadan && !e.isRamadanThemed) return false;

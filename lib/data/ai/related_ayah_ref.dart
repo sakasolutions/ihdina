@@ -15,7 +15,10 @@ class RelatedAyahRef {
     final aRaw = map['ayahNumber'];
     final surahId = sRaw is int ? sRaw : (sRaw is num ? sRaw.toInt() : null);
     final ayahNumber = aRaw is int ? aRaw : (aRaw is num ? aRaw.toInt() : null);
-    if (surahId == null || ayahNumber == null || surahId < 1 || ayahNumber < 1) {
+    if (surahId == null ||
+        ayahNumber == null ||
+        surahId < 1 ||
+        ayahNumber < 1) {
       throw FormatException('Invalid relatedAyah: $map');
     }
     return RelatedAyahRef(

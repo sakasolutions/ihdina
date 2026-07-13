@@ -54,7 +54,8 @@ class QuranVerseReaderTile extends StatelessWidget {
   final VoidCallback onPlayTap;
 
   static const Color _accentChampagneGold = Color(0xFFE5C07B);
-  static const List<VerseCardContentMode> _allModes = VerseCardContentMode.values;
+  static const List<VerseCardContentMode> _allModes =
+      VerseCardContentMode.values;
 
   @override
   Widget build(BuildContext context) {
@@ -154,7 +155,8 @@ class QuranVerseReaderTile extends StatelessWidget {
                         ),
                       ),
                       child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+                        padding: const EdgeInsets.symmetric(
+                            vertical: 10, horizontal: 12),
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
@@ -232,7 +234,8 @@ class QuranVerseReaderTile extends StatelessWidget {
                           boxShadow: isPlaying
                               ? [
                                   BoxShadow(
-                                    color: _accentChampagneGold.withOpacity(0.12),
+                                    color:
+                                        _accentChampagneGold.withOpacity(0.12),
                                     blurRadius: 6,
                                     spreadRadius: 0,
                                     offset: const Offset(0, 1),
@@ -259,7 +262,9 @@ class QuranVerseReaderTile extends StatelessWidget {
             height: 28,
             child: IconButton(
               icon: Icon(
-                isBookmarked ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
+                isBookmarked
+                    ? Icons.bookmark_rounded
+                    : Icons.bookmark_border_rounded,
                 size: 20,
                 color: isBookmarked ? Colors.white : Colors.white70,
               ),
@@ -290,7 +295,8 @@ class _FlippingCardPanel extends StatefulWidget {
   final VerseCardContentMode mode;
   final int modeRevision;
   final VoidCallback onContentTap;
-  final Widget Function(VerseCardContentMode mode, VoidCallback onContentTap) cardFaceBuilder;
+  final Widget Function(VerseCardContentMode mode, VoidCallback onContentTap)
+      cardFaceBuilder;
 
   @override
   State<_FlippingCardPanel> createState() => _FlippingCardPanelState();
@@ -317,7 +323,8 @@ class _FlippingCardPanelState extends State<_FlippingCardPanel>
   }
 
   void _onAnimationStatus(AnimationStatus status) {
-    if (status == AnimationStatus.completed || status == AnimationStatus.dismissed) {
+    if (status == AnimationStatus.completed ||
+        status == AnimationStatus.dismissed) {
       if (mounted) setState(() => _tapLocked = false);
     }
   }
@@ -364,7 +371,8 @@ class _FlippingCardPanelState extends State<_FlippingCardPanel>
 
   @override
   Widget build(BuildContext context) {
-    final fromFace = _fromFace ?? widget.cardFaceBuilder(widget.mode, _handleContentTap);
+    final fromFace =
+        _fromFace ?? widget.cardFaceBuilder(widget.mode, _handleContentTap);
     final toFace = _toFace ?? fromFace;
 
     return RepaintBoundary(
@@ -373,7 +381,8 @@ class _FlippingCardPanelState extends State<_FlippingCardPanel>
         builder: (context, _) {
           final t = _progress.value;
           final pastHalf = t >= 0.5;
-          final scaleX = (pastHalf ? (t - 0.5) * 2 : (1 - t * 2)).clamp(0.0, 1.0);
+          final scaleX =
+              (pastHalf ? (t - 0.5) * 2 : (1 - t * 2)).clamp(0.0, 1.0);
           // Bei schmaler Card zusätzlich ausblenden — verhindert milchigen Streifen
           // aus der halbtransparenten GlassCard in der Drehmitte.
           final face = pastHalf ? toFace : fromFace;
@@ -383,7 +392,8 @@ class _FlippingCardPanelState extends State<_FlippingCardPanel>
               opacity: scaleX,
               child: Transform(
                 alignment: Alignment.center,
-                transform: Matrix4.identity()..scale(scaleX == 0 ? 0.001 : scaleX, 1.0, 1.0),
+                transform: Matrix4.identity()
+                  ..scale(scaleX == 0 ? 0.001 : scaleX, 1.0, 1.0),
                 child: face,
               ),
             ),
@@ -483,7 +493,8 @@ abstract final class _VerseCardContent {
     }
   }
 
-  static Widget _arabicBlock(String ar, double arabicFontSize, double arabicHeight) {
+  static Widget _arabicBlock(
+      String ar, double arabicFontSize, double arabicHeight) {
     return Padding(
       padding: const EdgeInsets.only(left: 30),
       child: Directionality(
@@ -537,7 +548,8 @@ class _ModeDots extends StatelessWidget {
   final VerseCardContentMode activeMode;
   final List<VerseCardContentMode> availableModes;
 
-  static const List<VerseCardContentMode> _allModes = VerseCardContentMode.values;
+  static const List<VerseCardContentMode> _allModes =
+      VerseCardContentMode.values;
 
   @override
   Widget build(BuildContext context) {

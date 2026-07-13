@@ -37,6 +37,7 @@ class QuranPrintedPageReader extends StatefulWidget {
   final VerseActionCallback onVerstehenTap;
   final VerseActionCallback onPlayTap;
   final VerseActionCallback onBookmarkTap;
+
   /// Letzter Vers auf der sichtbaren Seite (Lesefortschritt).
   final void Function(int lastAyahOnPage) onPageCommit;
   final int? initialAyah;
@@ -63,7 +64,8 @@ class QuranPrintedPageReaderState extends State<QuranPrintedPageReader> {
     final pages = _pages;
     final c = _controller;
     if (pages == null || c == null || !c.hasClients) return;
-    final p = QuranPagePaginator.pageIndexForAyah(pages, ayah).clamp(0, pages.length - 1);
+    final p = QuranPagePaginator.pageIndexForAyah(pages, ayah)
+        .clamp(0, pages.length - 1);
     c.jumpToPage(p);
   }
 
@@ -86,7 +88,8 @@ class QuranPrintedPageReaderState extends State<QuranPrintedPageReader> {
   @override
   Widget build(BuildContext context) {
     if (widget.verses.isEmpty) {
-      return const Center(child: Text('Keine Verse', style: TextStyle(color: Colors.white54)));
+      return const Center(
+          child: Text('Keine Verse', style: TextStyle(color: Colors.white54)));
     }
 
     final scaler = MediaQuery.textScalerOf(context);
@@ -97,16 +100,20 @@ class QuranPrintedPageReaderState extends State<QuranPrintedPageReader> {
         const swipeHintHeight = 32.0;
         const pageInnerVerticalPad = 8.0 + 16.0;
         const surahTitleBlock = 40.0;
+
         /// Zusatzhöhe pro Vers: Rand‑Ayah‑Markierung, Innenabstand — muss zu [QuranPagePaginator.paginate] passen.
         const perVerseChrome = 36.0;
-        final maxW = (constraints.maxWidth - horizontalPad * 2).clamp(120.0, 800.0);
+        final maxW =
+            (constraints.maxWidth - horizontalPad * 2).clamp(120.0, 800.0);
         final hintBar = widget.showSwipeHint ? swipeHintHeight : 0.0;
         final pageViewViewport =
             (constraints.maxHeight - hintBar).clamp(160.0, 4000.0);
         final verseColumnMaxH =
-            (pageViewViewport - pageInnerVerticalPad - surahTitleBlock).clamp(80.0, 4000.0);
+            (pageViewViewport - pageInnerVerticalPad - surahTitleBlock)
+                .clamp(80.0, 4000.0);
 
-        final direction = widget.useArabicScript ? TextDirection.rtl : TextDirection.ltr;
+        final direction =
+            widget.useArabicScript ? TextDirection.rtl : TextDirection.ltr;
         final style = _verseStyle(scaler);
         final cacheKey = Object.hash(
           maxW.round(),
@@ -119,7 +126,8 @@ class QuranPrintedPageReaderState extends State<QuranPrintedPageReader> {
           widget.showSwipeHint,
         );
 
-        final same = _cacheKey == cacheKey && _pages != null && _controller != null;
+        final same =
+            _cacheKey == cacheKey && _pages != null && _controller != null;
 
         if (!same) {
           _pages = QuranPagePaginator.paginate(
@@ -137,7 +145,9 @@ class QuranPrintedPageReaderState extends State<QuranPrintedPageReader> {
           _controller?.dispose();
           final initialPage = widget.initialAyah == null || _pages!.isEmpty
               ? 0
-              : QuranPagePaginator.pageIndexForAyah(_pages!, widget.initialAyah!).clamp(0, _pages!.length - 1);
+              : QuranPagePaginator.pageIndexForAyah(
+                      _pages!, widget.initialAyah!)
+                  .clamp(0, _pages!.length - 1);
           _controller = PageController(initialPage: initialPage);
         }
 
@@ -151,7 +161,8 @@ class QuranPrintedPageReaderState extends State<QuranPrintedPageReader> {
                 padding: const EdgeInsets.only(bottom: 6),
                 child: Text(
                   '← Seiten wischen →',
-                  style: GoogleFonts.inter(fontSize: 12, color: Colors.white.withOpacity(0.45)),
+                  style: GoogleFonts.inter(
+                      fontSize: 12, color: Colors.white.withOpacity(0.45)),
                 ),
               ),
             Expanded(
@@ -167,10 +178,12 @@ class QuranPrintedPageReaderState extends State<QuranPrintedPageReader> {
                   return Directionality(
                     textDirection: direction,
                     child: Padding(
-                      padding: const EdgeInsets.fromLTRB(horizontalPad, topPad, horizontalPad, 16),
+                      padding: const EdgeInsets.fromLTRB(
+                          horizontalPad, topPad, horizontalPad, 16),
                       child: Column(
-                        crossAxisAlignment:
-                            widget.useArabicScript ? CrossAxisAlignment.stretch : CrossAxisAlignment.start,
+                        crossAxisAlignment: widget.useArabicScript
+                            ? CrossAxisAlignment.stretch
+                            : CrossAxisAlignment.start,
                         children: [
                           Text(
                             widget.surahNameDe,
@@ -179,7 +192,9 @@ class QuranPrintedPageReaderState extends State<QuranPrintedPageReader> {
                               fontWeight: FontWeight.w600,
                               color: Colors.white.withOpacity(0.55),
                             ),
-                            textAlign: widget.useArabicScript ? TextAlign.right : TextAlign.left,
+                            textAlign: widget.useArabicScript
+                                ? TextAlign.right
+                                : TextAlign.left,
                           ),
                           const SizedBox(height: 10),
                           ...slice.map(
@@ -187,7 +202,8 @@ class QuranPrintedPageReaderState extends State<QuranPrintedPageReader> {
                               verse: v,
                               useArabic: widget.useArabicScript,
                               verseStyle: style,
-                              isBookmarked: widget.bookmarkedAyahNumbers.contains(v.ayah),
+                              isBookmarked:
+                                  widget.bookmarkedAyahNumbers.contains(v.ayah),
                               isPlaying: widget.playingAyah == v.ayah,
                               isLoading: widget.loadingAyah == v.ayah,
                               onVerstehenTap: () => widget.onVerstehenTap(v),
@@ -241,7 +257,8 @@ class _FlowVerseParagraph extends StatelessWidget {
     final audioActive = isPlaying || isLoading;
 
     final bodyStyle = verseStyle.merge(TextStyle(
-      backgroundColor: audioActive ? _accentGold.withOpacity(0.14) : Colors.transparent,
+      backgroundColor:
+          audioActive ? _accentGold.withOpacity(0.14) : Colors.transparent,
     ));
 
     return Padding(
@@ -344,7 +361,8 @@ class _AyahMarginMark extends StatelessWidget {
         ),
         if (isBookmarked && !isLoading) ...[
           const SizedBox(height: 4),
-          Icon(Icons.bookmark_rounded, size: 11, color: Colors.white.withOpacity(0.5)),
+          Icon(Icons.bookmark_rounded,
+              size: 11, color: Colors.white.withOpacity(0.5)),
         ],
       ],
     );
@@ -398,7 +416,8 @@ Future<void> _showPrintedVerseToolSheet(
                       const Spacer(),
                       IconButton(
                         onPressed: () => Navigator.pop(ctx),
-                        icon: Icon(Icons.close_rounded, color: Colors.white.withOpacity(0.65)),
+                        icon: Icon(Icons.close_rounded,
+                            color: Colors.white.withOpacity(0.65)),
                       ),
                     ],
                   ),
@@ -425,12 +444,19 @@ Future<void> _showPrintedVerseToolSheet(
                           ),
                         )
                       : Icon(
-                          isPlaying ? Icons.stop_circle_outlined : Icons.play_circle_outline_rounded,
-                          color: isPlaying ? const Color(0xFFE5C07B) : AppColors.emeraldLight,
+                          isPlaying
+                              ? Icons.stop_circle_outlined
+                              : Icons.play_circle_outline_rounded,
+                          color: isPlaying
+                              ? const Color(0xFFE5C07B)
+                              : AppColors.emeraldLight,
                         ),
                   title: Text(
                     isPlaying ? 'Wiedergabe stoppen' : 'Wiedergabe',
-                    style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w500, color: Colors.white),
+                    style: GoogleFonts.inter(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.white),
                   ),
                   onTap: isLoading
                       ? null
@@ -441,12 +467,17 @@ Future<void> _showPrintedVerseToolSheet(
                 ),
                 ListTile(
                   leading: Icon(
-                    isBookmarked ? Icons.bookmark_rounded : Icons.bookmark_border_rounded,
+                    isBookmarked
+                        ? Icons.bookmark_rounded
+                        : Icons.bookmark_border_rounded,
                     color: Colors.white70,
                   ),
                   title: Text(
                     isBookmarked ? 'Lesezeichen entfernen' : 'Lesezeichen',
-                    style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w500, color: Colors.white),
+                    style: GoogleFonts.inter(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.white),
                   ),
                   onTap: () {
                     Navigator.pop(ctx);
@@ -454,10 +485,14 @@ Future<void> _showPrintedVerseToolSheet(
                   },
                 ),
                 ListTile(
-                  leading: Icon(Icons.auto_awesome, color: const Color(0xFFE5C07B).withOpacity(0.92)),
+                  leading: Icon(Icons.auto_awesome,
+                      color: const Color(0xFFE5C07B).withOpacity(0.92)),
                   title: Text(
                     'Verstehen',
-                    style: GoogleFonts.inter(fontSize: 15, fontWeight: FontWeight.w500, color: Colors.white),
+                    style: GoogleFonts.inter(
+                        fontSize: 15,
+                        fontWeight: FontWeight.w500,
+                        color: Colors.white),
                   ),
                   onTap: () {
                     Navigator.pop(ctx);

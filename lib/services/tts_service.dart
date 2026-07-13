@@ -65,7 +65,8 @@ class TtsService {
     try {
       // Optionale Plattform-Calls dürfen Init nicht abbrechen (Hot Reload / ältere Engine).
       if (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) {
-        await _tryOptionalTts('setSharedInstance', () => _tts.setSharedInstance(true));
+        await _tryOptionalTts(
+            'setSharedInstance', () => _tts.setSharedInstance(true));
       }
       if (!kIsWeb && defaultTargetPlatform == TargetPlatform.android) {
         _nativeQueueEnabled = await _tryOptionalTtsBool(
@@ -82,7 +83,8 @@ class TtsService {
           );
         });
       }
-      await _tryOptionalTts('awaitSpeakCompletion', () => _tts.awaitSpeakCompletion(true));
+      await _tryOptionalTts(
+          'awaitSpeakCompletion', () => _tts.awaitSpeakCompletion(true));
       await _tts.setSpeechRate(_defaultSpeechRate);
       await _tts.setPitch(0.96);
       await _tts.setVolume(1.0);
@@ -106,7 +108,8 @@ class TtsService {
     }
   }
 
-  Future<void> _tryOptionalTts(String name, Future<dynamic> Function() call) async {
+  Future<void> _tryOptionalTts(
+      String name, Future<dynamic> Function() call) async {
     try {
       await call();
     } catch (e) {
@@ -116,7 +119,8 @@ class TtsService {
     }
   }
 
-  Future<bool> _tryOptionalTtsBool(String name, Future<dynamic> Function() call) async {
+  Future<bool> _tryOptionalTtsBool(
+      String name, Future<dynamic> Function() call) async {
     try {
       await call();
       return true;

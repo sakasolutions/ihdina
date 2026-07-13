@@ -29,7 +29,8 @@ class LocalTtsPlayControl extends StatelessWidget {
   static const Color _accentGold = Color(0xFFE5C07B);
 
   bool get _isActive => ttsState.matches(sourceKey, kind);
-  bool get _isBusy => _isActive && (ttsState.isSpeaking || ttsState.isInitializing);
+  bool get _isBusy =>
+      _isActive && (ttsState.isSpeaking || ttsState.isInitializing);
 
   @override
   Widget build(BuildContext context) {
@@ -51,7 +52,9 @@ class LocalTtsPlayControl extends StatelessWidget {
         child: Ink(
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(14),
-            color: _isActive ? Colors.white.withOpacity(0.07) : Colors.white.withOpacity(0.04),
+            color: _isActive
+                ? Colors.white.withOpacity(0.07)
+                : Colors.white.withOpacity(0.04),
             border: Border.all(
               color: _isActive
                   ? _accentGold.withOpacity(0.42)
@@ -78,7 +81,9 @@ class LocalTtsPlayControl extends StatelessWidget {
                           ),
                         )
                       : Icon(
-                          _isBusy ? Icons.stop_circle_outlined : Icons.volume_up_rounded,
+                          _isBusy
+                              ? Icons.stop_circle_outlined
+                              : Icons.volume_up_rounded,
                           size: 24,
                           color: _isActive
                               ? _accentGold.withOpacity(0.95)

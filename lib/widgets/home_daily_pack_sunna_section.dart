@@ -146,7 +146,8 @@ Future<void> _openSunnaSheet(BuildContext context, DailyHadithEntry entry) {
         AppColors.emeraldDark,
         Colors.black,
         0.28,
-      )!.withOpacity(0.93);
+      )!
+          .withOpacity(0.93);
 
       return SizedBox(
         height: h,
@@ -214,7 +215,8 @@ Future<void> _openSunnaSheet(BuildContext context, DailyHadithEntry entry) {
                                 child: Padding(
                                   padding: const EdgeInsets.only(left: 10),
                                   child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: [
                                       Text(
                                         'HADITH',
@@ -222,7 +224,8 @@ Future<void> _openSunnaSheet(BuildContext context, DailyHadithEntry entry) {
                                           fontSize: 9,
                                           fontWeight: FontWeight.w700,
                                           letterSpacing: 1.1,
-                                          color: _accentGoldSunna.withOpacity(0.7),
+                                          color:
+                                              _accentGoldSunna.withOpacity(0.7),
                                         ),
                                       ),
                                       const SizedBox(height: 4),
@@ -263,15 +266,18 @@ Future<void> _openSunnaSheet(BuildContext context, DailyHadithEntry entry) {
                           ),
                           const SizedBox(height: 12),
                           ConstrainedBox(
-                            constraints: BoxConstraints(maxHeight: maxScrollRegion),
+                            constraints:
+                                BoxConstraints(maxHeight: maxScrollRegion),
                             child: CustomScrollView(
                               shrinkWrap: true,
                               physics: const BouncingScrollPhysics(),
                               slivers: [
                                 SliverPadding(
-                                  padding: const EdgeInsets.fromLTRB(10, 14, 10, 18),
+                                  padding:
+                                      const EdgeInsets.fromLTRB(10, 14, 10, 18),
                                   sliver: SliverToBoxAdapter(
-                                    child: _HomeDailySunnaSheetBody(entry: entry),
+                                    child:
+                                        _HomeDailySunnaSheetBody(entry: entry),
                                   ),
                                 ),
                               ],
@@ -297,7 +303,8 @@ class _HomeDailySunnaSheetBody extends StatefulWidget {
   final DailyHadithEntry entry;
 
   @override
-  State<_HomeDailySunnaSheetBody> createState() => _HomeDailySunnaSheetBodyState();
+  State<_HomeDailySunnaSheetBody> createState() =>
+      _HomeDailySunnaSheetBodyState();
 }
 
 class _HomeDailySunnaSheetBodyState extends State<_HomeDailySunnaSheetBody> {
@@ -313,9 +320,7 @@ class _HomeDailySunnaSheetBodyState extends State<_HomeDailySunnaSheetBody> {
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
         GestureDetector(
-          onTap: _expanded
-              ? null
-              : () => setState(() => _expanded = true),
+          onTap: _expanded ? null : () => setState(() => _expanded = true),
           behavior: HitTestBehavior.opaque,
           child: Stack(
             clipBehavior: Clip.none,
@@ -338,7 +343,8 @@ class _HomeDailySunnaSheetBodyState extends State<_HomeDailySunnaSheetBody> {
                 child: Text(
                   e.textDe,
                   maxLines: _expanded ? null : 8,
-                  overflow: _expanded ? TextOverflow.visible : TextOverflow.ellipsis,
+                  overflow:
+                      _expanded ? TextOverflow.visible : TextOverflow.ellipsis,
                   style: GoogleFonts.playfairDisplay(
                     fontSize: 17,
                     fontStyle: FontStyle.italic,

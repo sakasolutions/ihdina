@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
 import 'package:purchases_flutter/purchases_flutter.dart';
 
 /// RevenueCat in-app purchases service. Initializes SDK and provides purchase logic.
@@ -10,9 +11,13 @@ import 'package:purchases_flutter/purchases_flutter.dart';
 ///
 /// [init] muss mit derselben [appUserId] wie das Backend-`installId` aufgerufen werden,
 /// damit Webhooks den Nutzer zuordnen können (kein anonymer RC-User).
+/// Ergebnis eines Kaufversuchs (für Analytics; [purchasePackage] bleibt bool).
+enum PurchaseOutcome { success, cancelled, failed }
+
 class RevenueCatService {
   /// Replace with your Apple App Store key from RevenueCat Dashboard for iOS release.
   static const String _appleApiKey = 'appl_KKEmUnPTUuePJsVPBrQWfbDAFtn';
+
   /// Google Play public key (RevenueCat) – set and valid for Android.
   static const String _googleApiKey = 'goog_OFwfNiVgXAnPOSUSkUjtwGvoQrQ';
 
@@ -35,7 +40,8 @@ class RevenueCatService {
     _cachedOfferings = null;
     final trimmed = appUserId.trim();
     if (trimmed.isEmpty) {
-      throw StateError('RevenueCatService.init requires a non-empty appUserId (installId).');
+      throw StateError(
+          'RevenueCatService.init requires a non-empty appUserId (installId).');
     }
 
     await Purchases.setLogLevel(kDebugMode ? LogLevel.debug : LogLevel.info);
@@ -44,7 +50,8 @@ class RevenueCatService {
     if (Platform.isIOS) {
       configuration = PurchasesConfiguration(_appleApiKey)..appUserID = trimmed;
     } else if (Platform.isAndroid) {
-      configuration = PurchasesConfiguration(_googleApiKey)..appUserID = trimmed;
+      configuration = PurchasesConfiguration(_googleApiKey)
+        ..appUserID = trimmed;
     } else {
       return; // Unsupported platform (Desktop etc.)
     }
@@ -88,23 +95,39 @@ class RevenueCatService {
       final offerings = await getOfferings();
       return offerings?.current?.availablePackages ?? [];
     } catch (e, st) {
-      if (kDebugMode) debugPrint('[RevenueCat] getAvailablePackages failed: $e\n$st');
+      if (kDebugMode)
+        debugPrint('[RevenueCat] getAvailablePackages failed: $e\n$st');
       return [];
+    }
+  }
+
+  /// Purchases the given package with detailliertem Ergebnis.
+  static Future<PurchaseOutcome> purchasePackageWithOutcome(Package package) async {
+    try {
+      await Purchases.purchasePackage(package);
+      await updateCustomerStatus();
+      return PurchaseOutcome.success;
+    } on PlatformException catch (e) {
+      final code = PurchasesErrorHelper.getErrorCode(e);
+      if (code == PurchasesErrorCode.purchaseCancelledError) {
+        return PurchaseOutcome.cancelled;
+      }
+      if (kDebugMode) {
+        debugPrint('[RevenueCat] purchase cancelled/failed: $code');
+      }
+      return PurchaseOutcome.failed;
+    } catch (e, st) {
+      if (kDebugMode) {
+        debugPrint('[RevenueCat] purchasePackage failed: $e\n$st');
+      }
+      return PurchaseOutcome.failed;
     }
   }
 
   /// Purchases the given package. Returns true on success, false if user cancelled or error.
   static Future<bool> purchasePackage(Package package) async {
-    try {
-      await Purchases.purchasePackage(package);
-      await updateCustomerStatus();
-      return true;
-    } catch (e, st) {
-      if (kDebugMode) {
-        debugPrint('[RevenueCat] purchasePackage failed: $e\n$st');
-      }
-      return false; // User cancelled or error
-    }
+    final outcome = await purchasePackageWithOutcome(package);
+    return outcome == PurchaseOutcome.success;
   }
 
   /// Restores purchases and updates entitlement flags. Returns true if the call succeeded.
@@ -122,7 +145,8 @@ class RevenueCatService {
     try {
       await Purchases.presentCodeRedemptionSheet();
     } catch (e) {
-      if (kDebugMode) debugPrint('[RevenueCat] presentOfferCodeRedemption failed: $e');
+      if (kDebugMode)
+        debugPrint('[RevenueCat] presentOfferCodeRedemption failed: $e');
     }
   }
 }

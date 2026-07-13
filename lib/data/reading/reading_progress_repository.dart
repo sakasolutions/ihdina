@@ -7,11 +7,13 @@ import 'reading_progress.dart';
 class ReadingProgressRepository {
   ReadingProgressRepository._();
 
-  static final ReadingProgressRepository instance = ReadingProgressRepository._();
+  static final ReadingProgressRepository instance =
+      ReadingProgressRepository._();
 
   Future<Database> get _db => DatabaseProvider.instance.database;
 
-  Future<void> setLastRead({required int surahId, required int ayahNumber}) async {
+  Future<void> setLastRead(
+      {required int surahId, required int ayahNumber}) async {
     final db = await _db;
     final now = DateTime.now().millisecondsSinceEpoch;
     await db.rawInsert(

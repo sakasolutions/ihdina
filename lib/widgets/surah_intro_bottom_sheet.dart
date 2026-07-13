@@ -10,6 +10,7 @@ Future<void> showSurahIntroBottomSheet(
   BuildContext context, {
   required String surahNameDe,
   required String bodyDe,
+
   /// Wenn true: Option „nicht mehr automatisch“ + Callback nach Schließen.
   bool showAutoOptOut = false,
   void Function({required bool disableAutoShow})? onClose,
@@ -116,11 +117,14 @@ Future<void> showSurahIntroBottomSheet(
                                 height: 24,
                                 child: Checkbox(
                                   value: disableAuto,
-                                  onChanged: (v) => disableAutoVN.value = v ?? false,
+                                  onChanged: (v) =>
+                                      disableAutoVN.value = v ?? false,
                                   activeColor: _accentChampagneGold,
                                   checkColor: AppColors.emeraldDark,
-                                  side: BorderSide(color: Colors.white.withOpacity(0.45)),
-                                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                  side: BorderSide(
+                                      color: Colors.white.withOpacity(0.45)),
+                                  materialTapTargetSize:
+                                      MaterialTapTargetSize.shrinkWrap,
                                 ),
                               ),
                               const SizedBox(width: 6),
@@ -170,4 +174,3 @@ Future<void> showSurahIntroBottomSheet(
     },
   );
 }
-

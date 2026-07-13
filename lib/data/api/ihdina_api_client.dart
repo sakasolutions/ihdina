@@ -32,6 +32,7 @@ class IhdinaApiClient {
   static final IhdinaApiClient instance = IhdinaApiClient._();
 
   static const Duration _timeout = Duration(seconds: 12);
+
   /// KI-Endpunkte (OpenAI) brauchen auf Mobilfunk oft länger als Health/Entitlement.
   static const Duration _timeoutAi = Duration(seconds: 45);
 
@@ -62,12 +63,10 @@ class IhdinaApiClient {
   }
 
   Future<Map<String, dynamic>> fetchEntitlement(String installId) async {
-    final res = await http
-        .get(
-          _uri('/api/v1/entitlement/${Uri.encodeComponent(installId)}'),
-          headers: const {'Accept': 'application/json'},
-        )
-        .timeout(_timeout);
+    final res = await http.get(
+      _uri('/api/v1/entitlement/${Uri.encodeComponent(installId)}'),
+      headers: const {'Accept': 'application/json'},
+    ).timeout(_timeout);
     return _parseJsonObjectResponse(res);
   }
 
@@ -108,6 +107,47 @@ class IhdinaApiClient {
       }
       rethrow;
     }
+  }
+
+  /// Product-Analytics Batch-Ingest (Phase 2a.2).
+  Future<Map<String, dynamic>> postAnalyticsEvents({
+    required String installId,
+    required List<Map<String, dynamic>> events,
+  }) async {
+    final uri = _uri('/api/v1/analytics/events');
+    final res = await http
+        .post(
+          uri,
+          headers: const {
+            'Content-Type': 'application/json',
+            'Accept': 'application/json',
+          },
+          body: jsonEncode({
+            'installId': installId,
+            'events': events,
+          }),
+        )
+        .timeout(_timeout);
+
+    if (res.statusCode == 429) {
+      final retryAfter = int.tryParse(res.headers['retry-after'] ?? '');
+      throw IhdinaApiException(
+        'RATE_LIMIT_EXCEEDED',
+        retryAfter != null
+            ? 'Rate limit; retry after $retryAfter s'
+            : 'Rate limit exceeded.',
+      );
+    }
+
+    if (res.statusCode >= 500) {
+      throw IhdinaApiException(
+        IhdinaApiErrorCodes.aiTemporarilyUnavailable,
+        'Analytics server error.',
+      );
+    }
+
+    final data = _parseJsonObjectResponse(res, context: 'postAnalyticsEvents', uri: uri);
+    return data;
   }
 
   Future<Map<String, dynamic>> postFollowUp({

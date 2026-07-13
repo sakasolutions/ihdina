@@ -93,7 +93,8 @@ class _DuaThemesScreenState extends State<DuaThemesScreen> {
   Future<void> _load({bool forceReload = false}) async {
     try {
       final data = await DuaRepository.instance.load(forceReload: forceReload);
-      final favoriteCount = await DuaBookmarkRepository.instance.getBookmarkCount();
+      final favoriteCount =
+          await DuaBookmarkRepository.instance.getBookmarkCount();
       final counts = <String, int>{};
       for (final topic in DuaThemesScreen.topics) {
         counts[topic.situation] = DuaRepository.filterBySituation(

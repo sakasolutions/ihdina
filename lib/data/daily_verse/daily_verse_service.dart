@@ -48,7 +48,8 @@ class DailyVerseService {
     return _fetchVerseData(surahId, ayahNumber);
   }
 
-  Future<(int, int)> _pickAndSaveNewVerse(SharedPreferences prefs, String today) async {
+  Future<(int, int)> _pickAndSaveNewVerse(
+      SharedPreferences prefs, String today) async {
     final surahs = await QuranRepository.instance.getAllSurahs();
     if (surahs.isEmpty) {
       await prefs.setString(_keyDate, today);
@@ -67,7 +68,8 @@ class DailyVerseService {
     return (surah.id, ayah);
   }
 
-  Future<Map<String, dynamic>> _fetchVerseData(int surahId, int ayahNumber) async {
+  Future<Map<String, dynamic>> _fetchVerseData(
+      int surahId, int ayahNumber) async {
     await TranslationService.instance.ensureLoaded();
     final surahs = await QuranRepository.instance.getAllSurahs();
     SurahModel? surahModel;
@@ -90,7 +92,8 @@ class DailyVerseService {
     }
     final textAr = ayahModel?.textAr ?? '';
 
-    final textDe = TranslationService.instance.getTranslation(surahId, ayahNumber);
+    final textDe =
+        TranslationService.instance.getTranslation(surahId, ayahNumber);
 
     return {
       'surahId': surahId,

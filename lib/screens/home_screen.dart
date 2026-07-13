@@ -22,6 +22,7 @@ import '../models/surah.dart';
 import '../data/daily_verse/daily_verse_service.dart';
 import '../data/daily_hadith/daily_hadith_entry.dart';
 import '../data/daily_hadith/daily_hadith_service.dart';
+import '../services/analytics/analytics_constants.dart';
 import 'explanation_bottom_sheet.dart';
 import 'quran_reader_screen.dart';
 import 'my_verses_screen.dart';
@@ -32,6 +33,7 @@ const double _heroCardRadius = 26;
 const double _greetingToHeroGap = 40;
 const double _heroToPrayerGap = 20;
 const double _scrollBottomBreathing = 28;
+
 /// Abstand unter der Gebetsleiste: schwebende Tabbar (PremiumBottomNav ~72 + Rand 24) + Puffer.
 const double _floatingNavClearance = 112;
 const Duration _karahatSunriseDuration = Duration(minutes: 20);
@@ -82,7 +84,8 @@ class HomeScreen extends StatefulWidget {
   State<HomeScreen> createState() => _HomeScreenState();
 }
 
-class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMixin {
+class _HomeScreenState extends State<HomeScreen>
+    with AutomaticKeepAliveClientMixin {
   @override
   bool get wantKeepAlive => true;
 
@@ -102,7 +105,8 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
     _homeDailyPackFuture = _loadHomeDailyPack();
     _loadLastRead();
     _loadPrayerTimes();
-    _prayerTimer = Timer.periodic(const Duration(seconds: 1), (_) => _updatePrayerCountdown());
+    _prayerTimer = Timer.periodic(
+        const Duration(seconds: 1), (_) => _updatePrayerCountdown());
   }
 
   @override
@@ -136,7 +140,8 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
     }
     final enabled = await SettingsRepository.instance.getNotificationsEnabled();
     if (mounted && enabled) {
-      await NotificationService.instance.schedulePrayerNotifications(result, settings);
+      await NotificationService.instance
+          .schedulePrayerNotifications(result, settings);
     }
   }
 
@@ -145,7 +150,8 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
     final now = DateTime.now();
     final next = _prayerResult!.nextPrayerTime;
     final d = next.difference(now);
-    if (d.inSeconds != _prayerResult!.timeUntilNextPrayer.inSeconds && mounted) {
+    if (d.inSeconds != _prayerResult!.timeUntilNextPrayer.inSeconds &&
+        mounted) {
       setState(() {
         _prayerResult = PrayerTimesResult(
           times: _prayerResult!.times,
@@ -180,7 +186,8 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
   @override
   Widget build(BuildContext context) {
     super.build(context);
-    final heroPhase = DynamicHeroTheme.phaseFromPrayer(_prayerResult?.nextPrayerType);
+    final heroPhase =
+        DynamicHeroTheme.phaseFromPrayer(_prayerResult?.nextPrayerType);
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -236,16 +243,20 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
                                     child: FutureBuilder<_HomeDailyPack>(
                                       future: _homeDailyPackFuture,
                                       builder: (context, snapshot) {
-                                        if (snapshot.connectionState == ConnectionState.waiting) {
+                                        if (snapshot.connectionState ==
+                                            ConnectionState.waiting) {
                                           return GlassCard(
                                             borderRadius: _heroCardRadius,
                                             child: Padding(
-                                              padding: const EdgeInsets.symmetric(vertical: 48),
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      vertical: 48),
                                               child: Center(
                                                 child: SizedBox(
                                                   width: 22,
                                                   height: 22,
-                                                  child: CircularProgressIndicator(
+                                                  child:
+                                                      CircularProgressIndicator(
                                                     strokeWidth: 2,
                                                     color: _accentChampagneGold,
                                                   ),
@@ -259,30 +270,43 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
                                           return const SizedBox.shrink();
                                         }
                                         final data = pack.verse;
-                                        final surahNameEn = data['surahNameEn'] as String? ?? '';
-                                        final ayahNumber = data['ayahNumber'] as int? ?? 0;
-                                        final textAr = data['textAr'] as String? ?? '';
-                                        final textDe = data['textDe'] as String? ?? '—';
-                                        _dailyTakeawayFuture ??= TakeawayService.generateTakeaway(
+                                        final surahNameEn =
+                                            data['surahNameEn'] as String? ??
+                                                '';
+                                        final ayahNumber =
+                                            data['ayahNumber'] as int? ?? 0;
+                                        final textAr =
+                                            data['textAr'] as String? ?? '';
+                                        final textDe =
+                                            data['textDe'] as String? ?? '—';
+                                        _dailyTakeawayFuture ??=
+                                            TakeawayService.generateTakeaway(
                                           arabic: textAr,
                                           translation: textDe,
                                           surahName: surahNameEn,
                                           ayahNumber: ayahNumber,
                                         );
-                                        void openExplanation() => showAiExplanationWithQuotaCheck(
+                                        void openExplanation() =>
+                                            showAiExplanationWithQuotaCheck(
                                               context,
-                                              verseTitle: '$surahNameEn, Vers $ayahNumber',
+                                              verseTitle:
+                                                  '$surahNameEn, Vers $ayahNumber',
                                               surahName: surahNameEn,
+                                              surahNumber:
+                                                  data['surahId'] as int?,
                                               ayahNumber: ayahNumber,
                                               textAr: textAr,
                                               textDe: textDe,
                                               isFreeDailyVerse: true,
+                                              entrySource:
+                                                  AnalyticsVerseEntrySource.daily,
                                             );
                                         void openWeiterlesen() {
                                           final p = _lastRead!;
                                           final surah = Surah(
                                             number: p.surahId,
-                                            nameDe: _lastReadSurahNameEn ?? 'Sure ${p.surahId}',
+                                            nameDe: _lastReadSurahNameEn ??
+                                                'Sure ${p.surahId}',
                                             nameAr: _lastReadSurahNameAr ?? '',
                                             verses: const [],
                                           );
@@ -301,38 +325,52 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
                                           Navigator.push(
                                             context,
                                             MaterialPageRoute<void>(
-                                                builder: (_) => const MyVersesScreen()),
+                                                builder: (_) =>
+                                                    const MyVersesScreen()),
                                           );
                                         }
 
                                         return FutureBuilder<String>(
                                           future: _dailyTakeawayFuture,
                                           builder: (context, takeawaySnap) {
-                                            final loadingTakeaway = takeawaySnap.connectionState ==
-                                                ConnectionState.waiting;
-                                            final takeawayRaw = takeawaySnap.data;
-                                            final takeawayLine =
-                                                loadingTakeaway ? '...' : (takeawayRaw ?? '...');
-                                            final takeawayNeutral = loadingTakeaway ||
-                                                takeawayRaw == null ||
-                                                takeawayRaw == TakeawayService.fallbackMessage;
+                                            final loadingTakeaway =
+                                                takeawaySnap.connectionState ==
+                                                    ConnectionState.waiting;
+                                            final takeawayRaw =
+                                                takeawaySnap.data;
+                                            final takeawayLine = loadingTakeaway
+                                                ? '...'
+                                                : (takeawayRaw ?? '...');
+                                            final takeawayNeutral =
+                                                loadingTakeaway ||
+                                                    takeawayRaw == null ||
+                                                    takeawayRaw ==
+                                                        TakeawayService
+                                                            .fallbackMessage;
                                             return Padding(
-                                              padding: const EdgeInsets.symmetric(
-                                                  vertical: 8, horizontal: 2),
+                                              padding:
+                                                  const EdgeInsets.symmetric(
+                                                      vertical: 8,
+                                                      horizontal: 2),
                                               child: HomeDailyVerseHero(
                                                 surahNameEn: surahNameEn,
                                                 ayahNumber: ayahNumber,
                                                 arabic: textAr,
                                                 german: textDe,
                                                 personalTakeaway: takeawayLine,
-                                                takeawayNeutralPresentation: takeawayNeutral,
-                                                onMehrVerstehen: openExplanation,
+                                                takeawayNeutralPresentation:
+                                                    takeawayNeutral,
+                                                onMehrVerstehen:
+                                                    openExplanation,
                                                 onBookmarkTap: () {},
-                                                onWeiterlesen:
-                                                    _lastRead != null ? openWeiterlesen : null,
+                                                onWeiterlesen: _lastRead != null
+                                                    ? openWeiterlesen
+                                                    : null,
                                                 onSpeichern: openSpeichern,
                                                 dailyHadith:
-                                                    kShowDailyHadithOnHome ? pack.hadith : null,
+                                                    kShowDailyHadithOnHome
+                                                        ? pack.hadith
+                                                        : null,
                                               ),
                                             );
                                           },
@@ -345,7 +383,8 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
                                   child: SizedBox(height: 16),
                                 ),
                                 const SliverToBoxAdapter(
-                                  child: SizedBox(height: _scrollBottomBreathing),
+                                  child:
+                                      SizedBox(height: _scrollBottomBreathing),
                                 ),
                               ],
                             ),
@@ -385,7 +424,8 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
           AppColors.emeraldDark,
           Colors.black,
           0.28,
-        )!.withOpacity(0.93);
+        )!
+            .withOpacity(0.93);
 
         return SizedBox(
           height: h,
@@ -447,17 +487,20 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
                             ),
                             const SizedBox(height: 16),
                             ConstrainedBox(
-                              constraints: BoxConstraints(maxHeight: maxScrollRegion),
+                              constraints:
+                                  BoxConstraints(maxHeight: maxScrollRegion),
                               child: CustomScrollView(
                                 shrinkWrap: true,
                                 physics: const BouncingScrollPhysics(),
                                 slivers: [
                                   SliverPadding(
-                                    padding: const EdgeInsets.fromLTRB(10, 0, 10, 16),
+                                    padding: const EdgeInsets.fromLTRB(
+                                        10, 0, 10, 16),
                                     sliver: SliverToBoxAdapter(
                                       child: Column(
                                         mainAxisSize: MainAxisSize.min,
-                                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.stretch,
                                         children: [
                                           _buildPrayerSummaryPaddedBody(
                                             showChevron: false,
@@ -585,7 +628,9 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
                     style: GoogleFonts.inter(
                       fontSize: 15,
                       fontWeight: FontWeight.w700,
-                      color: k.isActive ? _accentChampagneGold : Colors.white.withOpacity(0.9),
+                      color: k.isActive
+                          ? _accentChampagneGold
+                          : Colors.white.withOpacity(0.9),
                     ),
                   ),
                   Align(
@@ -623,7 +668,8 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
     final nextPrayerType = _prayerResult?.nextPrayerType;
     final nextLabel = nextPrayerType?.label ?? '—';
     final countdownStr = _prayerResult != null
-        ? PrayerTimesRepository.formatCountdown(_prayerResult!.timeUntilNextPrayer)
+        ? PrayerTimesRepository.formatCountdown(
+            _prayerResult!.timeUntilNextPrayer)
         : '—:——';
     final karahat = _buildKarahatInlineInfo(_prayerResult);
     final nextPrayerTime = _prayerResult?.nextPrayerTime;
@@ -704,7 +750,8 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
                     borderRadius: BorderRadius.circular(8),
                     splashColor: Colors.white.withOpacity(0.08),
                     child: Padding(
-                      padding: const EdgeInsets.symmetric(vertical: 3, horizontal: 2),
+                      padding: const EdgeInsets.symmetric(
+                          vertical: 3, horizontal: 2),
                       child: Row(
                         children: [
                           Icon(
@@ -747,7 +794,9 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
             ],
           ),
         ),
-        if (showChevron) Padding(padding: const EdgeInsets.only(left: 2, top: 6), child: chevron),
+        if (showChevron)
+          Padding(
+              padding: const EdgeInsets.only(left: 2, top: 6), child: chevron),
       ],
     );
 
@@ -788,7 +837,9 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
     ];
 
     final now = DateTime.now();
-    final active = windows.where((w) => !now.isBefore(w.start) && now.isBefore(w.end)).toList();
+    final active = windows
+        .where((w) => !now.isBefore(w.start) && now.isBefore(w.end))
+        .toList();
     final upcoming = windows.where((w) => now.isBefore(w.start)).toList()
       ..sort((a, b) => a.start.compareTo(b.start));
 
@@ -798,7 +849,9 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
     final isActive = activeWindow != null;
     final label = isActive
         ? 'Karahat jetzt (${activeWindow.label})'
-        : (nextWindow != null ? 'Nächste Karahat (${nextWindow.label})' : 'Karahat heute');
+        : (nextWindow != null
+            ? 'Nächste Karahat (${nextWindow.label})'
+            : 'Karahat heute');
     final DateTime? start = isActive ? activeWindow.start : nextWindow?.start;
     final DateTime? end = isActive ? activeWindow.end : nextWindow?.end;
     final timeRange = (start != null && end != null)
@@ -818,7 +871,8 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
     final row2 = prayerTypeOrderForDisplay.sublist(mid);
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(_outerPadding - 2, 0, _outerPadding - 2, 0),
+      padding:
+          const EdgeInsets.fromLTRB(_outerPadding - 2, 0, _outerPadding - 2, 0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
@@ -839,7 +893,8 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
           ),
           Padding(
             padding: const EdgeInsets.symmetric(vertical: 8),
-            child: Divider(height: 1, thickness: 1, color: Colors.white.withOpacity(0.06)),
+            child: Divider(
+                height: 1, thickness: 1, color: Colors.white.withOpacity(0.06)),
           ),
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -876,8 +931,9 @@ class _HomeScreenState extends State<HomeScreen> with AutomaticKeepAliveClientMi
 
   PrayerType? _currentPrayerBlockType() {
     final nextPrayerType = _prayerResult?.nextPrayerType;
-    final nextPrayerIndex =
-        nextPrayerType != null ? prayerTypeOrderForDisplay.indexOf(nextPrayerType) : -1;
+    final nextPrayerIndex = nextPrayerType != null
+        ? prayerTypeOrderForDisplay.indexOf(nextPrayerType)
+        : -1;
     final currentPrayerIndex = nextPrayerIndex >= 0
         ? (nextPrayerIndex - 1 + prayerTypeOrderForDisplay.length) %
             prayerTypeOrderForDisplay.length
@@ -901,7 +957,8 @@ class _PrayerOverviewSlot extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final t = result?.timeFor(prayerType);
-    final timeStr = t != null ? PrayerTimesRepository.instance.formatTime(t) : '—';
+    final timeStr =
+        t != null ? PrayerTimesRepository.instance.formatTime(t) : '—';
 
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 2),

@@ -38,7 +38,8 @@ class _BookmarkNoteSheetBodyState extends State<_BookmarkNoteSheetBody> {
   @override
   void initState() {
     super.initState();
-    _controller = TextEditingController(text: (widget.item.noteBody ?? '').trim());
+    _controller =
+        TextEditingController(text: (widget.item.noteBody ?? '').trim());
   }
 
   @override
@@ -163,7 +164,8 @@ class _BookmarkNoteSheetBodyState extends State<_BookmarkNoteSheetBody> {
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(14),
-                  borderSide: BorderSide(color: _accentChampagneGold.withOpacity(0.45)),
+                  borderSide:
+                      BorderSide(color: _accentChampagneGold.withOpacity(0.45)),
                 ),
                 contentPadding: const EdgeInsets.all(14),
               ),
@@ -184,7 +186,8 @@ class _BookmarkNoteSheetBodyState extends State<_BookmarkNoteSheetBody> {
                   ),
                 const Spacer(),
                 TextButton(
-                  onPressed: _saving ? null : () => Navigator.of(context).pop(false),
+                  onPressed:
+                      _saving ? null : () => Navigator.of(context).pop(false),
                   child: Text(
                     'Abbrechen',
                     style: GoogleFonts.inter(color: Colors.white60),
@@ -196,8 +199,10 @@ class _BookmarkNoteSheetBodyState extends State<_BookmarkNoteSheetBody> {
                   style: FilledButton.styleFrom(
                     backgroundColor: _accentChampagneGold.withOpacity(0.92),
                     foregroundColor: Colors.black87,
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 12),
+                    shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12)),
                   ),
                   child: _saving
                       ? const SizedBox(

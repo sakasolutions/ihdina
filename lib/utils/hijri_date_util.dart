@@ -22,7 +22,8 @@ class HijriDateUtil {
     final hijriDay = julianDay - 1948440 + 10632;
     final n = ((hijriDay - 1) / 10631).floor();
     final hijriDay2 = hijriDay - 10631 * n + 354;
-    final j = ((10985 - hijriDay2) / 5316).floor() * ((50 * hijriDay2) / 17719).floor() +
+    final j = ((10985 - hijriDay2) / 5316).floor() *
+            ((50 * hijriDay2) / 17719).floor() +
         (hijriDay2 / 5670).floor() * ((43 * hijriDay2) / 15238).floor();
     final hijriDay3 = hijriDay2 -
         ((30 - j) / 15).floor() * ((17719 * j) / 50).floor() -

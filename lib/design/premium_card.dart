@@ -16,6 +16,7 @@ class PremiumCard extends StatelessWidget {
   final EdgeInsetsGeometry? padding;
   final EdgeInsetsGeometry? margin;
   final VoidCallback? onTap;
+
   /// Stärkerer Schatten für Hero-Bereiche (z. B. Nächstes Gebet).
   final bool hero;
 

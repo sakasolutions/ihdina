@@ -126,7 +126,8 @@ class _DuaDetailDialogState extends State<_DuaDetailDialog> {
             ),
             Center(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 24),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 18, vertical: 24),
                 child: ConstrainedBox(
                   constraints: BoxConstraints(maxHeight: maxHeight),
                   child: DecoratedBox(

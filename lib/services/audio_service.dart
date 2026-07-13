@@ -33,7 +33,8 @@ class AudioService {
 
   final AudioPlayer _player = AudioPlayer();
 
-  final ValueNotifier<AudioPlaybackState> state = ValueNotifier(const AudioPlaybackState());
+  final ValueNotifier<AudioPlaybackState> state =
+      ValueNotifier(const AudioPlaybackState());
 
   int? _currentSurahId;
   int? _currentAyahNumber;

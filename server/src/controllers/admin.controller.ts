@@ -2,8 +2,8 @@ import type { FastifyReply, FastifyRequest } from "fastify";
 import {
   getUserDetailByInstallId,
   listAdminUsers,
+  patchUserFlagsByInstallId,
   searchUsersByInstallId,
-  setUserProByInstallId,
 } from "../services/admin.service.js";
 import { getAdminFeatureUsage } from "../services/adminFeatureUsage.service.js";
 import { getAdminGrowthMetrics } from "../services/adminGrowth.service.js";
@@ -83,7 +83,7 @@ export async function adminUserDetailHandler(
 export async function adminSetProHandler(
   req: FastifyRequest<{
     Params: { installId: string };
-    Body: { isPro?: boolean };
+    Body: { isPro?: boolean; isInternal?: boolean };
   }>,
   reply: FastifyReply
 ) {
@@ -92,10 +92,22 @@ export async function adminSetProHandler(
     throw new AppError(ErrorCodes.INVALID_INPUT, "installId is required.", 400);
   }
   const body = req.body;
-  if (!body || typeof body !== "object" || typeof body.isPro !== "boolean") {
-    throw new AppError(ErrorCodes.INVALID_INPUT, "Body must include boolean isPro.", 400);
+  if (!body || typeof body !== "object") {
+    throw new AppError(ErrorCodes.INVALID_INPUT, "Invalid JSON body.", 400);
   }
-  const user = await setUserProByInstallId(installId, body.isPro);
+  const hasPro = typeof body.isPro === "boolean";
+  const hasInternal = typeof body.isInternal === "boolean";
+  if (!hasPro && !hasInternal) {
+    throw new AppError(
+      ErrorCodes.INVALID_INPUT,
+      "Body must include at least one of isPro, isInternal.",
+      400
+    );
+  }
+  const user = await patchUserFlagsByInstallId(installId, {
+    ...(hasPro ? { isPro: body.isPro } : {}),
+    ...(hasInternal ? { isInternal: body.isInternal } : {}),
+  });
   return reply.send({ success: true, data: { user } });
 }
 

@@ -1,6 +1,7 @@
 /// Canonical Basmalah forms for comparison (Uthmani script can use different Unicode).
 /// "In the name of Allah, the Entirely Merciful, the Especially Merciful."
 const String kBasmalahCanonical = 'بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ';
+
 /// Tanzil Uthmani variant (e.g. ٱ U+0671, ۡ sukun).
 const String kBasmalahTanzil = 'بِسۡمِ ٱللَّهِ ٱلرَّحۡمَـٰنِ ٱلرَّحِیمِ';
 

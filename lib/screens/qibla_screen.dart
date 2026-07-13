@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:io' show Platform;
 import 'dart:math' show pi;
 
@@ -7,6 +8,8 @@ import 'package:flutter_qiblah/flutter_qiblah.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../services/analytics/analytics_constants.dart';
+import '../services/analytics/analytics_service.dart';
 import '../theme/app_theme.dart';
 import '../theme/hero_theme.dart';
 
@@ -22,6 +25,7 @@ class QiblaScreen extends StatefulWidget {
 
 class _QiblaScreenState extends State<QiblaScreen> with WidgetsBindingObserver {
   bool _loading = true;
+
   /// Systemweite Ortungsdienste aus (nicht App-Berechtigung).
   bool _locationServicesOff = false;
   bool _permissionGranted = false;
@@ -32,6 +36,13 @@ class _QiblaScreenState extends State<QiblaScreen> with WidgetsBindingObserver {
     super.initState();
     WidgetsBinding.instance.addObserver(this);
     _prepareQiblah();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(
+        AnalyticsService.instance.trackScreenViewed(
+          screen: AnalyticsScreens.qibla,
+        ),
+      );
+    });
   }
 
   @override

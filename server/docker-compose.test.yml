@@ -1,0 +1,22 @@
+# Lokale PostgreSQL-Testdatenbank für Server-Integrationstests (Phase 2a.1b).
+# Keine Produktionsdaten. Port 5433, um Konflikte mit lokalem Postgres zu vermeiden.
+services:
+  postgres-test:
+    image: postgres:16-alpine
+    container_name: ihdina-postgres-test
+    environment:
+      POSTGRES_USER: ihdina_test
+      POSTGRES_PASSWORD: ihdina_test
+      POSTGRES_DB: ihdina_test
+    ports:
+      - "5433:5432"
+    volumes:
+      - ihdina_pg_test_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ihdina_test -d ihdina_test"]
+      interval: 2s
+      timeout: 5s
+      retries: 15
+
+volumes:
+  ihdina_pg_test_data:

@@ -17,8 +17,10 @@ class BookmarkItem {
   final String surahNameEn;
   final String surahNameAr;
   final String? ayahTextAr;
+
   /// Deutsche Übersetzung (optional, nicht aus SQL; z. B. für Sammlungsliste).
   final String? ayahTextDe;
+
   /// Persönliche Notiz (optional, JOIN bookmark_notes).
   final String? noteBody;
 

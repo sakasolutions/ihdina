@@ -24,7 +24,9 @@ export const env = {
   openaiPriceInputPer1mUsd: optionalUsdPer1m("OPENAI_PRICE_INPUT_PER_1M_USD"),
   openaiPriceOutputPer1mUsd: optionalUsdPer1m("OPENAI_PRICE_OUTPUT_PER_1M_USD"),
   /** If unset, admin routes are disabled (404). */
-  adminApiKey: process.env.ADMIN_API_KEY?.trim() || "",
+  get adminApiKey() {
+    return process.env.ADMIN_API_KEY?.trim() || "";
+  },
   /** Kommagetrennte Origins für Admin-UI auf Subdomain (z. B. https://admin.ihdina.app). Leer = kein CORS. */
   adminCorsOrigins: (process.env.ADMIN_CORS_ORIGINS ?? "")
     .split(",")

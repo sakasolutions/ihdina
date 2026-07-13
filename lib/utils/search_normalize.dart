@@ -56,7 +56,8 @@ abstract final class SearchNormalize {
 
   /// Substring-Match auf „Buchstaben/Ziffern nur“-Form. Kürzere Queries erhöhen Trefferlärm
   /// in langen Texten — deshalb [minQueryLen] (Suren niedriger, Fließtext höher).
-  static bool westLooseContains(String haystack, String query, {int minQueryLen = 3}) {
+  static bool westLooseContains(String haystack, String query,
+      {int minQueryLen = 3}) {
     final q = foldWestAlphanumeric(query);
     if (q.length < minQueryLen) return false;
     final h = foldWestAlphanumeric(haystack);
@@ -65,7 +66,8 @@ abstract final class SearchNormalize {
   }
 
   /// Erster Treffer (Start, Länge) in [full] für [needle], nur Groß-/Kleinschreibung ignoriert.
-  static (int start, int len)? firstCaseInsensitiveMatch(String full, String needle) {
+  static (int start, int len)? firstCaseInsensitiveMatch(
+      String full, String needle) {
     final n = needle.trim();
     if (n.isEmpty) return null;
     final lower = full.toLowerCase();

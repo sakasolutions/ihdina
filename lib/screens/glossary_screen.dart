@@ -44,7 +44,8 @@ class _GlossaryScreenState extends State<GlossaryScreen> {
 
   Future<void> _load({bool forceReload = false}) async {
     try {
-      final list = await GlossaryRepository.instance.loadEntries(forceReload: forceReload);
+      final list = await GlossaryRepository.instance
+          .loadEntries(forceReload: forceReload);
       if (!mounted) return;
       setState(() {
         _all = list;
@@ -124,7 +125,8 @@ class _GlossaryScreenState extends State<GlossaryScreen> {
               ),
               SafeArea(
                 child: _loading
-                    ? const Center(child: CircularProgressIndicator(color: Colors.white70))
+                    ? const Center(
+                        child: CircularProgressIndicator(color: Colors.white70))
                     : _error != null
                         ? Center(
                             child: Padding(
@@ -169,13 +171,16 @@ class _GlossaryScreenState extends State<GlossaryScreen> {
                             crossAxisAlignment: CrossAxisAlignment.stretch,
                             children: [
                               Padding(
-                                padding: const EdgeInsets.fromLTRB(24, 8, 24, 12),
+                                padding:
+                                    const EdgeInsets.fromLTRB(24, 8, 24, 12),
                                 child: Column(
-                                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                                  crossAxisAlignment:
+                                      CrossAxisAlignment.stretch,
                                   children: [
                                     TextField(
                                       controller: _search,
-                                      style: GoogleFonts.inter(fontSize: 15, color: Colors.white),
+                                      style: GoogleFonts.inter(
+                                          fontSize: 15, color: Colors.white),
                                       cursorColor: _accentChampagneGold,
                                       decoration: InputDecoration(
                                         hintText: 'Begriff suchen …',
@@ -191,23 +196,37 @@ class _GlossaryScreenState extends State<GlossaryScreen> {
                                           controller: _search,
                                           listenMode: ListenMode.search,
                                           iconColor: _accentChampagneGold,
-                                          padding: const EdgeInsetsDirectional.only(end: 4),
+                                          padding:
+                                              const EdgeInsetsDirectional.only(
+                                                  end: 4),
                                         ),
                                         filled: true,
-                                        fillColor: Colors.black.withOpacity(0.22),
+                                        fillColor:
+                                            Colors.black.withOpacity(0.22),
                                         border: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(14),
-                                          borderSide: BorderSide(color: Colors.white.withOpacity(0.14)),
+                                          borderRadius:
+                                              BorderRadius.circular(14),
+                                          borderSide: BorderSide(
+                                              color: Colors.white
+                                                  .withOpacity(0.14)),
                                         ),
                                         enabledBorder: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(14),
-                                          borderSide: BorderSide(color: Colors.white.withOpacity(0.14)),
+                                          borderRadius:
+                                              BorderRadius.circular(14),
+                                          borderSide: BorderSide(
+                                              color: Colors.white
+                                                  .withOpacity(0.14)),
                                         ),
                                         focusedBorder: OutlineInputBorder(
-                                          borderRadius: BorderRadius.circular(14),
-                                          borderSide: BorderSide(color: _accentChampagneGold.withOpacity(0.45)),
+                                          borderRadius:
+                                              BorderRadius.circular(14),
+                                          borderSide: BorderSide(
+                                              color: _accentChampagneGold
+                                                  .withOpacity(0.45)),
                                         ),
-                                        contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
+                                        contentPadding:
+                                            const EdgeInsets.symmetric(
+                                                horizontal: 8, vertical: 12),
                                       ),
                                     ),
                                     const LocalSpeechPrivacyCaption(),
@@ -230,22 +249,27 @@ class _GlossaryScreenState extends State<GlossaryScreen> {
                                         ),
                                       )
                                     : ListView.builder(
-                                        padding: const EdgeInsets.fromLTRB(24, 0, 24, 100),
+                                        padding: const EdgeInsets.fromLTRB(
+                                            24, 0, 24, 100),
                                         itemCount: _visible.length + 1,
                                         itemBuilder: (context, index) {
                                           if (index == _visible.length) {
                                             return Padding(
-                                              padding: const EdgeInsets.only(top: 8),
+                                              padding:
+                                                  const EdgeInsets.only(top: 8),
                                               child: GlassCard(
                                                 borderRadius: 18,
                                                 child: Padding(
-                                                  padding: const EdgeInsets.fromLTRB(18, 16, 18, 18),
+                                                  padding:
+                                                      const EdgeInsets.fromLTRB(
+                                                          18, 16, 18, 18),
                                                   child: Text(
                                                     'Kurztexte zum Einordnen – kein Ersatz für Unterricht bei qualifizierten Lehrpersonen. Bei Glaubens- und Praxisfragen verlässliche Ansprechpartner vor Ort oder anerkannte Institutionen konsultieren.',
                                                     style: GoogleFonts.inter(
                                                       fontSize: 12,
                                                       height: 1.45,
-                                                      color: Colors.white.withOpacity(0.55),
+                                                      color: Colors.white
+                                                          .withOpacity(0.55),
                                                     ),
                                                   ),
                                                 ),
@@ -254,19 +278,26 @@ class _GlossaryScreenState extends State<GlossaryScreen> {
                                           }
                                           final e = _visible[index];
                                           return Padding(
-                                            padding: const EdgeInsets.only(bottom: 14),
+                                            padding: const EdgeInsets.only(
+                                                bottom: 14),
                                             child: GlassCard(
                                               borderRadius: 20,
                                               child: Padding(
-                                                padding: const EdgeInsets.fromLTRB(20, 18, 20, 18),
+                                                padding:
+                                                    const EdgeInsets.fromLTRB(
+                                                        20, 18, 20, 18),
                                                 child: Column(
-                                                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                                                  crossAxisAlignment:
+                                                      CrossAxisAlignment
+                                                          .stretch,
                                                   children: [
                                                     Text(
                                                       e.term,
-                                                      style: GoogleFonts.playfairDisplay(
+                                                      style: GoogleFonts
+                                                          .playfairDisplay(
                                                         fontSize: 18,
-                                                        fontWeight: FontWeight.w600,
+                                                        fontWeight:
+                                                            FontWeight.w600,
                                                         color: Colors.white,
                                                         height: 1.25,
                                                       ),
@@ -277,7 +308,8 @@ class _GlossaryScreenState extends State<GlossaryScreen> {
                                                       style: GoogleFonts.inter(
                                                         fontSize: 14,
                                                         height: 1.5,
-                                                        color: Colors.white.withOpacity(0.86),
+                                                        color: Colors.white
+                                                            .withOpacity(0.86),
                                                       ),
                                                     ),
                                                   ],

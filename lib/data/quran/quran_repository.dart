@@ -21,7 +21,8 @@ class QuranRepository {
     const candidates = ['surah_id', 'surah_number', 'sura'];
     try {
       final info = await db.rawQuery('PRAGMA table_info(ayahs)');
-      final names = info.map<String>((r) => (r['name'] as String?) ?? '').toSet();
+      final names =
+          info.map<String>((r) => (r['name'] as String?) ?? '').toSet();
       for (final c in candidates) {
         if (names.contains(c)) {
           _ayahsSurahColumn = c;

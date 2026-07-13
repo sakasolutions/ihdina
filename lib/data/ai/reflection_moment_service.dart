@@ -29,9 +29,8 @@ class ReflectionMomentService {
   static String get displayTitle =>
       isFriday ? 'Freitags-Moment' : 'Moment zum Nachdenken';
 
-  static String get displaySubtitle => isFriday
-      ? 'Jumuʿah · Gemeinschaft & Besinnung'
-      : 'Ein Gedanke für heute';
+  static String get displaySubtitle =>
+      isFriday ? 'Jumuʿah · Gemeinschaft & Besinnung' : 'Ein Gedanke für heute';
 
   /// KPI: einmal pro Tag beim Aufklappen (oder Freitag-Auto-Expand).
   Future<void> recordExpand() async {
@@ -121,7 +120,10 @@ class ReflectionMomentService {
   }
 
   static String? _sanitize(String raw) {
-    var t = raw.replaceAll(RegExp(r'[\r\n]+'), ' ').replaceAll(RegExp(r'\s+'), ' ').trim();
+    var t = raw
+        .replaceAll(RegExp(r'[\r\n]+'), ' ')
+        .replaceAll(RegExp(r'\s+'), ' ')
+        .trim();
     if (t.isEmpty) return null;
     if (t.length > 320) {
       final cut = t.substring(0, 319);

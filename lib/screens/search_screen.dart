@@ -18,6 +18,8 @@ import '../utils/search_normalize.dart';
 import '../widgets/glass_card.dart';
 import '../widgets/local_dictation_icon_button.dart';
 import '../widgets/local_speech_privacy_caption.dart';
+import '../services/analytics/analytics_constants.dart';
+import '../services/analytics/analytics_service.dart';
 import '../models/surah.dart';
 import 'quran_reader_screen.dart';
 
@@ -32,7 +34,8 @@ List<Surah> filterSurahs(List<Surah> surahs, String query) {
   return surahs.where((s) {
     if (digitOnly.isNotEmpty && '${s.number}'.contains(digitOnly)) return true;
     if (SearchNormalize.westContains(s.nameDe, raw)) return true;
-    if (SearchNormalize.westLooseContains(s.nameDe, raw, minQueryLen: 3)) return true;
+    if (SearchNormalize.westLooseContains(s.nameDe, raw, minQueryLen: 3))
+      return true;
     if (SearchNormalize.arabicContains(s.nameAr, raw)) return true;
     if (s.nameAr.contains(raw)) return true;
     return false;
@@ -69,6 +72,13 @@ class _SearchScreenState extends State<SearchScreen> {
     _loadSurahs();
     _loadSettings();
     _loadPrayerTimes();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      unawaited(
+        AnalyticsService.instance.trackScreenViewed(
+          screen: AnalyticsScreens.search,
+        ),
+      );
+    });
   }
 
   Future<void> _loadPrayerTimes() async {
@@ -153,7 +163,8 @@ class _SearchScreenState extends State<SearchScreen> {
   }
 
   /// Offline verse search: Arabic + German. Iterates surahs/ayahs and uses TranslationService.
-  Future<List<SearchResult>> _searchVersesOffline(String query, {int limit = 50}) async {
+  Future<List<SearchResult>> _searchVersesOffline(String query,
+      {int limit = 50}) async {
     final raw = query.trim();
     if (raw.isEmpty) return [];
     await TranslationService.instance.ensureLoaded();
@@ -165,13 +176,16 @@ class _SearchScreenState extends State<SearchScreen> {
       for (final ayah in ayahs) {
         if (results.length >= limit) break;
         final textAr = ayah.textAr;
-        final textDe = TranslationService.instance.getTranslation(sm.id, ayah.ayahNumber);
+        final textDe =
+            TranslationService.instance.getTranslation(sm.id, ayah.ayahNumber);
         final translit = ayah.textTranslit ?? '';
         final matchAr = SearchNormalize.arabicContains(textAr, raw);
-        final matchDe = textDe.isNotEmpty && SearchNormalize.westContains(textDe, raw);
+        final matchDe =
+            textDe.isNotEmpty && SearchNormalize.westContains(textDe, raw);
         final matchDeLoose = textDe.isNotEmpty &&
             SearchNormalize.westLooseContains(textDe, raw, minQueryLen: 4);
-        final matchTr = translit.isNotEmpty && SearchNormalize.westContains(translit, raw);
+        final matchTr =
+            translit.isNotEmpty && SearchNormalize.westContains(translit, raw);
         final matchTrLoose = translit.isNotEmpty &&
             SearchNormalize.westLooseContains(translit, raw, minQueryLen: 4);
         if (matchAr || matchDe || matchDeLoose || matchTr || matchTrLoose) {
@@ -197,7 +211,8 @@ class _SearchScreenState extends State<SearchScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final heroPhase = DynamicHeroTheme.phaseFromPrayer(_prayerResult?.nextPrayerType);
+    final heroPhase =
+        DynamicHeroTheme.phaseFromPrayer(_prayerResult?.nextPrayerType);
 
     return Scaffold(
       extendBodyBehindAppBar: true,
@@ -230,91 +245,104 @@ class _SearchScreenState extends State<SearchScreen> {
           child: Stack(
             fit: StackFit.expand,
             children: [
-            Positioned.fill(
-              child: Opacity(
-                opacity: 0.1,
-                child: Image.asset(
-                  DynamicHeroTheme.backgroundAsset(heroPhase),
-                  fit: BoxFit.cover,
-                  width: double.infinity,
-                  height: double.infinity,
-                  errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+              Positioned.fill(
+                child: Opacity(
+                  opacity: 0.1,
+                  child: Image.asset(
+                    DynamicHeroTheme.backgroundAsset(heroPhase),
+                    fit: BoxFit.cover,
+                    width: double.infinity,
+                    height: double.infinity,
+                    errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                  ),
                 ),
               ),
-            ),
-            SafeArea(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(_outerPadding, 16, _outerPadding, 0),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: _SegmentButton(
-                          label: 'Suren',
-                          selected: _segmentIndex == 0,
-                          onTap: () => setState(() => _segmentIndex = 0),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      Expanded(
-                        child: _SegmentButton(
-                          label: 'Verse',
-                          selected: _segmentIndex == 1,
-                          onTap: () => setState(() => _segmentIndex = 1),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                Padding(
-                  padding: const EdgeInsets.fromLTRB(_outerPadding, 16, _outerPadding, 0),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      TextField(
-                        controller: _controller,
-                        onChanged: _onQueryChanged,
-                        decoration: InputDecoration(
-                          hintText: _segmentIndex == 0 ? 'Sure suchen' : 'Vers oder Stichwort suchen...',
-                          hintStyle: GoogleFonts.inter(fontSize: 15, color: Colors.white70),
-                          prefixIcon: const Icon(Icons.search_rounded, size: 22, color: Colors.white70),
-                          filled: true,
-                          fillColor: Colors.white.withOpacity(0.15),
-                          border: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
-                            borderSide: BorderSide(color: Colors.white.withOpacity(0.3)),
+              SafeArea(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(
+                          _outerPadding, 16, _outerPadding, 0),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: _SegmentButton(
+                              label: 'Suren',
+                              selected: _segmentIndex == 0,
+                              onTap: () => setState(() => _segmentIndex = 0),
+                            ),
                           ),
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(14),
-                            borderSide: BorderSide(color: Colors.white.withOpacity(0.3)),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: _SegmentButton(
+                              label: 'Verse',
+                              selected: _segmentIndex == 1,
+                              onTap: () => setState(() => _segmentIndex = 1),
+                            ),
                           ),
-                          suffixIcon: LocalDictationIconButton(
+                        ],
+                      ),
+                    ),
+                    Padding(
+                      padding: const EdgeInsets.fromLTRB(
+                          _outerPadding, 16, _outerPadding, 0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          TextField(
                             controller: _controller,
-                            listenMode: _segmentIndex == 0
-                                ? ListenMode.search
-                                : ListenMode.dictation,
-                            iconColor: Colors.white70,
-                            padding: const EdgeInsetsDirectional.only(end: 4),
+                            onChanged: _onQueryChanged,
+                            decoration: InputDecoration(
+                              hintText: _segmentIndex == 0
+                                  ? 'Sure suchen'
+                                  : 'Vers oder Stichwort suchen...',
+                              hintStyle: GoogleFonts.inter(
+                                  fontSize: 15, color: Colors.white70),
+                              prefixIcon: const Icon(Icons.search_rounded,
+                                  size: 22, color: Colors.white70),
+                              filled: true,
+                              fillColor: Colors.white.withOpacity(0.15),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14),
+                                borderSide: BorderSide(
+                                    color: Colors.white.withOpacity(0.3)),
+                              ),
+                              enabledBorder: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(14),
+                                borderSide: BorderSide(
+                                    color: Colors.white.withOpacity(0.3)),
+                              ),
+                              suffixIcon: LocalDictationIconButton(
+                                controller: _controller,
+                                listenMode: _segmentIndex == 0
+                                    ? ListenMode.search
+                                    : ListenMode.dictation,
+                                iconColor: Colors.white70,
+                                padding:
+                                    const EdgeInsetsDirectional.only(end: 4),
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(
+                                  horizontal: 16, vertical: 14),
+                            ),
+                            style: GoogleFonts.inter(
+                                fontSize: 15, color: Colors.white),
                           ),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                        ),
-                        style: GoogleFonts.inter(fontSize: 15, color: Colors.white),
+                          const LocalSpeechPrivacyCaption(),
+                        ],
                       ),
-                      const LocalSpeechPrivacyCaption(),
-                    ],
-                  ),
+                    ),
+                    const SizedBox(height: _sectionGap),
+                    Expanded(
+                      child: _segmentIndex == 0
+                          ? _buildSurenList()
+                          : _buildVerseList(),
+                    ),
+                  ],
                 ),
-                const SizedBox(height: _sectionGap),
-                Expanded(
-                  child: _segmentIndex == 0 ? _buildSurenList() : _buildVerseList(),
-                ),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
-        ),
         ),
       ),
     );
@@ -322,13 +350,16 @@ class _SearchScreenState extends State<SearchScreen> {
 
   Widget _buildSurenList() {
     if (_surahs == null) {
-      return const Center(child: CircularProgressIndicator(color: Colors.white70));
+      return const Center(
+          child: CircularProgressIndicator(color: Colors.white70));
     }
     final list = _filteredSurahs;
     if (list.isEmpty) {
       return Center(
         child: Text(
-          _controller.text.trim().isEmpty ? 'Keine Suren.' : 'Keine Treffer für „${_controller.text.trim()}".',
+          _controller.text.trim().isEmpty
+              ? 'Keine Suren.'
+              : 'Keine Treffer für „${_controller.text.trim()}".',
           style: GoogleFonts.inter(color: Colors.white70),
         ),
       );
@@ -362,16 +393,16 @@ class _SearchScreenState extends State<SearchScreen> {
                         width: 44,
                         height: 44,
                         alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.25),
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(
-                color: Colors.white.withOpacity(0.1),
-                width: 1,
-              ),
-            ),
-            child: Text(
-              '${surah.number}',
+                        decoration: BoxDecoration(
+                          color: Colors.black.withOpacity(0.25),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(
+                            color: Colors.white.withOpacity(0.1),
+                            width: 1,
+                          ),
+                        ),
+                        child: Text(
+                          '${surah.number}',
                           style: GoogleFonts.playfairDisplay(
                             fontSize: 18,
                             fontWeight: FontWeight.w700,
@@ -407,9 +438,11 @@ class _SearchScreenState extends State<SearchScreen> {
                       if (_bookmarkCounts.containsKey(surah.number))
                         const Padding(
                           padding: EdgeInsets.only(right: 8),
-                          child: Icon(Icons.bookmark_rounded, size: 18, color: Colors.white),
+                          child: Icon(Icons.bookmark_rounded,
+                              size: 18, color: Colors.white),
                         ),
-                      const Icon(Icons.chevron_right_rounded, color: Colors.white70, size: 24),
+                      const Icon(Icons.chevron_right_rounded,
+                          color: Colors.white70, size: 24),
                     ],
                   ),
                 ),
@@ -423,7 +456,8 @@ class _SearchScreenState extends State<SearchScreen> {
 
   Widget _buildVerseList() {
     if (_verseLoading) {
-      return const Center(child: CircularProgressIndicator(color: Colors.white70));
+      return const Center(
+          child: CircularProgressIndicator(color: Colors.white70));
     }
     final q = _controller.text.trim();
     if (q.isEmpty) {
@@ -487,7 +521,8 @@ class _SearchScreenState extends State<SearchScreen> {
 }
 
 class _SegmentButton extends StatelessWidget {
-  const _SegmentButton({required this.label, required this.selected, required this.onTap});
+  const _SegmentButton(
+      {required this.label, required this.selected, required this.onTap});
 
   final String label;
   final bool selected;
@@ -631,7 +666,8 @@ class _VerseResultTile extends StatelessWidget {
                 const SizedBox(height: 4),
                 Align(
                   alignment: Alignment.centerRight,
-                  child: Icon(Icons.chevron_right_rounded, color: Colors.white54, size: 22),
+                  child: Icon(Icons.chevron_right_rounded,
+                      color: Colors.white54, size: 22),
                 ),
               ],
             ),

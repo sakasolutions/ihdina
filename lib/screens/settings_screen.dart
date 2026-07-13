@@ -19,6 +19,7 @@ import '../theme/app_theme.dart';
 import '../theme/hero_theme.dart';
 import '../widgets/app_feedback_sheet.dart';
 import '../widgets/glass_card.dart';
+import '../services/analytics/analytics_constants.dart';
 import 'city_search_screen.dart';
 import 'paywall_screen.dart';
 import 'glossary_screen.dart';
@@ -231,7 +232,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
             }
             await Navigator.push<void>(
               context,
-              MaterialPageRoute<void>(builder: (_) => const PaywallScreen()),
+              MaterialPageRoute<void>(
+                builder: (_) => const PaywallScreen(
+                  analyticsTrigger: AnalyticsPaywallTrigger.settings,
+                ),
+              ),
             );
             await RevenueCatService.updateCustomerStatus();
             if (mounted) setState(() {});
@@ -241,7 +246,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
             child: Row(
               children: [
                 Icon(
-                  isPro ? Icons.verified_outlined : Icons.workspace_premium_outlined,
+                  isPro
+                      ? Icons.verified_outlined
+                      : Icons.workspace_premium_outlined,
                   color: _accentChampagneGold,
                   size: 26,
                 ),
@@ -272,7 +279,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     ],
                   ),
                 ),
-                Icon(Icons.chevron_right_rounded, color: Colors.white38, size: 24),
+                Icon(Icons.chevron_right_rounded,
+                    color: Colors.white38, size: 24),
               ],
             ),
           ),
@@ -293,7 +301,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
               borderRadius: BorderRadius.circular(20),
               onTap: () => setState(() => _supportExpanded = !_supportExpanded),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 20, vertical: 18),
                 child: Row(
                   children: [
                     Expanded(
@@ -333,7 +342,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 child: GlassCard(
                   borderRadius: 20,
                   child: Padding(
-                    padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
+                    padding: const EdgeInsets.symmetric(
+                        vertical: 14, horizontal: 20),
                     child: Row(
                       children: [
                         Icon(
@@ -517,13 +527,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Widget _buildOfficialDiyanetTile() {
-    final officialSelected = _prayerSettings!.method == PrayerMethodOption.turkiye;
+    final officialSelected =
+        _prayerSettings!.method == PrayerMethodOption.turkiye;
     return Material(
       color: Colors.transparent,
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: () async {
-          final updated = _prayerSettings!.copyWith(method: PrayerMethodOption.turkiye);
+          final updated =
+              _prayerSettings!.copyWith(method: PrayerMethodOption.turkiye);
           await SettingsRepository.instance.setPrayerSettings(updated);
           if (mounted) setState(() => _prayerSettings = updated);
           if (mounted) await _loadPrayerTimes();
@@ -545,7 +557,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
           child: Row(
             children: [
               Icon(
-                officialSelected ? Icons.check_circle_rounded : Icons.circle_outlined,
+                officialSelected
+                    ? Icons.check_circle_rounded
+                    : Icons.circle_outlined,
                 size: 20,
                 color: officialSelected ? _accentChampagneGold : Colors.white54,
               ),
@@ -601,7 +615,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
       if (placemarks.isNotEmpty) {
         final p = placemarks.first;
         final parts = <String>[];
-        if (p.locality != null && p.locality!.isNotEmpty) parts.add(p.locality!);
+        if (p.locality != null && p.locality!.isNotEmpty)
+          parts.add(p.locality!);
         if (p.administrativeArea != null && p.administrativeArea!.isNotEmpty) {
           parts.add(p.administrativeArea!);
         }
@@ -623,7 +638,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
         await _loadPrayerTimes();
         appRestartNotifier.value++;
         if (mounted && _notificationsEnabled && _prayerResult != null) {
-          await NotificationService.instance.schedulePrayerNotifications(_prayerResult!, updated);
+          await NotificationService.instance
+              .schedulePrayerNotifications(_prayerResult!, updated);
         }
         rootScaffoldMessengerKey.currentState?.showSnackBar(
           SnackBar(content: Text('Standort gesetzt: $locationLabel')),
@@ -662,7 +678,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   Future<void> _applyMadhab() async {
-    if (_prayerSettings == null || _madhabDraft == null || !_madhabHasPendingChanges) return;
+    if (_prayerSettings == null ||
+        _madhabDraft == null ||
+        !_madhabHasPendingChanges) return;
     setState(() => _madhabApplying = true);
     try {
       final updated = _prayerSettings!.copyWith(madhab: _madhabDraft!);
@@ -675,11 +693,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
       await _loadPrayerTimes();
       prayerSettingsRefreshNotifier.value++;
       if (mounted && _notificationsEnabled && _prayerResult != null) {
-        await NotificationService.instance.schedulePrayerNotifications(_prayerResult!, updated);
+        await NotificationService.instance
+            .schedulePrayerNotifications(_prayerResult!, updated);
       }
       if (mounted) {
         rootScaffoldMessengerKey.currentState?.showSnackBar(
-          SnackBar(content: Text('Asr-Berechnung: ${updated.madhab.displayName}')),
+          SnackBar(
+              content: Text('Asr-Berechnung: ${updated.madhab.displayName}')),
         );
       }
     } finally {
@@ -911,7 +931,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final heroPhase = DynamicHeroTheme.phaseFromPrayer(_prayerResult?.nextPrayerType);
+    final heroPhase =
+        DynamicHeroTheme.phaseFromPrayer(_prayerResult?.nextPrayerType);
 
     SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle.light.copyWith(
       statusBarColor: Colors.transparent,
@@ -953,711 +974,794 @@ class _SettingsScreenState extends State<SettingsScreen> {
           child: Stack(
             fit: StackFit.expand,
             children: [
-            Positioned.fill(
-              child: Opacity(
-                opacity: 0.1,
-                child: Image.asset(
-                  DynamicHeroTheme.backgroundAsset(heroPhase),
-                  fit: BoxFit.cover,
-                  width: double.infinity,
-                  height: double.infinity,
-                  errorBuilder: (_, __, ___) => const SizedBox.shrink(),
-                ),
-              ),
-            ),
-            SafeArea(
-            child: ListView(
-              padding: const EdgeInsets.fromLTRB(24, 24, 24, 130),
-              children: [
-                _buildProSettingsCard(),
-                const SizedBox(height: 16),
-                GlassCard(
-                  borderRadius: 20,
-                  child: Padding(
-                    padding: const EdgeInsets.all(20),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Benachrichtigungen',
-                          style: GoogleFonts.playfairDisplay(
-                            fontSize: 18,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        if (_prayerSettings != null) ...[
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                            children: [
-                              Text(
-                                'Gebets-Erinnerungen',
-                                style: GoogleFonts.inter(
-                                  fontSize: 14,
-                                  fontWeight: FontWeight.w500,
-                                  color: Colors.white,
-                                ),
-                              ),
-                              Switch(
-                                value: _notificationsEnabled,
-                                onChanged: (bool value) async {
-                                  if (mounted) setState(() => _notificationsEnabled = value);
-                                  try {
-                                    await SettingsRepository.instance.setNotificationsEnabled(value);
-                                    if (!value) {
-                                      try {
-                                        await NotificationService.instance.cancelAllPrayerNotifications();
-                                      } catch (_) { /* cancel löst auf manchen Geräten „Missing type parameter“ aus */ }
-                                      debugPrint('[NOTIF] Gebets-Erinnerungen aus');
-                                      rootScaffoldMessengerKey.currentState?.showSnackBar(
-                                        const SnackBar(
-                                          content: Text('Gebets-Erinnerungen deaktiviert'),
-                                          backgroundColor: Colors.white24,
-                                          behavior: SnackBarBehavior.floating,
-                                          duration: const Duration(seconds: 3),
-                                        ),
-                                      );
-                                    } else {
-                                      await NotificationService.instance.showImmediateConfirmationNotification();
-                                      rootScaffoldMessengerKey.currentState?.showSnackBar(
-                                        const SnackBar(
-                                          content: Text('Sofort-Benachrichtigung gesendet!'),
-                                          backgroundColor: Colors.green,
-                                          behavior: SnackBarBehavior.floating,
-                                          duration: const Duration(seconds: 4),
-                                        ),
-                                      );
-                                      final settings = await SettingsRepository.instance.getPrayerSettings();
-                                      final now = DateTime.now();
-                                      final result = PrayerTimesRepository.instance.computeToday(settings, now);
-                                      if (mounted) {
-                                        await NotificationService.instance.schedulePrayerNotifications(
-                                          result,
-                                          settings,
-                                        );
-                                        debugPrint('[NOTIF] Gebets-Erinnerungen geplant');
-                                      }
-                                    }
-                                  } catch (e, st) {
-                                    debugPrint('[NOTIF] Fehler: $e');
-                                    debugPrint('$st');
-                                    // Nur bei „Aus“ den Schalter zurücksetzen. Bei „An“ bleibt er an (Sofort-Benachrichtigung war schon erfolgreich).
-                                    if (!value && mounted) setState(() => _notificationsEnabled = true);
-                                    // Bei „An“ keine rote Meldung – grüne Snackbar + Vibration waren schon Erfolg.
-                                    if (!value) {
-                                      rootScaffoldMessengerKey.currentState?.showSnackBar(
-                                        SnackBar(
-                                          content: Text('Fehler: $e'),
-                                          backgroundColor: Colors.red,
-                                          behavior: SnackBarBehavior.floating,
-                                          duration: const Duration(seconds: 5),
-                                        ),
-                                      );
-                                    }
-                                  }
-                                },
-                                activeColor: Colors.white,
-                                activeTrackColor: Colors.white.withOpacity(0.4),
-                                inactiveThumbColor: Colors.white54,
-                                inactiveTrackColor: Colors.white.withOpacity(0.2),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 18),
-                        ],
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Tagesvers-Erinnerung',
-                                    style: GoogleFonts.inter(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w500,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    'Täglich um 10:00',
-                                    style: GoogleFonts.inter(
-                                      fontSize: 12,
-                                      color: Colors.white.withOpacity(0.58),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Switch(
-                              value: _dailyAyahReminderEnabled,
-                              onChanged: (bool value) async {
-                                await SettingsRepository.instance.setDailyAyahReminderEnabled(value);
-                                if (!value) {
-                                  await NotificationService.instance.cancelDailyAyahReminder();
-                                } else {
-                                  await NotificationService.instance.scheduleDailyAyahReminder();
-                                }
-                                if (mounted) setState(() => _dailyAyahReminderEnabled = value);
-                              },
-                              activeColor: Colors.white,
-                              activeTrackColor: Colors.white.withOpacity(0.4),
-                              inactiveThumbColor: Colors.white54,
-                              inactiveTrackColor: Colors.white.withOpacity(0.2),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 18),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Sure-Kurzinfo',
-                                    style: GoogleFonts.inter(
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w500,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    'Beim ersten Öffnen einer Sure im Lesen (wenn eine Einführung hinterlegt ist)',
-                                    style: GoogleFonts.inter(
-                                      fontSize: 12,
-                                      color: Colors.white.withOpacity(0.58),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Switch(
-                              value: _surahIntroAutoShow,
-                              onChanged: (bool value) async {
-                                await SettingsRepository.instance.setSurahIntroAutoShow(value);
-                                if (mounted) setState(() => _surahIntroAutoShow = value);
-                              },
-                              activeColor: Colors.white,
-                              activeTrackColor: Colors.white.withOpacity(0.4),
-                              inactiveThumbColor: Colors.white54,
-                              inactiveTrackColor: Colors.white.withOpacity(0.2),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
+              Positioned.fill(
+                child: Opacity(
+                  opacity: 0.1,
+                  child: Image.asset(
+                    DynamicHeroTheme.backgroundAsset(heroPhase),
+                    fit: BoxFit.cover,
+                    width: double.infinity,
+                    height: double.infinity,
+                    errorBuilder: (_, __, ___) => const SizedBox.shrink(),
                   ),
                 ),
-                const SizedBox(height: 16),
-                if (_prayerSettings != null)
-                  GlassCard(
-                    borderRadius: 20,
-                    child: Padding(
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Gebet',
-                            style: GoogleFonts.playfairDisplay(
-                              fontSize: 18,
-                              fontWeight: FontWeight.w600,
-                              color: Colors.white,
+              ),
+              SafeArea(
+                child: ListView(
+                  padding: const EdgeInsets.fromLTRB(24, 24, 24, 130),
+                  children: [
+                    _buildProSettingsCard(),
+                    const SizedBox(height: 16),
+                    GlassCard(
+                      borderRadius: 20,
+                      child: Padding(
+                        padding: const EdgeInsets.all(20),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Benachrichtigungen',
+                              style: GoogleFonts.playfairDisplay(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
                             ),
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            'Standort',
-                            style: GoogleFonts.inter(
-                              fontSize: 13,
-                              fontWeight: FontWeight.w500,
-                              color: Colors.white.withOpacity(0.72),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            _prayerSettings!.locationLabel,
-                            style: GoogleFonts.inter(
-                              fontSize: 15,
-                              color: Colors.white,
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Tooltip(
-                                message: 'Stadt auswählen',
-                                child: Material(
-                                  color: Colors.transparent,
-                                  child: InkWell(
-                                    onTap: () async {
-                                      final result = await Navigator.push<bool>(
-                                        context,
-                                        MaterialPageRoute<bool>(builder: (_) => const CitySearchScreen()),
-                                      );
-                                      if (result == true && mounted) {
-                                        await _load();
-                                        await _loadPrayerTimes();
-                                        appRestartNotifier.value++;
-                                        if (mounted &&
-                                            _notificationsEnabled &&
-                                            _prayerResult != null &&
-                                            _prayerSettings != null) {
-                                          await NotificationService.instance.schedulePrayerNotifications(
-                                            _prayerResult!,
-                                            _prayerSettings!,
+                            const SizedBox(height: 16),
+                            if (_prayerSettings != null) ...[
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    'Gebets-Erinnerungen',
+                                    style: GoogleFonts.inter(
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w500,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                                  Switch(
+                                    value: _notificationsEnabled,
+                                    onChanged: (bool value) async {
+                                      if (mounted)
+                                        setState(() =>
+                                            _notificationsEnabled = value);
+                                      try {
+                                        await SettingsRepository.instance
+                                            .setNotificationsEnabled(value);
+                                        if (!value) {
+                                          try {
+                                            await NotificationService.instance
+                                                .cancelAllPrayerNotifications();
+                                          } catch (_) {
+                                            /* cancel löst auf manchen Geräten „Missing type parameter“ aus */
+                                          }
+                                          debugPrint(
+                                              '[NOTIF] Gebets-Erinnerungen aus');
+                                          rootScaffoldMessengerKey.currentState
+                                              ?.showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                  'Gebets-Erinnerungen deaktiviert'),
+                                              backgroundColor: Colors.white24,
+                                              behavior:
+                                                  SnackBarBehavior.floating,
+                                              duration:
+                                                  const Duration(seconds: 3),
+                                            ),
+                                          );
+                                        } else {
+                                          await NotificationService.instance
+                                              .showImmediateConfirmationNotification();
+                                          rootScaffoldMessengerKey.currentState
+                                              ?.showSnackBar(
+                                            const SnackBar(
+                                              content: Text(
+                                                  'Sofort-Benachrichtigung gesendet!'),
+                                              backgroundColor: Colors.green,
+                                              behavior:
+                                                  SnackBarBehavior.floating,
+                                              duration:
+                                                  const Duration(seconds: 4),
+                                            ),
+                                          );
+                                          final settings =
+                                              await SettingsRepository.instance
+                                                  .getPrayerSettings();
+                                          final now = DateTime.now();
+                                          final result = PrayerTimesRepository
+                                              .instance
+                                              .computeToday(settings, now);
+                                          if (mounted) {
+                                            await NotificationService.instance
+                                                .schedulePrayerNotifications(
+                                              result,
+                                              settings,
+                                            );
+                                            debugPrint(
+                                                '[NOTIF] Gebets-Erinnerungen geplant');
+                                          }
+                                        }
+                                      } catch (e, st) {
+                                        debugPrint('[NOTIF] Fehler: $e');
+                                        debugPrint('$st');
+                                        // Nur bei „Aus“ den Schalter zurücksetzen. Bei „An“ bleibt er an (Sofort-Benachrichtigung war schon erfolgreich).
+                                        if (!value && mounted)
+                                          setState(() =>
+                                              _notificationsEnabled = true);
+                                        // Bei „An“ keine rote Meldung – grüne Snackbar + Vibration waren schon Erfolg.
+                                        if (!value) {
+                                          rootScaffoldMessengerKey.currentState
+                                              ?.showSnackBar(
+                                            SnackBar(
+                                              content: Text('Fehler: $e'),
+                                              backgroundColor: Colors.red,
+                                              behavior:
+                                                  SnackBarBehavior.floating,
+                                              duration:
+                                                  const Duration(seconds: 5),
+                                            ),
                                           );
                                         }
                                       }
                                     },
-                                    borderRadius: BorderRadius.circular(24),
-                                    child: Container(
-                                      width: 44,
-                                      height: 44,
-                                      alignment: Alignment.center,
-                                      decoration: BoxDecoration(
-                                        color: Colors.black.withOpacity(0.25),
-                                        shape: BoxShape.circle,
-                                        border: Border.all(
-                                          color: Colors.white.withOpacity(0.1),
-                                          width: 1,
+                                    activeColor: Colors.white,
+                                    activeTrackColor:
+                                        Colors.white.withOpacity(0.4),
+                                    inactiveThumbColor: Colors.white54,
+                                    inactiveTrackColor:
+                                        Colors.white.withOpacity(0.2),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 18),
+                            ],
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Tagesvers-Erinnerung',
+                                        style: GoogleFonts.inter(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w500,
+                                          color: Colors.white,
                                         ),
                                       ),
-                                      child: Icon(Icons.location_city_outlined, size: 22, color: Colors.white),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 12),
-                              Tooltip(
-                                message: 'Standort orten',
-                                child: Material(
-                                  color: Colors.transparent,
-                                  child: InkWell(
-                                    onTap: _locationLoading ? null : _determinePosition,
-                                    borderRadius: BorderRadius.circular(24),
-                                    child: Container(
-                                      width: 44,
-                                      height: 44,
-                                      alignment: Alignment.center,
-                                      decoration: BoxDecoration(
-                                        color: Colors.black.withOpacity(0.25),
-                                        shape: BoxShape.circle,
-                                        border: Border.all(
-                                          color: Colors.white.withOpacity(0.1),
-                                          width: 1,
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        'Täglich um 10:00',
+                                        style: GoogleFonts.inter(
+                                          fontSize: 12,
+                                          color: Colors.white.withOpacity(0.58),
                                         ),
                                       ),
-                                      child: _locationLoading
-                                          ? SizedBox(
-                                              width: 20,
-                                              height: 20,
-                                              child: CircularProgressIndicator(
-                                                strokeWidth: 2,
-                                                color: _accentChampagneGold,
-                                              ),
-                                            )
-                                          : Icon(Icons.my_location, size: 22, color: _accentChampagneGold),
-                                    ),
+                                    ],
                                   ),
                                 ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 18),
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  'Gebetszeiten',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w500,
-                                    color: Colors.white.withOpacity(0.72),
-                                  ),
-                                ),
-                              ),
-                              Tooltip(
-                                message: 'Infos zu Gebetszeiten & Quellen',
-                                child: Material(
-                                  color: Colors.transparent,
-                                  child: InkWell(
-                                    onTap: _showGebetszeitenInfoSheet,
-                                    borderRadius: BorderRadius.circular(20),
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(4),
-                                      child: Icon(
-                                        Icons.info_outline_rounded,
-                                        size: 20,
-                                        color: _accentChampagneGold,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 14),
-                          Text(
-                            'Offizielle Quellen',
-                            style: GoogleFonts.inter(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: 0.4,
-                              color: Colors.white.withOpacity(0.55),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          _buildOfficialDiyanetTile(),
-                          const SizedBox(height: 16),
-                          Text(
-                            'Berechnete Methoden',
-                            style: GoogleFonts.inter(
-                              fontSize: 12,
-                              fontWeight: FontWeight.w600,
-                              letterSpacing: 0.4,
-                              color: Colors.white.withOpacity(0.55),
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          DropdownButtonFormField<PrayerMethodOption?>(
-                            value: _prayerSettings!.method == PrayerMethodOption.turkiye
-                                ? null
-                                : _prayerSettings!.method,
-                            hint: Text(
-                              'Berechnete Methode wählen',
-                              style: GoogleFonts.inter(fontSize: 14, color: Colors.white54),
-                            ),
-                            dropdownColor: const Color(0xFF0A2E28),
-                            icon: const Icon(Icons.arrow_drop_down, color: Colors.white70, size: 22),
-                            decoration: _settingsDropdownDecoration(),
-                            style: GoogleFonts.inter(fontSize: 14, color: Colors.white),
-                            items: PrayerMethodOption.calculatedMethods
-                                .map((m) => DropdownMenuItem(
-                                      value: m,
-                                      child: Text(
-                                        m.displayName,
-                                        style: const TextStyle(color: Colors.white),
-                                      ),
-                                    ))
-                                .toList(),
-                            onChanged: (v) async {
-                              if (v == null) return;
-                              final updated = _prayerSettings!.copyWith(method: v);
-                              await SettingsRepository.instance.setPrayerSettings(updated);
-                              if (mounted) setState(() => _prayerSettings = updated);
-                              if (mounted) await _loadPrayerTimes();
-                              appRestartNotifier.value++;
-                            },
-                          ),
-                          const SizedBox(height: 18),
-                          Row(
-                            crossAxisAlignment: CrossAxisAlignment.center,
-                            children: [
-                              Expanded(
-                                child: Text(
-                                  'Asr-Berechnung',
-                                  style: GoogleFonts.inter(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w500,
-                                    color: Colors.white.withOpacity(0.72),
-                                  ),
-                                ),
-                              ),
-                              Tooltip(
-                                message: 'Infos zur Asr-Zeit',
-                                child: Material(
-                                  color: Colors.transparent,
-                                  child: InkWell(
-                                    onTap: _showAsrMadhabInfoSheet,
-                                    borderRadius: BorderRadius.circular(20),
-                                    child: Padding(
-                                      padding: const EdgeInsets.all(4),
-                                      child: Icon(
-                                        Icons.info_outline_rounded,
-                                        size: 20,
-                                        color: _accentChampagneGold,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 8),
-                          DropdownButtonFormField<MadhabOption>(
-                            value: _madhabDraft ?? _prayerSettings!.madhab,
-                            dropdownColor: const Color(0xFF0A2E28),
-                            icon: const Icon(Icons.arrow_drop_down, color: Colors.white70, size: 22),
-                            decoration: _settingsDropdownDecoration(),
-                            style: GoogleFonts.inter(fontSize: 14, color: Colors.white),
-                            items: MadhabOption.values
-                                .map((m) => DropdownMenuItem(
-                                      value: m,
-                                      child: Text(
-                                        m.displayName,
-                                        style: const TextStyle(color: Colors.white),
-                                      ),
-                                    ))
-                                .toList(),
-                            onChanged: _madhabApplying
-                                ? null
-                                : (v) {
-                                    if (v == null) return;
-                                    setState(() => _madhabDraft = v);
+                                Switch(
+                                  value: _dailyAyahReminderEnabled,
+                                  onChanged: (bool value) async {
+                                    await SettingsRepository.instance
+                                        .setDailyAyahReminderEnabled(value);
+                                    if (!value) {
+                                      await NotificationService.instance
+                                          .cancelDailyAyahReminder();
+                                    } else {
+                                      await NotificationService.instance
+                                          .scheduleDailyAyahReminder();
+                                    }
+                                    if (mounted)
+                                      setState(() =>
+                                          _dailyAyahReminderEnabled = value);
                                   },
-                          ),
-                          if (_prayerSettings!.method == PrayerMethodOption.turkiye) ...[
-                            const SizedBox(height: 6),
-                            Text(
-                              'Bei Diyanet-Zeiten Standard beibehalten. Entspricht den Moscheezeiten.',
-                              style: GoogleFonts.inter(
-                                fontSize: 11,
-                                height: 1.3,
-                                color: Colors.white.withOpacity(0.45),
-                              ),
+                                  activeColor: Colors.white,
+                                  activeTrackColor:
+                                      Colors.white.withOpacity(0.4),
+                                  inactiveThumbColor: Colors.white54,
+                                  inactiveTrackColor:
+                                      Colors.white.withOpacity(0.2),
+                                ),
+                              ],
                             ),
-                          ],
-                          if (_madhabHasPendingChanges) ...[
-                            const SizedBox(height: 10),
-                            Align(
-                              alignment: Alignment.centerRight,
-                              child: FilledButton(
-                                onPressed: _madhabApplying ? null : _applyMadhab,
-                                style: FilledButton.styleFrom(
-                                  backgroundColor: _accentChampagneGold,
-                                  foregroundColor: const Color(0xFF0A2E28),
-                                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                                  minimumSize: Size.zero,
-                                  tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                                  textStyle: GoogleFonts.inter(
-                                    fontSize: 13,
-                                    fontWeight: FontWeight.w600,
+                            const SizedBox(height: 18),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Sure-Kurzinfo',
+                                        style: GoogleFonts.inter(
+                                          fontSize: 14,
+                                          fontWeight: FontWeight.w500,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        'Beim ersten Öffnen einer Sure im Lesen (wenn eine Einführung hinterlegt ist)',
+                                        style: GoogleFonts.inter(
+                                          fontSize: 12,
+                                          color: Colors.white.withOpacity(0.58),
+                                        ),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                                child: _madhabApplying
-                                    ? const SizedBox(
-                                        width: 16,
-                                        height: 16,
-                                        child: CircularProgressIndicator(
-                                          strokeWidth: 2,
-                                          color: Color(0xFF0A2E28),
-                                        ),
-                                      )
-                                    : const Text('Übernehmen'),
-                              ),
+                                Switch(
+                                  value: _surahIntroAutoShow,
+                                  onChanged: (bool value) async {
+                                    await SettingsRepository.instance
+                                        .setSurahIntroAutoShow(value);
+                                    if (mounted)
+                                      setState(
+                                          () => _surahIntroAutoShow = value);
+                                  },
+                                  activeColor: Colors.white,
+                                  activeTrackColor:
+                                      Colors.white.withOpacity(0.4),
+                                  inactiveThumbColor: Colors.white54,
+                                  inactiveTrackColor:
+                                      Colors.white.withOpacity(0.2),
+                                ),
+                              ],
                             ),
                           ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    if (_prayerSettings != null)
+                      GlassCard(
+                        borderRadius: 20,
+                        child: Padding(
+                          padding: const EdgeInsets.all(20),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Gebet',
+                                style: GoogleFonts.playfairDisplay(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w600,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              Text(
+                                'Standort',
+                                style: GoogleFonts.inter(
+                                  fontSize: 13,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.white.withOpacity(0.72),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                _prayerSettings!.locationLabel,
+                                style: GoogleFonts.inter(
+                                  fontSize: 15,
+                                  color: Colors.white,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Tooltip(
+                                    message: 'Stadt auswählen',
+                                    child: Material(
+                                      color: Colors.transparent,
+                                      child: InkWell(
+                                        onTap: () async {
+                                          final result =
+                                              await Navigator.push<bool>(
+                                            context,
+                                            MaterialPageRoute<bool>(
+                                                builder: (_) =>
+                                                    const CitySearchScreen()),
+                                          );
+                                          if (result == true && mounted) {
+                                            await _load();
+                                            await _loadPrayerTimes();
+                                            appRestartNotifier.value++;
+                                            if (mounted &&
+                                                _notificationsEnabled &&
+                                                _prayerResult != null &&
+                                                _prayerSettings != null) {
+                                              await NotificationService.instance
+                                                  .schedulePrayerNotifications(
+                                                _prayerResult!,
+                                                _prayerSettings!,
+                                              );
+                                            }
+                                          }
+                                        },
+                                        borderRadius: BorderRadius.circular(24),
+                                        child: Container(
+                                          width: 44,
+                                          height: 44,
+                                          alignment: Alignment.center,
+                                          decoration: BoxDecoration(
+                                            color:
+                                                Colors.black.withOpacity(0.25),
+                                            shape: BoxShape.circle,
+                                            border: Border.all(
+                                              color:
+                                                  Colors.white.withOpacity(0.1),
+                                              width: 1,
+                                            ),
+                                          ),
+                                          child: Icon(
+                                              Icons.location_city_outlined,
+                                              size: 22,
+                                              color: Colors.white),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Tooltip(
+                                    message: 'Standort orten',
+                                    child: Material(
+                                      color: Colors.transparent,
+                                      child: InkWell(
+                                        onTap: _locationLoading
+                                            ? null
+                                            : _determinePosition,
+                                        borderRadius: BorderRadius.circular(24),
+                                        child: Container(
+                                          width: 44,
+                                          height: 44,
+                                          alignment: Alignment.center,
+                                          decoration: BoxDecoration(
+                                            color:
+                                                Colors.black.withOpacity(0.25),
+                                            shape: BoxShape.circle,
+                                            border: Border.all(
+                                              color:
+                                                  Colors.white.withOpacity(0.1),
+                                              width: 1,
+                                            ),
+                                          ),
+                                          child: _locationLoading
+                                              ? SizedBox(
+                                                  width: 20,
+                                                  height: 20,
+                                                  child:
+                                                      CircularProgressIndicator(
+                                                    strokeWidth: 2,
+                                                    color: _accentChampagneGold,
+                                                  ),
+                                                )
+                                              : Icon(Icons.my_location,
+                                                  size: 22,
+                                                  color: _accentChampagneGold),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 18),
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      'Gebetszeiten',
+                                      style: GoogleFonts.inter(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w500,
+                                        color: Colors.white.withOpacity(0.72),
+                                      ),
+                                    ),
+                                  ),
+                                  Tooltip(
+                                    message: 'Infos zu Gebetszeiten & Quellen',
+                                    child: Material(
+                                      color: Colors.transparent,
+                                      child: InkWell(
+                                        onTap: _showGebetszeitenInfoSheet,
+                                        borderRadius: BorderRadius.circular(20),
+                                        child: Padding(
+                                          padding: const EdgeInsets.all(4),
+                                          child: Icon(
+                                            Icons.info_outline_rounded,
+                                            size: 20,
+                                            color: _accentChampagneGold,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 14),
+                              Text(
+                                'Offizielle Quellen',
+                                style: GoogleFonts.inter(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 0.4,
+                                  color: Colors.white.withOpacity(0.55),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              _buildOfficialDiyanetTile(),
+                              const SizedBox(height: 16),
+                              Text(
+                                'Berechnete Methoden',
+                                style: GoogleFonts.inter(
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.w600,
+                                  letterSpacing: 0.4,
+                                  color: Colors.white.withOpacity(0.55),
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              DropdownButtonFormField<PrayerMethodOption?>(
+                                value: _prayerSettings!.method ==
+                                        PrayerMethodOption.turkiye
+                                    ? null
+                                    : _prayerSettings!.method,
+                                hint: Text(
+                                  'Berechnete Methode wählen',
+                                  style: GoogleFonts.inter(
+                                      fontSize: 14, color: Colors.white54),
+                                ),
+                                dropdownColor: const Color(0xFF0A2E28),
+                                icon: const Icon(Icons.arrow_drop_down,
+                                    color: Colors.white70, size: 22),
+                                decoration: _settingsDropdownDecoration(),
+                                style: GoogleFonts.inter(
+                                    fontSize: 14, color: Colors.white),
+                                items: PrayerMethodOption.calculatedMethods
+                                    .map((m) => DropdownMenuItem(
+                                          value: m,
+                                          child: Text(
+                                            m.displayName,
+                                            style: const TextStyle(
+                                                color: Colors.white),
+                                          ),
+                                        ))
+                                    .toList(),
+                                onChanged: (v) async {
+                                  if (v == null) return;
+                                  final updated =
+                                      _prayerSettings!.copyWith(method: v);
+                                  await SettingsRepository.instance
+                                      .setPrayerSettings(updated);
+                                  if (mounted)
+                                    setState(() => _prayerSettings = updated);
+                                  if (mounted) await _loadPrayerTimes();
+                                  appRestartNotifier.value++;
+                                },
+                              ),
+                              const SizedBox(height: 18),
+                              Row(
+                                crossAxisAlignment: CrossAxisAlignment.center,
+                                children: [
+                                  Expanded(
+                                    child: Text(
+                                      'Asr-Berechnung',
+                                      style: GoogleFonts.inter(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w500,
+                                        color: Colors.white.withOpacity(0.72),
+                                      ),
+                                    ),
+                                  ),
+                                  Tooltip(
+                                    message: 'Infos zur Asr-Zeit',
+                                    child: Material(
+                                      color: Colors.transparent,
+                                      child: InkWell(
+                                        onTap: _showAsrMadhabInfoSheet,
+                                        borderRadius: BorderRadius.circular(20),
+                                        child: Padding(
+                                          padding: const EdgeInsets.all(4),
+                                          child: Icon(
+                                            Icons.info_outline_rounded,
+                                            size: 20,
+                                            color: _accentChampagneGold,
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              DropdownButtonFormField<MadhabOption>(
+                                value: _madhabDraft ?? _prayerSettings!.madhab,
+                                dropdownColor: const Color(0xFF0A2E28),
+                                icon: const Icon(Icons.arrow_drop_down,
+                                    color: Colors.white70, size: 22),
+                                decoration: _settingsDropdownDecoration(),
+                                style: GoogleFonts.inter(
+                                    fontSize: 14, color: Colors.white),
+                                items: MadhabOption.values
+                                    .map((m) => DropdownMenuItem(
+                                          value: m,
+                                          child: Text(
+                                            m.displayName,
+                                            style: const TextStyle(
+                                                color: Colors.white),
+                                          ),
+                                        ))
+                                    .toList(),
+                                onChanged: _madhabApplying
+                                    ? null
+                                    : (v) {
+                                        if (v == null) return;
+                                        setState(() => _madhabDraft = v);
+                                      },
+                              ),
+                              if (_prayerSettings!.method ==
+                                  PrayerMethodOption.turkiye) ...[
+                                const SizedBox(height: 6),
+                                Text(
+                                  'Bei Diyanet-Zeiten Standard beibehalten. Entspricht den Moscheezeiten.',
+                                  style: GoogleFonts.inter(
+                                    fontSize: 11,
+                                    height: 1.3,
+                                    color: Colors.white.withOpacity(0.45),
+                                  ),
+                                ),
+                              ],
+                              if (_madhabHasPendingChanges) ...[
+                                const SizedBox(height: 10),
+                                Align(
+                                  alignment: Alignment.centerRight,
+                                  child: FilledButton(
+                                    onPressed:
+                                        _madhabApplying ? null : _applyMadhab,
+                                    style: FilledButton.styleFrom(
+                                      backgroundColor: _accentChampagneGold,
+                                      foregroundColor: const Color(0xFF0A2E28),
+                                      padding: const EdgeInsets.symmetric(
+                                          horizontal: 16, vertical: 8),
+                                      minimumSize: Size.zero,
+                                      tapTargetSize:
+                                          MaterialTapTargetSize.shrinkWrap,
+                                      textStyle: GoogleFonts.inter(
+                                        fontSize: 13,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                    ),
+                                    child: _madhabApplying
+                                        ? const SizedBox(
+                                            width: 16,
+                                            height: 16,
+                                            child: CircularProgressIndicator(
+                                              strokeWidth: 2,
+                                              color: Color(0xFF0A2E28),
+                                            ),
+                                          )
+                                        : const Text('Übernehmen'),
+                                  ),
+                                ),
+                              ],
+                            ],
+                          ),
+                        ),
+                      ),
+                    _settingsSectionDivider(),
+                    Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute<void>(
+                                builder: (_) => const GlossaryScreen()),
+                          );
+                        },
+                        borderRadius: BorderRadius.circular(20),
+                        child: GlassCard(
+                          borderRadius: 20,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                                vertical: 14, horizontal: 20),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.menu_book_outlined,
+                                  size: 22,
+                                  color: const Color(0xFFE5C07B),
+                                ),
+                                const SizedBox(width: 14),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Koran-Begriffe',
+                                        style: GoogleFonts.playfairDisplay(
+                                          fontSize: 17,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        'Kurz erklärt: Sure, Ayah, Tafsir, Hadith …',
+                                        style: GoogleFonts.inter(
+                                          fontSize: 12,
+                                          color: Colors.white.withOpacity(0.58),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Icon(
+                                  Icons.chevron_right,
+                                  size: 24,
+                                  color: Colors.white54,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute<void>(
+                                builder: (_) => const SourcesScreen()),
+                          );
+                        },
+                        borderRadius: BorderRadius.circular(20),
+                        child: GlassCard(
+                          borderRadius: 20,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                                vertical: 14, horizontal: 20),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.info_outline,
+                                  size: 22,
+                                  color: const Color(0xFFE5C07B),
+                                ),
+                                const SizedBox(width: 14),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Quellen & Lizenzen',
+                                        style: GoogleFonts.playfairDisplay(
+                                          fontSize: 17,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        'Koran, Übersetzung & KI',
+                                        style: GoogleFonts.inter(
+                                          fontSize: 12,
+                                          color: Colors.white.withOpacity(0.58),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Icon(
+                                  Icons.chevron_right,
+                                  size: 24,
+                                  color: Colors.white54,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    Material(
+                      color: Colors.transparent,
+                      child: InkWell(
+                        onTap: () => showAppFeedbackSheet(context),
+                        borderRadius: BorderRadius.circular(20),
+                        child: GlassCard(
+                          borderRadius: 20,
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(
+                                vertical: 14, horizontal: 20),
+                            child: Row(
+                              children: [
+                                Icon(
+                                  Icons.feedback_outlined,
+                                  size: 22,
+                                  color: const Color(0xFFE5C07B),
+                                ),
+                                const SizedBox(width: 14),
+                                Expanded(
+                                  child: Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Feedback senden',
+                                        style: GoogleFonts.playfairDisplay(
+                                          fontSize: 17,
+                                          fontWeight: FontWeight.w600,
+                                          color: Colors.white,
+                                        ),
+                                      ),
+                                      const SizedBox(height: 2),
+                                      Text(
+                                        'Hilft uns, Ihdina zu verbessern',
+                                        style: GoogleFonts.inter(
+                                          fontSize: 12,
+                                          color: Colors.white.withOpacity(0.58),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                                Icon(
+                                  Icons.chevron_right,
+                                  size: 24,
+                                  color: Colors.white54,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 12),
+                    _buildSupportSection(),
+                    const SizedBox(height: 24),
+                    Center(
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'Made with Sabr & Code',
+                            style: GoogleFonts.inter(
+                              fontSize: 12,
+                              color: Colors.white54,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Koran-Text: Tanzil.net | Übersetzung: Bubenheim (QuranEnc)',
+                            textAlign: TextAlign.center,
+                            style: GoogleFonts.inter(
+                              fontSize: 10,
+                              color: Colors.white38,
+                            ),
+                          ),
                         ],
                       ),
                     ),
-                  ),
-                _settingsSectionDivider(),
-                Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute<void>(builder: (_) => const GlossaryScreen()),
-                      );
-                    },
-                    borderRadius: BorderRadius.circular(20),
-                    child: GlassCard(
-                      borderRadius: 20,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.menu_book_outlined,
-                              size: 22,
-                              color: const Color(0xFFE5C07B),
-                            ),
-                            const SizedBox(width: 14),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Koran-Begriffe',
-                                    style: GoogleFonts.playfairDisplay(
-                                      fontSize: 17,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    'Kurz erklärt: Sure, Ayah, Tafsir, Hadith …',
-                                    style: GoogleFonts.inter(
-                                      fontSize: 12,
-                                      color: Colors.white.withOpacity(0.58),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Icon(
-                              Icons.chevron_right,
-                              size: 24,
-                              color: Colors.white54,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
+                    const SizedBox(height: 32),
+                  ],
                 ),
-                const SizedBox(height: 12),
-                Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute<void>(builder: (_) => const SourcesScreen()),
-                      );
-                    },
-                    borderRadius: BorderRadius.circular(20),
-                    child: GlassCard(
-                      borderRadius: 20,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.info_outline,
-                              size: 22,
-                              color: const Color(0xFFE5C07B),
-                            ),
-                            const SizedBox(width: 14),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Quellen & Lizenzen',
-                                    style: GoogleFonts.playfairDisplay(
-                                      fontSize: 17,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    'Koran, Übersetzung & KI',
-                                    style: GoogleFonts.inter(
-                                      fontSize: 12,
-                                      color: Colors.white.withOpacity(0.58),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Icon(
-                              Icons.chevron_right,
-                              size: 24,
-                              color: Colors.white54,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                Material(
-                  color: Colors.transparent,
-                  child: InkWell(
-                    onTap: () => showAppFeedbackSheet(context),
-                    borderRadius: BorderRadius.circular(20),
-                    child: GlassCard(
-                      borderRadius: 20,
-                      child: Padding(
-                        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
-                        child: Row(
-                          children: [
-                            Icon(
-                              Icons.feedback_outlined,
-                              size: 22,
-                              color: const Color(0xFFE5C07B),
-                            ),
-                            const SizedBox(width: 14),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    'Feedback senden',
-                                    style: GoogleFonts.playfairDisplay(
-                                      fontSize: 17,
-                                      fontWeight: FontWeight.w600,
-                                      color: Colors.white,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 2),
-                                  Text(
-                                    'Hilft uns, Ihdina zu verbessern',
-                                    style: GoogleFonts.inter(
-                                      fontSize: 12,
-                                      color: Colors.white.withOpacity(0.58),
-                                    ),
-                                  ),
-                                ],
-                              ),
-                            ),
-                            Icon(
-                              Icons.chevron_right,
-                              size: 24,
-                              color: Colors.white54,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 12),
-                _buildSupportSection(),
-                const SizedBox(height: 24),
-                Center(
-                  child: Column(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        'Made with Sabr & Code',
-                        style: GoogleFonts.inter(
-                          fontSize: 12,
-                          color: Colors.white54,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Koran-Text: Tanzil.net | Übersetzung: Bubenheim (QuranEnc)',
-                        textAlign: TextAlign.center,
-                        style: GoogleFonts.inter(
-                          fontSize: 10,
-                          color: Colors.white38,
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-                const SizedBox(height: 32),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
-        ),
         ),
       ),
     );

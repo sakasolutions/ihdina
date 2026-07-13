@@ -53,8 +53,8 @@ class TtsVoiceSelector {
       });
       final locale = voice['locale'] ?? voice['language'] ?? '';
       if (!_isGermanLocale(locale)) continue;
-      final blob =
-          '${voice['name']} ${voice['identifier']} ${voice['locale']}'.toLowerCase();
+      final blob = '${voice['name']} ${voice['identifier']} ${voice['locale']}'
+          .toLowerCase();
       if (_excludeLocale.hasMatch(blob)) continue;
       candidates.add(voice);
     }
@@ -148,7 +148,9 @@ class TtsVoiceSelector {
     }
 
     // Der „Holländer“: meist Markus **compact** ohne Enhanced.
-    if (_markusHint.hasMatch(blob) && _compactHint.hasMatch(blob) && !enhanced) {
+    if (_markusHint.hasMatch(blob) &&
+        _compactHint.hasMatch(blob) &&
+        !enhanced) {
       score -= 220;
     } else if (_compactHint.hasMatch(blob) && !enhanced) {
       score -= 90;

@@ -25,6 +25,7 @@ dependencies:
   permission_handler: ^11.3.1
   path_provider: ^2.1.4
   path: ^1.9.0
+  package_info_plus: ^8.3.0
   purchases_flutter: ^8.0.0
   shared_preferences: ^2.2.2
   sqflite: ^2.3.2

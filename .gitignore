@@ -57,3 +57,9 @@ node_modules/
 ios/build/
 server/dist/
 server/node_modules/
+
+# Generated local Quran context
+/generated/quran-context.json
+
+# Local religious source PDFs
+/docs/sources/*.pdf

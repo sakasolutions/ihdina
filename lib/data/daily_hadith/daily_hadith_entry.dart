@@ -14,20 +14,27 @@ class DailyHadithEntry {
   });
 
   final int id;
+
   /// Z. B. „Sahih al-Bukhari 1“ — für Anzeige & Nachschlagen.
   final String referenceDe;
+
   /// Kurze redaktionelle Einordnung: Thema, warum die Überlieferung heute berührt (keine KI).
   final String einordnungDe;
   final String textDe;
   final String textAr;
+
   /// Optional: stabiler Link zur Referenz (z. B. sunnah.com).
   final String? sourceUrl;
+
   /// Themen für Auswahl (z. B. sabr, salat, bruderlichkeit).
   final List<String> tags;
+
   /// `all` | `ramadan` | `dhul_hijjah` — Sonderkalender.
   final List<String> seasons;
+
   /// Passt zum Freitags-Moment (Gemeinschaft, Jumuʿah).
   final bool fridayOk;
+
   /// 1 = alltagstauglich, 2 = etwas tiefer.
   final int tier;
 

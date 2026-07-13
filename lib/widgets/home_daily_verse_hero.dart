@@ -37,8 +37,10 @@ class HomeDailyVerseHero extends StatelessWidget {
     required this.ayahNumber,
     required this.arabic,
     required this.german,
+
     /// Optional KI-/Impuls-Zeile; sonst [dailyTakeawayPlaceholder].
     this.personalTakeaway,
+
     /// Wenn true: kein echter KI-Impuls (Laden oder Standard-Fallback-Text) – dezentere Typo, gleiche Fläche.
     this.takeawayNeutralPresentation = false,
     required this.onMehrVerstehen,
@@ -58,6 +60,7 @@ class HomeDailyVerseHero extends StatelessWidget {
   final VoidCallback? onBookmarkTap;
   final VoidCallback? onWeiterlesen;
   final VoidCallback onSpeichern;
+
   /// Optional: Sunna-Block in derselben Gold-Karte (Tagespaket).
   final DailyHadithEntry? dailyHadith;
 
@@ -97,9 +100,8 @@ class HomeDailyVerseHero extends StatelessWidget {
     final tier1ShortFill =
         kHomeDailyVerseHeroTier1Layout && kHomeDailyVerseHeroShortVerseFill;
     final shortVerse = tier1ShortFill && _isShortGermanVerse(german);
-    final tier1MaxHeight = shortVerse
-        ? _maxTier1PackInnerHeightShort
-        : _maxTier1PackInnerHeight;
+    final tier1MaxHeight =
+        shortVerse ? _maxTier1PackInnerHeightShort : _maxTier1PackInnerHeight;
 
     return _DailyVerseHeroChrome(
       maxInnerHeight: kHomeDailyVerseHeroTier1Layout
@@ -518,7 +520,8 @@ class _Tier1AdaptivePackBody extends StatelessWidget {
                         physics: const BouncingScrollPhysics(
                           parent: AlwaysScrollableScrollPhysics(),
                         ),
-                        padding: const EdgeInsets.symmetric(horizontal: 2, vertical: 4),
+                        padding: const EdgeInsets.symmetric(
+                            horizontal: 2, vertical: 4),
                         child: _scrollableMainContent(),
                       ),
                     ),
@@ -543,7 +546,8 @@ class _MehrVerstehenGlassButton extends StatefulWidget {
   final VoidCallback onPressed;
 
   @override
-  State<_MehrVerstehenGlassButton> createState() => _MehrVerstehenGlassButtonState();
+  State<_MehrVerstehenGlassButton> createState() =>
+      _MehrVerstehenGlassButtonState();
 }
 
 class _MehrVerstehenGlassButtonState extends State<_MehrVerstehenGlassButton>
@@ -612,7 +616,8 @@ class _MehrVerstehenGlassButtonState extends State<_MehrVerstehenGlassButton>
                 ],
               ),
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   mainAxisAlignment: MainAxisAlignment.center,

@@ -10,7 +10,8 @@ import 'tts_pronunciation_rule.dart';
 class TtsPronunciationRepository {
   TtsPronunciationRepository._();
 
-  static final TtsPronunciationRepository instance = TtsPronunciationRepository._();
+  static final TtsPronunciationRepository instance =
+      TtsPronunciationRepository._();
 
   static const String _assetPath = 'assets/data/tts_pronunciations.json';
 

@@ -12,6 +12,10 @@ model User {
   installId   String    @unique
   displayName String?   @map("display_name")
   isPro       Boolean   @default(false)
+  /// Entwickler-/Testnutzer — standardmäßig aus Produkt-KPIs ausschließen.
+  isInternal  Boolean   @default(false)
+  /// Erstes gespeichertes AppOpenEvent (Kohortenbeginn); null wenn nie geöffnet.
+  firstAppOpenAt DateTime?
   createdAt  DateTime  @default(now())
   updatedAt  DateTime  @updatedAt
   lastSeenAt DateTime?
@@ -27,6 +31,39 @@ model User {
   aiRequestLogs  AiRequestLog[]
   appFeedbacks   AppFeedback[]
   appOpenEvents  AppOpenEvent[]
+  productEvents  ProductEvent[]
+
+  @@index([firstAppOpenAt, isInternal])
+}
+
+/// Client-Produktanalytics (kein app_opened — siehe AppOpenEvent).
+model ProductEvent {
+  id              String   @id @default(cuid())
+  eventId         String   @unique
+  eventVersion    Int
+  eventName       String
+  userId          String
+  user            User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  installId       String
+  sessionId       String?
+  occurredAt      DateTime
+  receivedAt      DateTime @default(now())
+  platform        String?
+  appVersion      String?
+  buildNumber     String?
+  isProSnapshot   Boolean?
+  source          String?
+  surahNumber     Int?
+  ayahNumber      Int?
+  properties      Json?
+  createdAt       DateTime @default(now())
+
+  @@index([userId, occurredAt])
+  @@index([installId, occurredAt])
+  @@index([eventName, occurredAt])
+  @@index([occurredAt])
+  @@index([sessionId])
+  @@index([userId, eventName, occurredAt])
 }
 
 /// Idempotente Speicherung eingehender RevenueCat-Webhooks (Audit + Duplikat-Schutz).
@@ -90,6 +127,8 @@ model AiRequestLog {
 
   @@index([userId])
   @@index([createdAt])
+  @@index([errorCode, createdAt])
+  @@index([userId, endpoint, createdAt])
 }
 
 /// In-App-Feedback (Rating + optionaler Text), verknüpft mit installId / optional User.
@@ -106,6 +145,7 @@ model AppFeedback {
 
   @@index([installId])
   @@index([createdAt])
+  @@index([createdAt, screen])
 }
 
 /// App-Foreground/Start — ein Eintrag pro gemeldeter Öffnung (kein Feature-Bezug).
@@ -117,4 +157,5 @@ model AppOpenEvent {
 
   @@index([userId])
   @@index([createdAt])
+  @@index([userId, createdAt])
 }

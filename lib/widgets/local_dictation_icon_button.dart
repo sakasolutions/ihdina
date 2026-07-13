@@ -26,7 +26,8 @@ class LocalDictationIconButton extends StatefulWidget {
   final EdgeInsetsGeometry padding;
 
   @override
-  State<LocalDictationIconButton> createState() => _LocalDictationIconButtonState();
+  State<LocalDictationIconButton> createState() =>
+      _LocalDictationIconButtonState();
 }
 
 class _LocalDictationIconButtonState extends State<LocalDictationIconButton> {
@@ -94,8 +95,7 @@ class _LocalDictationIconButtonState extends State<LocalDictationIconButton> {
         onResult: (r) {
           final words = r.recognizedWords;
           final sep = _baseText.isEmpty || _baseText.endsWith(' ') ? '' : ' ';
-          final combined =
-              _baseText.isEmpty ? words : '$_baseText$sep$words';
+          final combined = _baseText.isEmpty ? words : '$_baseText$sep$words';
           widget.controller.value = TextEditingValue(
             text: combined,
             selection: TextSelection.collapsed(offset: combined.length),
@@ -142,7 +142,8 @@ class _LocalDictationIconButtonState extends State<LocalDictationIconButton> {
         onPressed: widget.enabled ? _toggle : null,
         padding: widget.padding,
         constraints: const BoxConstraints(minWidth: 40, minHeight: 40),
-        tooltip: active ? 'Diktat beenden' : 'Spracheingabe (nur auf dem Gerät)',
+        tooltip:
+            active ? 'Diktat beenden' : 'Spracheingabe (nur auf dem Gerät)',
         icon: Icon(
           active ? Icons.mic_rounded : Icons.mic_none_rounded,
           size: widget.iconSize,

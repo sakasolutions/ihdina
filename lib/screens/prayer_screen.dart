@@ -3,6 +3,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
+import '../config/religious_feature_flags.dart';
 import '../data/prayer/prayer_models.dart';
 import '../data/prayer/prayer_times_repository.dart';
 import '../data/settings/settings_repository.dart';
@@ -11,6 +12,7 @@ import '../prayer/prayer_type.dart';
 import '../theme/app_theme.dart';
 import '../theme/hero_theme.dart';
 import '../widgets/glass_card.dart';
+import 'prayer_guide_screen.dart';
 import 'qibla_screen.dart';
 import 'tasbih_screen.dart';
 import 'settings_screen.dart';
@@ -20,6 +22,9 @@ const double _sectionGap = 20;
 
 /// Champagne-gold accent for the active/next prayer icon (matches home dashboard pill).
 const Color _accentChampagneGold = Color(0xFFE5C07B);
+
+/// Etwas klarerer Goldton nur für die Gebets-Guide-Card (CTA + Icon).
+const Color _guideProminentGold = Color(0xFFEBC980);
 const Duration _karahatSunriseDuration = Duration(minutes: 20);
 const Duration _karahatZenithBefore = Duration(minutes: 5);
 const Duration _karahatZenithAfter = Duration(minutes: 5);
@@ -27,7 +32,7 @@ const Duration _karahatSunsetDuration = Duration(minutes: 20);
 
 enum _PrayerRowStatus { past, current, upcoming }
 
-/// Daily prayer overview: location, date, next prayer + countdown, full list, settings row.
+/// Daily prayer overview: location, date, next prayer + countdown, full list.
 class PrayerScreen extends StatefulWidget {
   const PrayerScreen({super.key});
 
@@ -85,19 +90,31 @@ class _PrayerScreenState extends State<PrayerScreen> {
       final hijriDay = julianDay - 1948440 + 10632;
       final n = ((hijriDay - 1) / 10631).floor();
       final hijriDay2 = hijriDay - 10631 * n + 354;
-      final j = ((10985 - hijriDay2) / 5316).floor() * ((50 * hijriDay2) / 17719).floor() +
+      final j = ((10985 - hijriDay2) / 5316).floor() *
+              ((50 * hijriDay2) / 17719).floor() +
           (hijriDay2 / 5670).floor() * ((43 * hijriDay2) / 15238).floor();
-      final hijriDay3 = hijriDay2 - ((30 - j) / 15).floor() * ((17719 * j) / 50).floor() -
-          (j / 16).floor() * ((15238 * j) / 43).floor() + 29;
+      final hijriDay3 = hijriDay2 -
+          ((30 - j) / 15).floor() * ((17719 * j) / 50).floor() -
+          (j / 16).floor() * ((15238 * j) / 43).floor() +
+          29;
       final month = (24 * hijriDay3 / 709).floor();
       final day = hijriDay3 - (709 * month / 24).floor();
       final year = 30 * n + j - 1 + (month / 13).floor();
       final monthNum = month % 13 + 1;
 
       const monthNames = [
-        'Muharram', 'Safar', "Rabi' al-Awwal", "Rabi' ath-Thani",
-        'Dschumada l-Ula', 'Dschumada th-Thaniya', 'Radschab', "Scha'ban",
-        'Ramadan', 'Schawwal', "Dhu l-Qa'da", "Dhu l-Hiddscha",
+        'Muharram',
+        'Safar',
+        "Rabi' al-Awwal",
+        "Rabi' ath-Thani",
+        'Dschumada l-Ula',
+        'Dschumada th-Thaniya',
+        'Radschab',
+        "Scha'ban",
+        'Ramadan',
+        'Schawwal',
+        "Dhu l-Qa'da",
+        "Dhu l-Hiddscha",
       ];
       return '$day. ${monthNames[monthNum - 1]} $year H';
     } catch (_) {
@@ -121,75 +138,84 @@ class _PrayerScreenState extends State<PrayerScreen> {
           child: Stack(
             fit: StackFit.expand,
             children: [
-            Positioned.fill(
-              child: Opacity(
-                opacity: 0.1,
-                child: Image.asset(
-                  DynamicHeroTheme.backgroundAsset(heroPhase),
-                  fit: BoxFit.cover,
-                  width: double.infinity,
-                  height: double.infinity,
-                  errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+              Positioned.fill(
+                child: Opacity(
+                  opacity: 0.1,
+                  child: Image.asset(
+                    DynamicHeroTheme.backgroundAsset(heroPhase),
+                    fit: BoxFit.cover,
+                    width: double.infinity,
+                    height: double.infinity,
+                    errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                  ),
                 ),
               ),
-            ),
-            SafeArea(
-            child: CustomScrollView(
-              slivers: [
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(_outerPadding, 16, _outerPadding, 0),
-                    child: _buildTopSection(),
-                  ),
+              SafeArea(
+                child: CustomScrollView(
+                  slivers: [
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(
+                            _outerPadding, 16, _outerPadding, 0),
+                        child: _buildNextPrayerSection(),
+                      ),
+                    ),
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(
+                            _outerPadding, _sectionGap, _outerPadding, 0),
+                        child: _buildDailyListHeader(),
+                      ),
+                    ),
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(
+                            _outerPadding, 8, _outerPadding, 0),
+                        child: _buildDailyList(),
+                      ),
+                    ),
+                    if (ReligiousFeatureFlags.religiousPurificationGuideEnabled)
+                      SliverToBoxAdapter(
+                        child: Padding(
+                          padding: const EdgeInsets.fromLTRB(
+                              _outerPadding, _sectionGap, _outerPadding, 0),
+                          child: _buildPrayerGuideCard(),
+                        ),
+                      ),
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(
+                            _outerPadding, 14, _outerPadding, 0),
+                        child: _buildKarahatSection(),
+                      ),
+                    ),
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(
+                            _outerPadding, 16, _outerPadding, 0),
+                        child: _buildTopSection(),
+                      ),
+                    ),
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(
+                            _outerPadding, _sectionGap, _outerPadding, 0),
+                        child: _buildQiblaButton(),
+                      ),
+                    ),
+                    SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.fromLTRB(
+                            _outerPadding, 12, _outerPadding, 0),
+                        child: _buildTasbihButton(),
+                      ),
+                    ),
+                    const SliverToBoxAdapter(child: SizedBox(height: 130)),
+                  ],
                 ),
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(_outerPadding, _sectionGap, _outerPadding, 0),
-                    child: _buildNextPrayerSection(),
-                  ),
-                ),
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(_outerPadding, _sectionGap, _outerPadding, 0),
-                    child: _buildDailyListHeader(),
-                  ),
-                ),
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(_outerPadding, 8, _outerPadding, 0),
-                    child: _buildDailyList(),
-                  ),
-                ),
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(_outerPadding, 14, _outerPadding, 0),
-                    child: _buildKarahatSection(),
-                  ),
-                ),
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(_outerPadding, _sectionGap, _outerPadding, 0),
-                    child: _buildQiblaButton(),
-                  ),
-                ),
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(_outerPadding, 12, _outerPadding, 0),
-                    child: _buildTasbihButton(),
-                  ),
-                ),
-                SliverToBoxAdapter(
-                  child: Padding(
-                    padding: const EdgeInsets.fromLTRB(_outerPadding, _sectionGap + 8, _outerPadding, 0),
-                    child: _buildBottomSection(),
-                  ),
-                ),
-                const SliverToBoxAdapter(child: SizedBox(height: 130)),
-              ],
-            ),
+              ),
+            ],
           ),
-        ],
-        ),
         ),
       ),
     );
@@ -226,7 +252,8 @@ class _PrayerScreenState extends State<PrayerScreen> {
               onTap: () {
                 Navigator.push(
                   context,
-                  MaterialPageRoute<void>(builder: (_) => const SettingsScreen()),
+                  MaterialPageRoute<void>(
+                      builder: (_) => const SettingsScreen()),
                 ).then((_) => _load());
               },
               borderRadius: BorderRadius.circular(12),
@@ -322,7 +349,8 @@ class _PrayerScreenState extends State<PrayerScreen> {
         borderRadius: 20,
         child: const Padding(
           padding: EdgeInsets.symmetric(vertical: 24, horizontal: 20),
-          child: Center(child: CircularProgressIndicator(color: Colors.white70)),
+          child:
+              Center(child: CircularProgressIndicator(color: Colors.white70)),
         ),
       );
     }
@@ -331,7 +359,8 @@ class _PrayerScreenState extends State<PrayerScreen> {
     final countdownStr = PrayerTimesRepository.formatCountdown(
       r.nextPrayerTime.difference(DateTime.now()),
     );
-    final nextTimeStr = PrayerTimesRepository.instance.formatTime(r.nextPrayerTime);
+    final nextTimeStr =
+        PrayerTimesRepository.instance.formatTime(r.nextPrayerTime);
 
     return GlassCard(
       borderRadius: 20,
@@ -437,7 +466,9 @@ class _PrayerScreenState extends State<PrayerScreen> {
                 final t = times[type];
                 if (t == null) return _PrayerRowStatus.past;
                 if (now.isBefore(t)) return _PrayerRowStatus.upcoming;
-                return type == currentType ? _PrayerRowStatus.current : _PrayerRowStatus.past;
+                return type == currentType
+                    ? _PrayerRowStatus.current
+                    : _PrayerRowStatus.past;
               }(),
             ),
             if (i < order.length - 1)
@@ -486,6 +517,116 @@ class _PrayerScreenState extends State<PrayerScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildPrayerGuideCard() {
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        onTap: () {
+          Navigator.push(
+            context,
+            MaterialPageRoute<void>(builder: (_) => const PrayerGuideScreen()),
+          );
+        },
+        borderRadius: BorderRadius.circular(20),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(20),
+            border: Border.all(
+              color: _accentChampagneGold.withOpacity(0.42),
+              width: 1,
+            ),
+          ),
+          child: GlassCard(
+            borderRadius: 20,
+            child: Padding(
+              padding: const EdgeInsets.fromLTRB(18, 18, 18, 16),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(10),
+                        decoration: BoxDecoration(
+                          color: _accentChampagneGold.withOpacity(0.22),
+                          borderRadius: BorderRadius.circular(14),
+                          border: Border.all(
+                            color: _guideProminentGold.withOpacity(0.52),
+                          ),
+                        ),
+                        child: const Icon(
+                          Icons.school_outlined,
+                          color: _guideProminentGold,
+                          size: 24,
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Gebets-Guide',
+                              style: GoogleFonts.playfairDisplay(
+                                fontSize: 18,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Waschung und Gebet Schritt für Schritt lernen',
+                              style: GoogleFonts.inter(
+                                fontSize: 14,
+                                height: 1.35,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.white.withOpacity(0.88),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Wudu · Ghusl · Tayammum · Gebetsablauf · Audio',
+                    style: GoogleFonts.inter(
+                      fontSize: 11,
+                      height: 1.4,
+                      letterSpacing: 0.1,
+                      color: Colors.white.withOpacity(0.52),
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+                  Row(
+                    children: [
+                      Text(
+                        'Guide öffnen',
+                        style: GoogleFonts.inter(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: _guideProminentGold,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      const Icon(
+                        Icons.arrow_forward_rounded,
+                        size: 18,
+                        color: _guideProminentGold,
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -568,7 +709,8 @@ class _PrayerScreenState extends State<PrayerScreen> {
                 ),
                 if (isNowKarahat)
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                     decoration: BoxDecoration(
                       color: _accentChampagneGold.withOpacity(0.18),
                       borderRadius: BorderRadius.circular(999),
@@ -812,7 +954,8 @@ class _PrayerScreenState extends State<PrayerScreen> {
           ),
           child: Row(
             children: [
-              Icon(Icons.explore_outlined, color: _accentChampagneGold, size: 28),
+              Icon(Icons.explore_outlined,
+                  color: _accentChampagneGold, size: 28),
               const SizedBox(width: 16),
               Text(
                 'Qibla-Kompass',
@@ -823,7 +966,8 @@ class _PrayerScreenState extends State<PrayerScreen> {
                 ),
               ),
               const Spacer(),
-              Icon(Icons.chevron_right_rounded, color: Colors.white54, size: 24),
+              Icon(Icons.chevron_right_rounded,
+                  color: Colors.white54, size: 24),
             ],
           ),
         ),
@@ -851,7 +995,8 @@ class _PrayerScreenState extends State<PrayerScreen> {
           ),
           child: Row(
             children: [
-              Icon(Icons.touch_app_rounded, color: _accentChampagneGold, size: 28),
+              Icon(Icons.touch_app_rounded,
+                  color: _accentChampagneGold, size: 28),
               const SizedBox(width: 16),
               Text(
                 'Tasbih / Zikr',
@@ -862,7 +1007,8 @@ class _PrayerScreenState extends State<PrayerScreen> {
                 ),
               ),
               const Spacer(),
-              Icon(Icons.chevron_right_rounded, color: Colors.white54, size: 24),
+              Icon(Icons.chevron_right_rounded,
+                  color: Colors.white54, size: 24),
             ],
           ),
         ),
@@ -870,87 +1016,20 @@ class _PrayerScreenState extends State<PrayerScreen> {
     );
   }
 
-  Widget _buildBottomSection() {
-    final method = _settings?.method.displayName ?? '—';
-    final madhab = _settings?.madhab.displayName ?? '—';
-    final location = _settings?.locationLabel ?? '—';
-
-    return Material(
-      color: Colors.transparent,
-      child: InkWell(
-        onTap: () {
-          Navigator.push(
-            context,
-            MaterialPageRoute<void>(builder: (_) => const SettingsScreen()),
-          ).then((_) => _load());
-        },
-        borderRadius: BorderRadius.circular(20),
-        child: GlassCard(
-          borderRadius: 20,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      'Einstellungen',
-                      style: GoogleFonts.playfairDisplay(
-                        fontSize: 17,
-                        fontWeight: FontWeight.w600,
-                        color: Colors.white,
-                      ),
-                    ),
-                    Icon(Icons.chevron_right_rounded, color: Colors.white70, size: 22),
-                  ],
-                ),
-                const SizedBox(height: 14),
-                _infoRow('Methode', method),
-                const SizedBox(height: 6),
-                _infoRow('Asr-Berechnung', madhab),
-                const SizedBox(height: 6),
-                _infoRow('Standort', location),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _infoRow(String label, String value) {
-    return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        SizedBox(
-          width: 88,
-          child: Text(
-            label,
-            style: GoogleFonts.inter(
-              fontSize: 14,
-              color: Colors.white70,
-            ),
-          ),
-        ),
-        Expanded(
-          child: Text(
-            value,
-            style: GoogleFonts.inter(
-              fontSize: 14,
-              color: Colors.white,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
   static String _formatGregorian(DateTime d) {
     const months = [
-      'Januar', 'Februar', 'März', 'April', 'Mai', 'Juni',
-      'Juli', 'August', 'September', 'Oktober', 'November', 'Dezember',
+      'Januar',
+      'Februar',
+      'März',
+      'April',
+      'Mai',
+      'Juni',
+      'Juli',
+      'August',
+      'September',
+      'Oktober',
+      'November',
+      'Dezember',
     ];
     return '${d.day}. ${months[d.month - 1]} ${d.year}';
   }
@@ -960,6 +1039,11 @@ int _gregorianToJulian(int year, int month, int day) {
   final a = ((14 - month) / 12).floor();
   final y = year + 4800 - a;
   final m = month + 12 * a - 3;
-  return day + ((153 * m + 2) / 5).floor() + 365 * y +
-      (y / 4).floor() - (y / 100).floor() + (y / 400).floor() - 32045;
+  return day +
+      ((153 * m + 2) / 5).floor() +
+      365 * y +
+      (y / 4).floor() -
+      (y / 100).floor() +
+      (y / 400).floor() -
+      32045;
 }

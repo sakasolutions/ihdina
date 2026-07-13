@@ -12,6 +12,7 @@ class AyahModel {
   final int surahId;
   final int ayahNumber;
   final String textAr;
+
   /// Latin transliteration (e.g. from Tanzil en.transliteration.txt). Null if not in DB.
   final String? textTranslit;
 

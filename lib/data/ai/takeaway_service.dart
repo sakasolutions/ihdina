@@ -74,7 +74,8 @@ class TakeawayService {
   }
 
   /// Ein Eintrag pro Tag + Vers (Sure-Name für Lesbarkeit normalisiert).
-  static String _prefsKey(String dateYyyyMmDd, String surahName, int ayahNumber) {
+  static String _prefsKey(
+      String dateYyyyMmDd, String surahName, int ayahNumber) {
     final safeSurah = surahName.replaceAll(RegExp(r'[^\w\-]+'), '_');
     return '$_prefsPrefix${dateYyyyMmDd}_${safeSurah}_$ayahNumber';
   }

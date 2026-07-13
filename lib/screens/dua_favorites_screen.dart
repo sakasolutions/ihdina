@@ -36,7 +36,8 @@ class _DuaFavoritesScreenState extends State<DuaFavoritesScreen> {
 
   Future<void> _load() async {
     try {
-      final entries = await DuaBookmarkRepository.instance.getBookmarkedEntries();
+      final entries =
+          await DuaBookmarkRepository.instance.getBookmarkedEntries();
       if (!mounted) return;
       setState(() {
         _entries = entries;

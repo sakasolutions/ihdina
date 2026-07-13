@@ -43,7 +43,8 @@ class LocalSpeechService {
     if (list.isEmpty) return null;
     final system = await _speech.systemLocale();
     if (system != null &&
-        list.any((l) => l.localeId.toLowerCase() == system.localeId.toLowerCase())) {
+        list.any(
+            (l) => l.localeId.toLowerCase() == system.localeId.toLowerCase())) {
       return system.localeId;
     }
     for (final l in list) {

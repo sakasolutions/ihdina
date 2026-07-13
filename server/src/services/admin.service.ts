@@ -35,6 +35,8 @@ export async function listAdminUsers(params: {
         displayName: true,
         isPro: true,
         proExpiresAt: true,
+        isInternal: true,
+        firstAppOpenAt: true,
         createdAt: true,
         lastSeenAt: true,
         _count: { select: { aiRequestLogs: true } },
@@ -90,6 +92,38 @@ export async function setUserProByInstallId(installId: string, isPro: boolean) {
     where: { installId },
     data: { isPro },
   });
+  if (user.count === 0) {
+    throw new AppError(ErrorCodes.INVALID_INPUT, "User not found for this installId.", 404);
+  }
+  return prisma.user.findUniqueOrThrow({ where: { installId } });
+}
+
+export async function setUserInternalByInstallId(installId: string, isInternal: boolean) {
+  const user = await prisma.user.updateMany({
+    where: { installId },
+    data: { isInternal },
+  });
+  if (user.count === 0) {
+    throw new AppError(ErrorCodes.INVALID_INPUT, "User not found for this installId.", 404);
+  }
+  return prisma.user.findUniqueOrThrow({ where: { installId } });
+}
+
+export async function patchUserFlagsByInstallId(
+  installId: string,
+  flags: { isPro?: boolean; isInternal?: boolean }
+) {
+  const data: Prisma.UserUpdateInput = {};
+  if (typeof flags.isPro === "boolean") data.isPro = flags.isPro;
+  if (typeof flags.isInternal === "boolean") data.isInternal = flags.isInternal;
+  if (Object.keys(data).length === 0) {
+    throw new AppError(
+      ErrorCodes.INVALID_INPUT,
+      "Body must include at least one of isPro, isInternal.",
+      400
+    );
+  }
+  const user = await prisma.user.updateMany({ where: { installId }, data });
   if (user.count === 0) {
     throw new AppError(ErrorCodes.INVALID_INPUT, "User not found for this installId.", 404);
   }

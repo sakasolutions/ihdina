@@ -9,6 +9,8 @@ import '../data/prayer/notification_service.dart';
 import '../data/quran/models/surah_model.dart';
 import '../data/quran/quran_repository.dart';
 import '../data/settings/settings_repository.dart';
+import '../services/analytics/analytics_constants.dart';
+import '../services/analytics/analytics_service.dart';
 import '../services/app_opened_service.dart';
 import '../theme/app_theme.dart';
 import '../theme/tokens.dart';
@@ -26,8 +28,10 @@ class BootstrapScreen extends StatefulWidget {
 class _BootstrapScreenState extends State<BootstrapScreen> {
   String _status = 'Vorbereiten…';
   bool _error = false;
+
   /// true = Asset im Bundle gefunden; false = Fehler oder noch nicht geprüft.
   bool _startImageInBundle = true;
+
   /// true = start.png ist dekodiert und kann sofort angezeigt werden (kein dunkler Rahmen zuerst).
   bool _imageReady = false;
 
@@ -35,6 +39,7 @@ class _BootstrapScreenState extends State<BootstrapScreen> {
   void initState() {
     super.initState();
     unawaited(AppOpenedService.recordAppOpened());
+    unawaited(AnalyticsService.instance.init());
     _checkStartImage();
     _precacheImage();
     _run();
@@ -45,10 +50,11 @@ class _BootstrapScreenState extends State<BootstrapScreen> {
       await rootBundle.load(_startImage);
       if (mounted) setState(() => _startImageInBundle = true);
     } catch (e, st) {
-      if (mounted) setState(() {
-        _startImageInBundle = false;
-        _imageReady = true;
-      });
+      if (mounted)
+        setState(() {
+          _startImageInBundle = false;
+          _imageReady = true;
+        });
       debugPrint('BootstrapScreen: start.png nicht im Asset-Bundle: $e');
       debugPrint('$st');
     }
@@ -73,7 +79,8 @@ class _BootstrapScreenState extends State<BootstrapScreen> {
       await DatabaseProvider.instance.database;
       final results = await Future.wait<dynamic>([
         QuranRepository.instance.getAllSurahs(),
-        NotificationService.instance.reschedulePrayerNotificationsOnAppStartup(),
+        NotificationService.instance
+            .reschedulePrayerNotificationsOnAppStartup(),
       ]);
       final surahs = results[0] as List<SurahModel>;
       if (surahs.length >= 114 && mounted) {
@@ -106,7 +113,8 @@ class _BootstrapScreenState extends State<BootstrapScreen> {
   }
 
   void _navigate() async {
-    final onboardingCompleted = await SettingsRepository.instance.getOnboardingCompleted();
+    final onboardingCompleted =
+        await SettingsRepository.instance.getOnboardingCompleted();
     if (!mounted) return;
 
     Navigator.of(context).pushReplacement(
@@ -153,7 +161,8 @@ class _BootstrapScreenState extends State<BootstrapScreen> {
                 width: double.infinity,
                 height: double.infinity,
                 errorBuilder: (_, Object error, __) {
-                  debugPrint('BootstrapScreen: start.png Image.asset Fehler: $error');
+                  debugPrint(
+                      'BootstrapScreen: start.png Image.asset Fehler: $error');
                   return const SizedBox.expand();
                 },
               ),

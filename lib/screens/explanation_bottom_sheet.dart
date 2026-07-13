@@ -13,6 +13,10 @@ import '../data/ai/related_ayah_ref.dart';
 import '../data/api/ihdina_api_client.dart';
 import '../data/quran/quran_repository.dart';
 import '../models/surah.dart';
+import '../services/analytics/analytics_constants.dart';
+import '../services/analytics/analytics_service.dart';
+import '../services/analytics/explanation_analytics_helpers.dart';
+import '../services/analytics/explanation_viewed_tracker.dart';
 import '../services/install_id_service.dart';
 import '../services/revenuecat_service.dart';
 import '../data/tts/tts_pronunciation_repository.dart';
@@ -35,7 +39,8 @@ const bool _kExplanationSheetRefinedUi = true;
 const int _kVerstehenUxVariant = 1;
 
 /// Angehängte `Quelle:`-Zeile am Ende von [heute] extrahieren und aus dem Fließtext entfernen.
-({String heute, String? tafsirSource}) splitTafsirSourceFromHeute(String heute) {
+({String heute, String? tafsirSource}) splitTafsirSourceFromHeute(
+    String heute) {
   final trimmed = heute.trimRight();
   final match = RegExp(
     r'(?:\r?\n\r?\n?|\A)Quelle:\s*(.+)\s*$',
@@ -75,21 +80,25 @@ Future<void> showAiExplanationWithQuotaCheck(
   String? verseTitle,
   String? surahName,
   int? ayahNumber,
+  int? surahNumber,
   String? textAr,
   String? textDe,
   bool isFreeDailyVerse = false,
   bool showVerseHeader = true,
+  String entrySource = AnalyticsVerseEntrySource.other,
 }) async {
   if (isFreeDailyVerse) {
     showExplanationBottomSheet(
       context,
       verseTitle: verseTitle,
       surahName: surahName,
+      surahNumber: surahNumber,
       ayahNumber: ayahNumber,
       textAr: textAr,
       textDe: textDe,
       isFreeDailyVerse: true,
       showVerseHeader: showVerseHeader,
+      entrySource: entrySource,
     );
     return;
   }
@@ -99,19 +108,19 @@ Future<void> showAiExplanationWithQuotaCheck(
       context,
       verseTitle: verseTitle,
       surahName: surahName,
+      surahNumber: surahNumber,
       ayahNumber: ayahNumber,
       textAr: textAr,
       textDe: textDe,
       isFreeDailyVerse: false,
       showVerseHeader: showVerseHeader,
+      entrySource: entrySource,
     );
     return;
   }
 
   // Bereits gecachte Erklärung: kein Entitlement-Call, Sheet direkt öffnen.
-  if (surahName != null &&
-      surahName.isNotEmpty &&
-      ayahNumber != null) {
+  if (surahName != null && surahName.isNotEmpty && ayahNumber != null) {
     final prefs = await SharedPreferences.getInstance();
     final cached = prefs.getString(AIService.cacheKey(surahName, ayahNumber));
     if (cached != null && cached.trim().isNotEmpty) {
@@ -120,11 +129,13 @@ Future<void> showAiExplanationWithQuotaCheck(
         context,
         verseTitle: verseTitle,
         surahName: surahName,
+        surahNumber: surahNumber,
         ayahNumber: ayahNumber,
         textAr: textAr,
         textDe: textDe,
         isFreeDailyVerse: false,
         showVerseHeader: showVerseHeader,
+        entrySource: entrySource,
       );
       return;
     }
@@ -143,7 +154,11 @@ Future<void> showAiExplanationWithQuotaCheck(
       if (freeExtra != null && freeExtra <= 0) {
         Navigator.push(
           context,
-          MaterialPageRoute<void>(builder: (_) => const PaywallScreen()),
+          MaterialPageRoute<void>(
+            builder: (_) => const PaywallScreen(
+              analyticsTrigger: AnalyticsPaywallTrigger.quota,
+            ),
+          ),
         );
         return;
       }
@@ -157,11 +172,13 @@ Future<void> showAiExplanationWithQuotaCheck(
     context,
     verseTitle: verseTitle,
     surahName: surahName,
+    surahNumber: surahNumber,
     ayahNumber: ayahNumber,
     textAr: textAr,
     textDe: textDe,
     isFreeDailyVerse: false,
     showVerseHeader: showVerseHeader,
+    entrySource: entrySource,
   );
 }
 
@@ -176,8 +193,10 @@ class ChatMessage {
 
   final bool isUser;
   final String text;
+
   /// Chips unter einer Assistant-Folgeantwort (Server-Feld `relatedAyahs`).
   final List<RelatedAyahRef>? relatedAyahs;
+
   /// Gesetz bei KI-Folgeantworten — steuert Disclaimer/Feedback in [_MessageBubble].
   final String? followUpQuestion;
 }
@@ -193,23 +212,29 @@ class VerseExplanationParams {
   const VerseExplanationParams({
     required this.verseTitle,
     this.surahName,
+    this.surahNumber,
     this.ayahNumber,
     this.textAr,
     this.textDe,
     this.isFreeDailyVerse = false,
     this.showVerseHeader = true,
+    this.entrySource = AnalyticsVerseEntrySource.other,
   });
 
   final String verseTitle;
   final String? surahName;
+  final int? surahNumber;
   final int? ayahNumber;
   final String? textAr;
   final String? textDe;
+
   /// Tagesvers: zählt nicht gegen das tägliche Free-Kontingent.
   final bool isFreeDailyVerse;
 
   /// `true`: Arabisch + Deutsch + Trennlinie oben (z. B. Tagesvers). `false`: Leser (nur Tabs + Karten).
   final bool showVerseHeader;
+
+  final String entrySource;
 
   bool get canCallAi =>
       surahName != null &&
@@ -218,8 +243,7 @@ class VerseExplanationParams {
       textAr!.isNotEmpty &&
       textDe != null;
 
-  String get initialUserPrompt =>
-      'Erkläre folgenden Vers aus dem Koran:\n'
+  String get initialUserPrompt => 'Erkläre folgenden Vers aus dem Koran:\n'
       'Sure: $surahName, Vers: $ayahNumber\n'
       'Arabisch: $textAr\n'
       'Deutsche Übersetzung: $textDe\n\n'
@@ -231,20 +255,24 @@ void showExplanationBottomSheet(
   BuildContext context, {
   String? verseTitle,
   String? surahName,
+  int? surahNumber,
   int? ayahNumber,
   String? textAr,
   String? textDe,
   bool isFreeDailyVerse = false,
   bool showVerseHeader = true,
+  String entrySource = AnalyticsVerseEntrySource.other,
 }) {
   final params = VerseExplanationParams(
     verseTitle: verseTitle ?? 'Vers-Erklärung',
     surahName: surahName,
+    surahNumber: surahNumber,
     ayahNumber: ayahNumber,
     textAr: textAr,
     textDe: textDe,
     isFreeDailyVerse: isFreeDailyVerse,
     showVerseHeader: showVerseHeader,
+    entrySource: entrySource,
   );
 
   showModalBottomSheet<void>(
@@ -291,12 +319,19 @@ class _ExplanationBottomSheetContentState
 
   /// Verbleibende Follow-ups laut letzter Server-Antwort; `null` = noch keine Follow-up-Antwort in dieser Session.
   int? _remainingFollowUps;
+
   /// Verbleibende Folgefragen heute (Free); `null` = Pro oder noch unbekannt.
   int? _remainingFollowUpsToday;
   String? _installId;
   bool _verseExplanationFeedbackSent = false;
+  ExplanationViewedTracker? _viewedTracker;
+  bool _contentFromCache = false;
+  bool _explanationRequestedTracked = false;
+  int? _resolvedSurahNumber;
+
   /// Nur UI: Verstehen-Bereich bei Variante 0 einklappbar.
   bool _verstehenExpanded = false;
+
   /// Nur UI: Variante 1 — 0 = Lesen, 1 = Verstehen.
   int _verstehenReadStep = 0;
 
@@ -455,9 +490,14 @@ class _ExplanationBottomSheetContentState
           final map = Map<String, dynamic>.from(e);
           final sRaw = map['surahId'];
           final aRaw = map['ayahNumber'];
-          final surahId = sRaw is int ? sRaw : (sRaw is num ? sRaw.toInt() : null);
-          final ayahNumber = aRaw is int ? aRaw : (aRaw is num ? aRaw.toInt() : null);
-          if (surahId == null || ayahNumber == null || surahId <= 0 || ayahNumber <= 0) {
+          final surahId =
+              sRaw is int ? sRaw : (sRaw is num ? sRaw.toInt() : null);
+          final ayahNumber =
+              aRaw is int ? aRaw : (aRaw is num ? aRaw.toInt() : null);
+          if (surahId == null ||
+              ayahNumber == null ||
+              surahId <= 0 ||
+              ayahNumber <= 0) {
             continue;
           }
           refs.add(
@@ -483,7 +523,8 @@ class _ExplanationBottomSheetContentState
     }
   }
 
-  VerseCards _mergeServerRelatedAyahs(VerseCards cards, List<RelatedAyahRef> server) {
+  VerseCards _mergeServerRelatedAyahs(
+      VerseCards cards, List<RelatedAyahRef> server) {
     if (server.isEmpty) return cards;
     final seen = <String>{};
     final merged = <RelatedAyahRef>[];
@@ -704,12 +745,14 @@ class _ExplanationBottomSheetContentState
     );
     final cached = prefs.getString(key);
     if (cached != null && cached.trim().isNotEmpty) {
+      _contentFromCache = true;
       final id = await InstallIdService.instance.getOrCreate();
       if (!mounted) return const AiExplanationResult('');
       setState(() => _installId = id);
       return AiExplanationResult(cached.trim());
     }
 
+    _contentFromCache = false;
     final id = await InstallIdService.instance.getOrCreate();
     if (!mounted) return const AiExplanationResult('');
     setState(() => _installId = id);
@@ -724,9 +767,74 @@ class _ExplanationBottomSheetContentState
     );
   }
 
+  Future<void> _resolveSurahNumber() async {
+    if (widget.params.surahNumber != null) {
+      _resolvedSurahNumber = widget.params.surahNumber;
+      return;
+    }
+    final name = widget.params.surahName;
+    if (name == null || name.isEmpty) return;
+    final surahs = await QuranRepository.instance.getAllSurahs();
+    for (final s in surahs) {
+      if (s.nameEn == name || s.nameAr == name) {
+        _resolvedSurahNumber = s.id;
+        return;
+      }
+    }
+  }
+
+  void _trackExplanationRequestedOnce() {
+    final surah = _resolvedSurahNumber ?? widget.params.surahNumber;
+    final ayah = widget.params.ayahNumber;
+    if (!ExplanationAnalyticsHelpers.shouldEmitExplanationRequested(
+      canCallAi: widget.params.canCallAi,
+      surahNumber: surah,
+      ayahNumber: ayah,
+      alreadyTracked: _explanationRequestedTracked,
+    )) {
+      return;
+    }
+    _explanationRequestedTracked = true;
+    unawaited(
+      AnalyticsService.instance.trackExplanationRequested(
+        surahNumber: surah!,
+        ayahNumber: ayah!,
+        isDailyVerse: widget.params.isFreeDailyVerse,
+        surahId: surah,
+        source: widget.params.entrySource,
+      ),
+    );
+  }
+
+  void _startExplanationViewedTracking() {
+    final surah = _resolvedSurahNumber ?? widget.params.surahNumber;
+    final ayah = widget.params.ayahNumber;
+    if (surah == null || ayah == null || _cards == null) return;
+    _viewedTracker?.dispose();
+    _viewedTracker = ExplanationViewedTracker(
+      surahNumber: surah,
+      ayahNumber: ayah,
+      isDailyVerse: widget.params.isFreeDailyVerse,
+      contentSource: _contentFromCache ? 'cache' : 'server',
+      surahId: surah,
+    );
+    _viewedTracker!.onExplanationRendered();
+  }
+
   @override
   void initState() {
     super.initState();
+    unawaited(_resolveSurahNumber().then((_) {
+      if (!mounted) return;
+      if (widget.params.canCallAi) {
+        unawaited(
+          AnalyticsService.instance.trackScreenViewed(
+            screen: AnalyticsScreens.explanation,
+          ),
+        );
+        _trackExplanationRequestedOnce();
+      }
+    }));
     TtsService.instance.state.addListener(_onTtsStateChanged);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       TtsService.instance.ensureInitialized();
@@ -745,6 +853,7 @@ class _ExplanationBottomSheetContentState
               value.relatedAyahs,
             );
           });
+          _startExplanationViewedTracking();
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (!mounted) return;
             if (_scrollController.hasClients) {
@@ -765,6 +874,7 @@ class _ExplanationBottomSheetContentState
   }
 
   void _applyExplainError(Object e) {
+    _viewedTracker?.cancel();
     if (e is IhdinaApiException) {
       _isRateLimit = e.code == IhdinaApiErrorCodes.freeLimitReached;
       _isAiTransient = e.code == IhdinaApiErrorCodes.aiTemporarilyUnavailable;
@@ -796,6 +906,7 @@ class _ExplanationBottomSheetContentState
 
   @override
   void dispose() {
+    _viewedTracker?.dispose();
     TtsService.instance.state.removeListener(_onTtsStateChanged);
     TtsService.instance.stop();
     RevenueCatService.isProNotifier.removeListener(_onProStatusChanged);
@@ -872,6 +983,19 @@ class _ExplanationBottomSheetContentState
     }
     final q = last['content'] ?? '';
 
+    final surah = _resolvedSurahNumber ?? widget.params.surahNumber;
+    if (surah != null && widget.params.ayahNumber != null) {
+      final isSuggested = _quickQuestions.contains(question.trim());
+      unawaited(
+        AnalyticsService.instance.trackFollowupSubmitted(
+          surahNumber: surah,
+          ayahNumber: widget.params.ayahNumber!,
+          followupSource: isSuggested ? 'suggested' : 'custom',
+          surahId: surah,
+        ),
+      );
+    }
+
     try {
       final result = await AIService.instance.askFollowUpForVerse(
         installId: _installId!,
@@ -902,7 +1026,11 @@ class _ExplanationBottomSheetContentState
       if (e.code == IhdinaApiErrorCodes.proRequired) {
         Navigator.push(
           context,
-          MaterialPageRoute<void>(builder: (_) => const PaywallScreen()),
+          MaterialPageRoute<void>(
+            builder: (_) => const PaywallScreen(
+              analyticsTrigger: AnalyticsPaywallTrigger.quota,
+            ),
+          ),
         );
       }
       if (e.code == IhdinaApiErrorCodes.followupLimitReached) {
@@ -1437,7 +1565,8 @@ class _ExplanationBottomSheetContentState
                         ),
                       ),
                       const SizedBox(width: 2),
-                      Icon(Icons.expand_more_rounded, size: 22, color: Colors.white54),
+                      Icon(Icons.expand_more_rounded,
+                          size: 22, color: Colors.white54),
                     ],
                   ),
                 ),
@@ -1665,9 +1794,11 @@ class _ExplanationBottomSheetContentState
                   child: AnimatedContainer(
                     duration: const Duration(milliseconds: 200),
                     alignment: Alignment.center,
-                    padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 2),
+                    padding:
+                        const EdgeInsets.symmetric(vertical: 10, horizontal: 2),
                     decoration: BoxDecoration(
-                      color: selected ? _accentChampagneGold : Colors.transparent,
+                      color:
+                          selected ? _accentChampagneGold : Colors.transparent,
                       borderRadius: BorderRadius.circular(9),
                       boxShadow: selected
                           ? [
@@ -1687,7 +1818,8 @@ class _ExplanationBottomSheetContentState
                       overflow: TextOverflow.ellipsis,
                       style: TextStyle(
                         fontSize: 12.5,
-                        fontWeight: selected ? FontWeight.w800 : FontWeight.w600,
+                        fontWeight:
+                            selected ? FontWeight.w800 : FontWeight.w600,
                         letterSpacing: selected ? -0.1 : 0,
                         color: selected
                             ? const Color(0xFF1A1A1A)
@@ -1807,7 +1939,8 @@ class _ExplanationBottomSheetContentState
               splashColor: Colors.white.withOpacity(0.08),
               highlightColor: Colors.white.withOpacity(0.06),
               child: Ink(
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.07),
                   borderRadius: BorderRadius.circular(22),
@@ -1822,7 +1955,9 @@ class _ExplanationBottomSheetContentState
                       fontSize: 13,
                       height: 1.25,
                       fontWeight: FontWeight.w500,
-                      color: _isLoadingFollowUp ? Colors.white38 : Colors.white.withOpacity(0.92),
+                      color: _isLoadingFollowUp
+                          ? Colors.white38
+                          : Colors.white.withOpacity(0.92),
                     ),
                   ),
                 ),
@@ -1852,7 +1987,8 @@ class _ExplanationBottomSheetContentState
               splashColor: Colors.white.withOpacity(0.08),
               highlightColor: Colors.white.withOpacity(0.06),
               child: Ink(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
                 decoration: BoxDecoration(
                   color: Colors.white.withOpacity(0.06),
                   borderRadius: BorderRadius.circular(22),
@@ -1894,7 +2030,11 @@ class _ExplanationBottomSheetContentState
         onTap: () {
           Navigator.push(
             context,
-            MaterialPageRoute<void>(builder: (_) => const PaywallScreen()),
+            MaterialPageRoute<void>(
+              builder: (_) => const PaywallScreen(
+                analyticsTrigger: AnalyticsPaywallTrigger.proRequired,
+              ),
+            ),
           );
         },
         borderRadius: BorderRadius.circular(22),
@@ -2100,16 +2240,18 @@ class _ExplanationBottomSheetContentState
             spacing: 8,
             runSpacing: 8,
             children: refs.map((ref) {
-              final label = (ref.shortLabel != null && ref.shortLabel!.trim().isNotEmpty)
-                  ? ref.shortLabel!.trim()
-                  : 'Sure ${ref.surahId}, Vers ${ref.ayahNumber}';
+              final label =
+                  (ref.shortLabel != null && ref.shortLabel!.trim().isNotEmpty)
+                      ? ref.shortLabel!.trim()
+                      : 'Sure ${ref.surahId}, Vers ${ref.ayahNumber}';
               return Material(
                 color: Colors.transparent,
                 child: InkWell(
                   borderRadius: BorderRadius.circular(20),
                   onTap: () => _openAyahPreview(ref.surahId, ref.ayahNumber),
                   child: Ink(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     decoration: BoxDecoration(
                       color: Colors.white.withOpacity(0.07),
                       borderRadius: BorderRadius.circular(20),
@@ -2211,18 +2353,20 @@ class _ExplanationBottomSheetContentState
   }
 
   Widget _buildBottomComposer(MediaQueryData media) {
-    final showComposer = (_cards != null || _messages.isNotEmpty) && _errorMessage == null;
+    final showComposer =
+        (_cards != null || _messages.isNotEmpty) && _errorMessage == null;
     if (!showComposer) {
       return const SizedBox.shrink();
     }
     final keyboardOpen = media.viewInsets.bottom > 0;
     final quickQs = _visibleQuickQuestions();
-    final showQuickChips = (_remainingFollowUps == null || _remainingFollowUps! > 0) &&
-        (isProUser ||
-            _remainingFollowUpsToday == null ||
-            _remainingFollowUpsToday! > 0) &&
-        !keyboardOpen &&
-        quickQs.isNotEmpty;
+    final showQuickChips =
+        (_remainingFollowUps == null || _remainingFollowUps! > 0) &&
+            (isProUser ||
+                _remainingFollowUpsToday == null ||
+                _remainingFollowUpsToday! > 0) &&
+            !keyboardOpen &&
+            quickQs.isNotEmpty;
     final expandedChildren = <Widget>[
       if (showQuickChips) ...[
         _buildQuickChips(),
@@ -2238,7 +2382,8 @@ class _ExplanationBottomSheetContentState
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Divider(height: 1, thickness: 1, color: Colors.white.withOpacity(0.08)),
+            Divider(
+                height: 1, thickness: 1, color: Colors.white.withOpacity(0.08)),
             ...expandedChildren,
           ],
         ),
@@ -2271,7 +2416,8 @@ class _ExplanationBottomSheetContentState
                     foregroundColor: Colors.white54,
                     visualDensity: VisualDensity.compact,
                   ),
-                  onPressed: () => setState(() => _fragenComposerExpanded = false),
+                  onPressed: () =>
+                      setState(() => _fragenComposerExpanded = false),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
@@ -2284,7 +2430,8 @@ class _ExplanationBottomSheetContentState
                         ),
                       ),
                       const SizedBox(width: 2),
-                      Icon(Icons.expand_more_rounded, size: 22, color: Colors.white54),
+                      Icon(Icons.expand_more_rounded,
+                          size: 22, color: Colors.white54),
                     ],
                   ),
                 ),
@@ -2333,14 +2480,14 @@ class _MessageBubble extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final showAiFooter =
-        !message.isUser && message.followUpQuestion != null;
+    final showAiFooter = !message.isUser && message.followUpQuestion != null;
     final feedbackContext = _followUpFeedbackContext();
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Align(
-        alignment: message.isUser ? Alignment.centerRight : Alignment.centerLeft,
+        alignment:
+            message.isUser ? Alignment.centerRight : Alignment.centerLeft,
         child: ConstrainedBox(
           constraints: BoxConstraints(
             maxWidth: MediaQuery.of(context).size.width *

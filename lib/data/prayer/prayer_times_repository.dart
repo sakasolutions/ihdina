@@ -11,7 +11,6 @@ class PrayerTimesRepository {
 
   static final PrayerTimesRepository instance = PrayerTimesRepository._();
 
-
   /// Convert UTC DateTime from adhan to local.
   static DateTime _toLocal(DateTime utc) {
     return DateTime.fromMillisecondsSinceEpoch(
@@ -74,7 +73,8 @@ class PrayerTimesRepository {
         break;
     }
 
-    final madhab = settings.madhab == MadhabOption.hanafi ? Madhab.hanafi : Madhab.shafi;
+    final madhab =
+        settings.madhab == MadhabOption.hanafi ? Madhab.hanafi : Madhab.shafi;
     params.madhab = madhab;
 
     // User adjustments (minutes)
@@ -135,7 +135,8 @@ class PrayerTimesRepository {
     final maghrib = _roundToMinute(_toLocal(pt.maghrib));
     final sunrise = _roundToMinute(_toLocal(pt.sunrise));
 
-    final isSummer = localCalendarDate.month >= 3 && localCalendarDate.month <= 9;
+    final isSummer =
+        localCalendarDate.month >= 3 && localCalendarDate.month <= 9;
     if (settings.method == PrayerMethodOption.turkiye &&
         settings.latitude.abs() > 45 &&
         isSummer) {
@@ -164,7 +165,8 @@ class PrayerTimesRepository {
   PrayerTimesResult computeToday(PrayerSettings settings, DateTime now) {
     if (kDebugMode) {
       // ignore: avoid_print
-      print('[PRAYER] using lat=${settings.latitude} lng=${settings.longitude} label=${settings.locationLabel}');
+      print(
+          '[PRAYER] using lat=${settings.latitude} lng=${settings.longitude} label=${settings.locationLabel}');
     }
 
     final times = computePrayerTimesMapForDate(
@@ -174,7 +176,8 @@ class PrayerTimesRepository {
 
     final params = _paramsFromSettings(settings);
     if (kDebugMode) {
-      debugPrint('[PRAYER] params.madhab=${params.madhab?.name ?? "null"} (vor PrayerTimes)');
+      debugPrint(
+          '[PRAYER] params.madhab=${params.madhab?.name ?? "null"} (vor PrayerTimes)');
     }
 
     final fajr = times[PrayerType.fajr]!;

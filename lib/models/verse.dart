@@ -10,6 +10,7 @@ class Verse {
   final int ayah;
   final String ar;
   final String de;
+
   /// Latin transliteration (e.g. Tanzil en). Null if not available.
   final String? transliteration;
 

@@ -30,8 +30,8 @@ class GeonamesRepository {
 
     try {
       final response = await http.get(uri).timeout(
-        const Duration(seconds: 10),
-      );
+            const Duration(seconds: 10),
+          );
 
       if (kDebugMode) {
         // ignore: avoid_print

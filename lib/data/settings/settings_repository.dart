@@ -17,7 +17,8 @@ const String _keyPrayerMadhab = 'prayer_madhab';
 const String _keyNotificationsEnabled = 'notifications_enabled';
 const String _keyDailyAyahReminderEnabled = 'daily_ayah_reminder_enabled';
 const String _keySurahIntroAutoShow = 'surah_intro_auto_show';
-const String _keySurahIntroAutoShownSurahIds = 'surah_intro_auto_shown_surah_ids';
+const String _keySurahIntroAutoShownSurahIds =
+    'surah_intro_auto_shown_surah_ids';
 const String _keyQuranReaderLayout = 'quran_reader_layout';
 const String _keyQuranPageScript = 'quran_page_script';
 const double _defaultLat = 48.68;
@@ -60,7 +61,8 @@ class SettingsRepository {
     final madhabStr = await _get(_keyPrayerMadhab);
     assert(() {
       // Debug: prüfen, ob Madhab (Hanafi/Shafi) korrekt aus DB gelesen wird
-      debugPrint('[SETTINGS] getPrayerSettings: prayer_madhab aus DB = "${madhabStr ?? "null"}"');
+      debugPrint(
+          '[SETTINGS] getPrayerSettings: prayer_madhab aus DB = "${madhabStr ?? "null"}"');
       return true;
     }());
 
@@ -70,7 +72,8 @@ class SettingsRepository {
     final lng = lngStr != null && lngStr.isNotEmpty
         ? (double.tryParse(lngStr) ?? _defaultLng)
         : _defaultLng;
-    final locationLabel = label?.isNotEmpty == true ? label! : _defaultLocationLabel;
+    final locationLabel =
+        label?.isNotEmpty == true ? label! : _defaultLocationLabel;
     final method = PrayerMethodOption.fromValue(methodStr ?? 'turkiye');
     final madhab = MadhabOption.fromValue(madhabStr ?? 'shafi');
 
@@ -86,7 +89,8 @@ class SettingsRepository {
 
   Future<void> setPrayerSettings(PrayerSettings s) async {
     assert(() {
-      debugPrint('[SETTINGS] setPrayerSettings: speichere madhab="${s.madhab.name}" (${s.madhab == MadhabOption.hanafi ? "Hanafi/Asr 2x" : "Shafi/Asr 1x"})');
+      debugPrint(
+          '[SETTINGS] setPrayerSettings: speichere madhab="${s.madhab.name}" (${s.madhab == MadhabOption.hanafi ? "Hanafi/Asr 2x" : "Shafi/Asr 1x"})');
       return true;
     }());
     await _set(_keyPrayerLat, s.latitude.toStringAsFixed(6));
@@ -99,7 +103,11 @@ class SettingsRepository {
   /// Returns stored prayer location (label + lat/lng). Uses defaults if never set.
   Future<({String label, double lat, double lng})> getPrayerLocation() async {
     final settings = await getPrayerSettings();
-    return (label: settings.locationLabel, lat: settings.latitude, lng: settings.longitude);
+    return (
+      label: settings.locationLabel,
+      lat: settings.latitude,
+      lng: settings.longitude
+    );
   }
 
   Future<bool> getNotificationsEnabled() async {

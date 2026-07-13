@@ -85,7 +85,8 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
               Expanded(
                 child: PageView(
                   controller: _pageController,
-                  onPageChanged: (index) => setState(() => _currentPage = index),
+                  onPageChanged: (index) =>
+                      setState(() => _currentPage = index),
                   children: [
                     _WelcomePage(onContinue: _nextPage),
                     _LocationPage(
@@ -130,9 +131,8 @@ class _PageDots extends StatelessWidget {
           height: 8,
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(999),
-            color: active
-                ? _accentChampagneGold
-                : Colors.white.withOpacity(0.28),
+            color:
+                active ? _accentChampagneGold : Colors.white.withOpacity(0.28),
           ),
         );
       }),
@@ -192,7 +192,8 @@ class _OnboardingPageLayout extends StatelessWidget {
           _OnboardingPrimaryButton(label: primaryLabel, onPressed: onPrimary),
           if (secondaryLabel != null && onSecondary != null) ...[
             const SizedBox(height: 12),
-            _OnboardingTextButton(label: secondaryLabel!, onPressed: onSecondary!),
+            _OnboardingTextButton(
+                label: secondaryLabel!, onPressed: onSecondary!),
           ],
           const SizedBox(height: 8),
         ],

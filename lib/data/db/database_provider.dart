@@ -55,7 +55,8 @@ class DatabaseProvider {
   static Future<void> _ensureAyahsTransliterationColumn(Database db) async {
     try {
       final info = await db.rawQuery('PRAGMA table_info(ayahs)');
-      final hasTranslit = info.any((r) => (r['name'] as String?) == 'text_translit');
+      final hasTranslit =
+          info.any((r) => (r['name'] as String?) == 'text_translit');
       if (!hasTranslit) {
         await db.execute('ALTER TABLE ayahs ADD COLUMN text_translit TEXT');
         if (kDebugMode) debugPrint('[DB] ayahs: added text_translit column');
@@ -113,9 +114,12 @@ class DatabaseProvider {
       'ayah_number INTEGER NOT NULL, '
       'updated_at INTEGER NOT NULL)',
     );
-    final n = Sqflite.firstIntValue(await db.rawQuery('SELECT COUNT(*) FROM surah_read_progress')) ?? 0;
+    final n = Sqflite.firstIntValue(
+            await db.rawQuery('SELECT COUNT(*) FROM surah_read_progress')) ??
+        0;
     if (n == 0) {
-      final legacy = await db.query('reading_progress', where: 'id = 1', limit: 1);
+      final legacy =
+          await db.query('reading_progress', where: 'id = 1', limit: 1);
       if (legacy.isNotEmpty) {
         final m = legacy.first;
         await db.insert(
@@ -149,7 +153,12 @@ class DatabaseProvider {
       for (final layout in ['cards', 'page']) {
         await db.insert(
           'surah_read_progress_layout',
-          {'surah_id': sid, 'reader_layout': layout, 'ayah_number': ay, 'updated_at': u},
+          {
+            'surah_id': sid,
+            'reader_layout': layout,
+            'ayah_number': ay,
+            'updated_at': u
+          },
           conflictAlgorithm: ConflictAlgorithm.ignore,
         );
       }

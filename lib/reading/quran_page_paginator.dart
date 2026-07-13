@@ -15,6 +15,7 @@ class QuranPagePaginator {
     required TextDirection direction,
     required TextScaler textScaler,
     required bool useArabicScript,
+
     /// Zusätzliche Höhe pro Vers im Layout (Nummer, Karten-Padding, Abstand) — muss zu [_VerseBlock] passen.
     double perVerseChromeHeight = 52,
   }) {

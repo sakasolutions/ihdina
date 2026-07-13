@@ -69,7 +69,8 @@ class SourcesScreen extends StatelessWidget {
                     _SourceCard(
                       icon: Icons.menu_book,
                       title: 'Arabischer Originaltext',
-                      body: 'Der arabische Text des Korans wird vom Tanzil-Projekt (tanzil.net) bereitgestellt. Einem hochpräzisen, verifizierten und international anerkannten Standard für digitale Koran-Texte.',
+                      body:
+                          'Der arabische Text des Korans wird vom Tanzil-Projekt (tanzil.net) bereitgestellt. Einem hochpräzisen, verifizierten und international anerkannten Standard für digitale Koran-Texte.',
                       linkText: 'tanzil.net',
                       linkUrl: _tanzilUrl,
                     ),
@@ -77,7 +78,8 @@ class SourcesScreen extends StatelessWidget {
                     _SourceCard(
                       icon: Icons.translate,
                       title: 'Deutsche Bedeutung',
-                      body: 'Die deutsche Übersetzung stammt von Frank Bubenheim und Dr. Nadim Elias. Diese anerkannte Übersetzung wurde offiziell bereitgestellt von der Enzyklopädie des edlen Korans (QuranEnc.com).',
+                      body:
+                          'Die deutsche Übersetzung stammt von Frank Bubenheim und Dr. Nadim Elias. Diese anerkannte Übersetzung wurde offiziell bereitgestellt von der Enzyklopädie des edlen Korans (QuranEnc.com).',
                       linkText: 'QuranEnc.com',
                       linkUrl: _quranEncUrl,
                     ),
@@ -85,7 +87,8 @@ class SourcesScreen extends StatelessWidget {
                     _SourceCard(
                       icon: Icons.auto_stories_outlined,
                       title: 'Hadith des Tages (kuratiert)',
-                      body: 'Die Hadithe stammen aus einer lokalen Bibliothek. Unter „Einordnung“ steht jeweils ein kurzer redaktioneller Hinweis von Ihdina (keine KI), damit Thema und Bedeutung greifbar werden. Die „Kurzfassung“ fasst den Inhalt knapp auf Deutsch; vollständiger Wortlaut und Überliefererkette: siehe sunnah.com am verlinkten Eintrag.\n\nDie App erfindet keine Hadithe.',
+                      body:
+                          'Die Hadithe stammen aus einer lokalen Bibliothek. Unter „Einordnung“ steht jeweils ein kurzer redaktioneller Hinweis von Ihdina (keine KI), damit Thema und Bedeutung greifbar werden. Die „Kurzfassung“ fasst den Inhalt knapp auf Deutsch; vollständiger Wortlaut und Überliefererkette: siehe sunnah.com am verlinkten Eintrag.\n\nDie App erfindet keine Hadithe.',
                       linkText: 'sunnah.com',
                       linkUrl: 'https://sunnah.com',
                     ),
@@ -102,13 +105,15 @@ class SourcesScreen extends StatelessWidget {
                     _SourceCard(
                       icon: Icons.auto_awesome,
                       title: 'KI-Erklärungen & Tafsir',
-                      body: 'Die Erklärungen zu den Versen werden von einer künstlichen Intelligenz generiert. Die KI ist strikt angewiesen, sich ausschließlich auf klassische und authentische sunnitische Tafsir-Werke (wie Tafsir Ibn Kathir) zu stützen.\n\nHinweis: Da die Antworten maschinell zusammengefasst werden, können Fehler nicht zu 100 % ausgeschlossen werden. Für komplexe theologische Fragen (Fiqh) konsultiere bitte stets gelehrte Personen.',
+                      body:
+                          'Die Erklärungen zu den Versen werden von einer künstlichen Intelligenz generiert. Die KI ist strikt angewiesen, sich ausschließlich auf klassische und authentische sunnitische Tafsir-Werke (wie Tafsir Ibn Kathir) zu stützen.\n\nHinweis: Da die Antworten maschinell zusammengefasst werden, können Fehler nicht zu 100 % ausgeschlossen werden. Für komplexe theologische Fragen (Fiqh) konsultiere bitte stets gelehrte Personen.',
                     ),
                     const SizedBox(height: 20),
                     _SourceCard(
                       icon: Icons.phonelink_ring,
                       title: 'Transliteration (Lautschrift)',
-                      body: 'Die lateinische Transliteration basiert auf den frei verfügbaren Daten des Tanzil Projects (tanzil.net). Diese Daten sind unter den Bedingungen der Creative Commons Lizenz frei nutzbar.',
+                      body:
+                          'Die lateinische Transliteration basiert auf den frei verfügbaren Daten des Tanzil Projects (tanzil.net). Diese Daten sind unter den Bedingungen der Creative Commons Lizenz frei nutzbar.',
                       linkText: 'tanzil.net',
                       linkUrl: _tanzilUrl,
                     ),
@@ -116,7 +121,8 @@ class SourcesScreen extends StatelessWidget {
                     _SourceCard(
                       icon: Icons.volume_up_rounded,
                       title: 'Audio-Rezitationen',
-                      body: 'Die Audio-Rezitationen (Mishary Rashid Alafasy) werden freundlicherweise über die offene API von EveryAyah.com bereitgestellt und live gestreamt.',
+                      body:
+                          'Die Audio-Rezitationen (Mishary Rashid Alafasy) werden freundlicherweise über die offene API von EveryAyah.com bereitgestellt und live gestreamt.',
                       linkText: 'EveryAyah.com',
                       linkUrl: 'https://everyayah.com',
                     ),

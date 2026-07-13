@@ -1,0 +1,98 @@
+import 'wudu_step.dart';
+
+/// Lokale Schrittliste für den Wudu-Guide (Inhalte werden später ergänzt).
+const List<WuduStep> wuduSteps = [
+  WuduStep(
+    id: 'voraussetzungen',
+    order: 1,
+    section: WuduSection.preparation,
+    title: 'Voraussetzungen',
+    overviewText: 'Was du vor der Waschung beachten solltest',
+  ),
+  WuduStep(
+    id: 'absicht',
+    order: 2,
+    section: WuduSection.preparation,
+    title: 'Absicht',
+    overviewText: 'Die innere Absicht vor der Waschung setzen',
+  ),
+  WuduStep(
+    id: 'basmala',
+    order: 3,
+    section: WuduSection.preparation,
+    title: 'Basmala',
+    overviewText: 'Mit der Basmala beginnen',
+    hasAudio: true,
+  ),
+  WuduStep(
+    id: 'haende_waschen',
+    order: 4,
+    section: WuduSection.washing,
+    title: 'Hände waschen',
+    overviewText: 'Hände gründlich bis zu den Handgelenken waschen',
+  ),
+  WuduStep(
+    id: 'mund_ausspuelen',
+    order: 5,
+    section: WuduSection.washing,
+    title: 'Mund ausspülen',
+    overviewText: 'Mund gründlich mit Wasser ausspülen',
+  ),
+  WuduStep(
+    id: 'nase_reinigen',
+    order: 6,
+    section: WuduSection.washing,
+    title: 'Nase reinigen',
+    overviewText: 'Nase vorsichtig mit Wasser reinigen',
+  ),
+  WuduStep(
+    id: 'gesicht_waschen',
+    order: 7,
+    section: WuduSection.washing,
+    title: 'Gesicht waschen',
+    overviewText: 'Gesicht von der Stirn bis zum Kinn waschen',
+  ),
+  WuduStep(
+    id: 'arme_waschen',
+    order: 8,
+    section: WuduSection.washing,
+    title: 'Arme bis zu den Ellenbogen waschen',
+    overviewText: 'Arme bis einschließlich der Ellenbogen waschen',
+  ),
+  WuduStep(
+    id: 'kopf_streichen',
+    order: 9,
+    section: WuduSection.washing,
+    title: 'Kopf streichen',
+    overviewText: 'Den Kopf einmal mit nassen Händen streichen',
+  ),
+  WuduStep(
+    id: 'ohren_streichen',
+    order: 10,
+    section: WuduSection.washing,
+    title: 'Ohren streichen',
+    overviewText: 'Ohren innen und außen mit nassen Fingern streichen',
+  ),
+  WuduStep(
+    id: 'fuesse_waschen',
+    order: 11,
+    section: WuduSection.washing,
+    title: 'Füße waschen',
+    overviewText: 'Füße bis einschließlich der Knöchel waschen',
+  ),
+  WuduStep(
+    id: 'dua_nach_waschung',
+    order: 12,
+    section: WuduSection.completion,
+    title: 'Dua nach der Waschung',
+    overviewText: 'Kurzes Bittgebet nach der Waschung',
+    hasAudio: true,
+  ),
+  WuduStep(
+    id: 'zusammenfassung',
+    order: 13,
+    section: WuduSection.completion,
+    title: 'Zusammenfassung',
+    overviewText: 'Den vollständigen Ablauf noch einmal überblicken',
+  ),
+];

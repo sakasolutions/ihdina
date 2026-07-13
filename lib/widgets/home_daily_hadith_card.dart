@@ -29,7 +29,8 @@ class HomeDailyHadithCard extends StatelessWidget {
           children: [
             Row(
               children: [
-                Icon(Icons.format_quote_rounded, size: 20, color: _accentGold.withOpacity(0.85)),
+                Icon(Icons.format_quote_rounded,
+                    size: 20, color: _accentGold.withOpacity(0.85)),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -78,7 +79,8 @@ class HomeDailyHadithCard extends StatelessWidget {
               ),
             ],
             const SizedBox(height: 14),
-            Divider(height: 1, thickness: 1, color: Colors.white.withOpacity(0.08)),
+            Divider(
+                height: 1, thickness: 1, color: Colors.white.withOpacity(0.08)),
             const SizedBox(height: 12),
             Text(
               'Kurzfassung der Überlieferung',
@@ -124,10 +126,12 @@ class HomeDailyHadithCard extends StatelessWidget {
                   onPressed: () async {
                     final uri = Uri.parse(entry.sourceUrl!);
                     if (await canLaunchUrl(uri)) {
-                      await launchUrl(uri, mode: LaunchMode.externalApplication);
+                      await launchUrl(uri,
+                          mode: LaunchMode.externalApplication);
                     }
                   },
-                  icon: Icon(Icons.open_in_new_rounded, size: 14, color: _accentGold.withOpacity(0.9)),
+                  icon: Icon(Icons.open_in_new_rounded,
+                      size: 14, color: _accentGold.withOpacity(0.9)),
                   label: Text(
                     'Volltext & Kette nachlesen',
                     style: GoogleFonts.inter(
