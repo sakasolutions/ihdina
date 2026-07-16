@@ -11,10 +11,13 @@ import {
   getDailyExplanationExtraCount,
   getDailyVerseExplainCount,
 } from "./dailyExplanationUsageQueries.js";
-import { completeExplanation } from "./openai.service.js";
+import {
+  completeExplanation,
+  type ChatCompletionResult,
+} from "./openai.service.js";
 import { getOrCreateUser } from "./user.service.js";
 import { logAiRequest } from "./usageLog.service.js";
-import { VERSE_EXPLANATION_POLICY } from "./verseExplanationPolicy.service.js";
+import { buildVerseExplanationPolicy } from "./verseExplanationPolicy.service.js";
 import { buildVerifiedQuranPromptContext } from "./verifiedQuranPromptContext.service.js";
 import { buildTafsirPromptContext } from "./tafsirContext.service.js";
 
@@ -27,6 +30,37 @@ export type ExplainInput = {
   language: string;
   isDailyVerse: boolean;
 };
+
+/**
+ * Kern der produktiven Verserklärung ohne Nutzer-, Limit-, Analytics-
+ * oder Datenbanklogik. Wird von der API-Route und dem lokalen
+ * Evaluationswerkzeug gemeinsam genutzt.
+ */
+export async function completeVerifiedVerseExplanation(params: {
+  surahName: string;
+  ayahNumber: number;
+}): Promise<ChatCompletionResult> {
+  const verifiedContext = buildVerifiedQuranPromptContext({
+    surahName: params.surahName,
+    ayahNumber: params.ayahNumber,
+    includeContextWindow: true,
+  });
+
+  const tafsirContext = buildTafsirPromptContext({
+    surahName: params.surahName,
+    ayahNumber: params.ayahNumber,
+  });
+
+  const verseKey = `${verifiedContext.verse.surahId}:${verifiedContext.verse.ayahNumber}`;
+
+  return completeExplanation({
+    trustedContext: [verifiedContext.promptContext, "", tafsirContext].join(
+      "\n"
+    ),
+    policyInstructions: buildVerseExplanationPolicy(verseKey),
+    verseKey,
+  });
+}
 
 export async function explainVerse(input: ExplainInput) {
   const user = await getOrCreateUser(input.installId);
@@ -68,20 +102,9 @@ export async function explainVerse(input: ExplainInput) {
 
   let completion;
   try {
-    const verifiedContext = buildVerifiedQuranPromptContext({
+    completion = await completeVerifiedVerseExplanation({
       surahName: input.surahName,
       ayahNumber: input.ayahNumber,
-      includeContextWindow: true,
-    });
-
-    const tafsirContext = buildTafsirPromptContext({
-      surahName: input.surahName,
-      ayahNumber: input.ayahNumber,
-    });
-
-    completion = await completeExplanation({
-      trustedContext: [verifiedContext.promptContext, "", tafsirContext].join("\n"),
-      policyInstructions: VERSE_EXPLANATION_POLICY,
     });
   } catch (e) {
     await logAiRequest({
