@@ -314,7 +314,8 @@ export async function runEvaluateCurrentExplanationsCli(
   loadEnv();
 
   if (args.model) {
-    process.env.OPENAI_MODEL = args.model;
+    // Nur die erste Verserklärung überschreiben — Follow-ups bleiben bei OPENAI_MODEL.
+    process.env.OPENAI_EXPLANATION_MODEL = args.model;
   }
 
   ensureUnusedDatabaseUrlForEval();

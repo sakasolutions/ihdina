@@ -130,11 +130,14 @@ describe("regelbasierte Explanation-Sonderfälle", () => {
     assert.match(parsed.kontext, /4:35/);
   });
 
-  it("ein normaler Vers läuft weiterhin über das konfigurierte Modell (gpt-4.1-Pfad)", () => {
+  it("ein normaler Vers läuft weiterhin über das konfigurierte Explanation-Modell", () => {
     assert.equal(resolveRuleBasedExplanationJson("2:255"), null);
     assert.equal(resolveRuleBasedExplanationJson("1:1"), null);
     assert.equal(resolveRuleBasedExplanationJson("13:28"), null);
-    // Produktionspfad: callChat nutzt env.openaiModel (lokal typisch gpt-4.1).
+    assert.ok(
+      typeof env.openaiExplanationModel === "string" &&
+        env.openaiExplanationModel.length > 0
+    );
     assert.ok(typeof env.openaiModel === "string" && env.openaiModel.length > 0);
   });
 });

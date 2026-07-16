@@ -20,6 +20,15 @@ export const env = {
   databaseUrl: required("DATABASE_URL"),
   openaiApiKey: required("OPENAI_API_KEY"),
   openaiModel: process.env.OPENAI_MODEL?.trim() || "gpt-4o-mini",
+  /**
+   * Optional: stärkeres Modell nur für die erste Verserklärung.
+   * Fällt auf OPENAI_MODEL zurück, wenn leer oder nicht gesetzt.
+   */
+  get openaiExplanationModel() {
+    return (
+      process.env.OPENAI_EXPLANATION_MODEL?.trim() || env.openaiModel
+    );
+  },
   /** Optional: feste $/1M für Usage-Admin (sonst Modell-Tabelle in openaiUsageCost.ts). */
   openaiPriceInputPer1mUsd: optionalUsdPer1m("OPENAI_PRICE_INPUT_PER_1M_USD"),
   openaiPriceOutputPer1mUsd: optionalUsdPer1m("OPENAI_PRICE_OUTPUT_PER_1M_USD"),

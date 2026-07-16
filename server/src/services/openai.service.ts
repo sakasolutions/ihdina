@@ -421,6 +421,7 @@ export async function completeExplanation(params: {
     maxTokens: 900,
     temperature: 0.2,
     responseFormatJsonObject: true,
+    model: env.openaiExplanationModel,
   });
 
   const normalizedText = normalizeVerseExplainJsonPayload(out.text);
@@ -432,7 +433,12 @@ export async function completeExplanation(params: {
         { role: "assistant", content: normalizedText },
         { role: "user", content: ASH_SHARH_94_6_CORRECTION_JSON_PROMPT },
       ],
-      { maxTokens: 900, temperature: 0.1, responseFormatJsonObject: true }
+      {
+        maxTokens: 900,
+        temperature: 0.1,
+        responseFormatJsonObject: true,
+        model: env.openaiExplanationModel,
+      }
     );
 
     const retryText = normalizeVerseExplainJsonPayload(retry.text);
@@ -460,7 +466,12 @@ export async function completeExplanation(params: {
         { role: "assistant", content: normalizedText },
         { role: "user", content: AN_NISA_4_34_CORRECTION_JSON_PROMPT },
       ],
-      { maxTokens: 900, temperature: 0.1, responseFormatJsonObject: true }
+      {
+        maxTokens: 900,
+        temperature: 0.1,
+        responseFormatJsonObject: true,
+        model: env.openaiExplanationModel,
+      }
     );
 
     const retryText = normalizeVerseExplainJsonPayload(retry.text);
@@ -623,12 +634,19 @@ export async function completeTakeaway(params: {
 
 async function callChat(
   messages: OpenAI.Chat.ChatCompletionMessageParam[],
-  opts: { maxTokens: number; temperature: number; responseFormatJsonObject?: boolean }
+  opts: {
+    maxTokens: number;
+    temperature: number;
+    responseFormatJsonObject?: boolean;
+    /** Wenn gesetzt, überschreibt env.openaiModel nur für diesen Aufruf. */
+    model?: string;
+  }
 ): Promise<ChatCompletionResult> {
   try {
+    const requestedModel = opts.model ?? env.openaiModel;
     const t0 = Date.now();
     const res = await getClient().chat.completions.create({
-      model: env.openaiModel,
+      model: requestedModel,
       messages,
       max_tokens: opts.maxTokens,
       temperature: opts.temperature,
@@ -646,7 +664,7 @@ async function callChat(
       );
     }
     const u = res.usage;
-    const model = res.model ?? env.openaiModel;
+    const model = res.model ?? requestedModel;
     return {
       text,
       model,
