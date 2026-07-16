@@ -17,7 +17,8 @@
     "db:migrate": "prisma migrate dev",
     "db:migrate:deploy": "prisma migrate deploy",
     "analytics:backfill-app-open": "tsx src/scripts/backfillFirstAppOpen.ts",
-    "analytics:seed-internal": "tsx src/scripts/seedInternalUsers.ts"
+    "analytics:seed-internal": "tsx src/scripts/seedInternalUsers.ts",
+    "explain:evaluate": "tsx src/tools/evaluateCurrentExplanations.ts"
   },
   "dependencies": {
     "@fastify/cors": "^11.2.0",
