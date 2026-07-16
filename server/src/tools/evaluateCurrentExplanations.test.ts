@@ -249,7 +249,7 @@ describe("explain evaluation isolation", () => {
       source,
       /completion = await completeVerifiedVerseExplanation\(/
     );
-    assert.match(source, /VERSE_EXPLANATION_POLICY/);
+    assert.match(source, /buildVerseExplanationPolicy/);
     assert.match(source, /buildVerifiedQuranPromptContext/);
     assert.match(source, /buildTafsirPromptContext/);
     assert.match(source, /completeExplanation/);

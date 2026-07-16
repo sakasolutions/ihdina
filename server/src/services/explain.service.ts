@@ -17,7 +17,7 @@ import {
 } from "./openai.service.js";
 import { getOrCreateUser } from "./user.service.js";
 import { logAiRequest } from "./usageLog.service.js";
-import { VERSE_EXPLANATION_POLICY } from "./verseExplanationPolicy.service.js";
+import { buildVerseExplanationPolicy } from "./verseExplanationPolicy.service.js";
 import { buildVerifiedQuranPromptContext } from "./verifiedQuranPromptContext.service.js";
 import { buildTafsirPromptContext } from "./tafsirContext.service.js";
 
@@ -51,11 +51,14 @@ export async function completeVerifiedVerseExplanation(params: {
     ayahNumber: params.ayahNumber,
   });
 
+  const verseKey = `${verifiedContext.verse.surahId}:${verifiedContext.verse.ayahNumber}`;
+
   return completeExplanation({
     trustedContext: [verifiedContext.promptContext, "", tafsirContext].join(
       "\n"
     ),
-    policyInstructions: VERSE_EXPLANATION_POLICY,
+    policyInstructions: buildVerseExplanationPolicy(verseKey),
+    verseKey,
   });
 }
 

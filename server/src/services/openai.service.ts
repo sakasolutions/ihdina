@@ -56,8 +56,46 @@ function normalizeAllahTerminology(raw: string): string {
     .replace(/\bGott\b/g, "Allah");
 }
 
+/**
+ * Entfernt ausschließlich angehängte bekannte Rassoul-Quellenzeilen bzw.
+ * Klammerangaben aus Erklärungsfeldern. Keine allgemeine Textbereinigung.
+ */
+export function stripKnownExplanationSourceAttribution(text: string): string {
+  let result = text;
+
+  // Apostroph-Varianten in „Qur'ān“ / „Qur’ān“
+  const knownSourceCore =
+    String.raw`Tafs[iī]r\s+Al-Qur['\u2019\u02BC][aā]n\s+Al-Kar[iī]m`;
+
+  // Angehängte Klammer: (Quelle: Tafsīr Al-Qur'ān Al-Karīm …)
+  result = result.replace(
+    new RegExp(
+      String.raw`\s*\(\s*Quelle:\s*${knownSourceCore}[^)]*\)\s*$`,
+      "giu"
+    ),
+    ""
+  );
+
+  // Angehängte Zeile: Quelle: Tafsīr Al-Qur'ān Al-Karīm …
+  result = result.replace(
+    new RegExp(
+      String.raw`(?:\n|\r\n|\s)*Quelle:\s*${knownSourceCore}[^\n]*\s*$`,
+      "giu"
+    ),
+    ""
+  );
+
+  return result.replace(/[ \t]+$/gm, "").replace(/\s+$/u, "");
+}
+
+function sanitizeExplanationField(raw: string): string {
+  return stripKnownExplanationSourceAttribution(
+    normalizeAllahTerminology(raw)
+  );
+}
+
 /** Liefert ein JSON-String mit bedeutung/kontext/heute — so erwartet die App die drei Pillen. */
-function normalizeVerseExplainJsonPayload(raw: string): string {
+export function normalizeVerseExplainJsonPayload(raw: string): string {
   let t = raw.trim();
   const fenceOpen = /^```(?:json)?\s*/i;
   if (fenceOpen.test(t)) {
@@ -70,9 +108,9 @@ function normalizeVerseExplainJsonPayload(raw: string): string {
         const v = parsed[a] ?? parsed[b];
         return typeof v === "string" ? v : "";
       };
-      const bedeutung = normalizeAllahTerminology(pick("bedeutung", "Bedeutung"));
-      const kontext = normalizeAllahTerminology(pick("kontext", "Kontext"));
-      const heute = normalizeAllahTerminology(pick("heute", "Heute"));
+      const bedeutung = sanitizeExplanationField(pick("bedeutung", "Bedeutung"));
+      const kontext = sanitizeExplanationField(pick("kontext", "Kontext"));
+      const heute = sanitizeExplanationField(pick("heute", "Heute"));
       if (bedeutung !== "" || kontext !== "" || heute !== "") {
         return JSON.stringify({ bedeutung, kontext, heute });
       }
@@ -81,7 +119,7 @@ function normalizeVerseExplainJsonPayload(raw: string): string {
     /* Fließtext-Fallback */
   }
   return JSON.stringify({
-    bedeutung: normalizeAllahTerminology(raw.trim()),
+    bedeutung: sanitizeExplanationField(raw.trim()),
     kontext: "",
     heute: "",
   });
@@ -104,24 +142,31 @@ function appendTafsirSourceToExplainJsonPayload(
 ): string {
   const source = extractTafsirSourceFromTrustedContext(trustedContext);
 
-  if (!source) return rawJson;
-
   try {
     const parsed = JSON.parse(rawJson) as Record<string, unknown>;
 
-    const bedeutung = typeof parsed.bedeutung === "string" ? parsed.bedeutung : "";
-    const kontext = typeof parsed.kontext === "string" ? parsed.kontext : "";
-    const heute = typeof parsed.heute === "string" ? parsed.heute : "";
+    const bedeutung = sanitizeExplanationField(
+      typeof parsed.bedeutung === "string" ? parsed.bedeutung : ""
+    );
+    const kontext = sanitizeExplanationField(
+      typeof parsed.kontext === "string" ? parsed.kontext : ""
+    );
+    let heute = sanitizeExplanationField(
+      typeof parsed.heute === "string" ? parsed.heute : ""
+    );
 
-    const sourceLine = `Quelle: ${source}`;
-    const heuteWithSource = heute.includes(source)
-      ? heute
-      : [heute.trim(), sourceLine].filter(Boolean).join("\n\n");
+    // Separat angefügte System-Quellenangabe bleibt erhalten.
+    if (source) {
+      const sourceLine = `Quelle: ${source}`;
+      if (!heute.includes(source)) {
+        heute = [heute.trim(), sourceLine].filter(Boolean).join("\n\n");
+      }
+    }
 
     return JSON.stringify({
       bedeutung,
       kontext,
-      heute: heuteWithSource,
+      heute,
     });
   } catch {
     return rawJson;
@@ -147,12 +192,76 @@ function appendTafsirSourceToTextPayload(
 
 const ASH_SHARH_94_6_EXPLANATION_FALLBACK_JSON = JSON.stringify({
   bedeutung:
-    "Der Vers sagt textnah: „mit der Erschwernis ist Erleichterung“. Er stellt Erschwernis und Erleichterung in eine direkte Verbindung, ohne daraus eine zusätzliche zeitliche Reihenfolge oder persönliche Garantie abzuleiten.",
+    "Der Vers sagt textnah, dass mit der Erschwernis Erleichterung ist. Er stellt Erschwernis und Erleichterung in eine unmittelbare Verbindung, ohne Zeitpunkt oder konkrete Form der Erleichterung festzulegen.",
   kontext:
     "Im unmittelbaren Kontext wird diese Aussage in 94:5 und 94:6 wiederholt. Danach folgen die Aufforderungen, sich nach dem Fertigwerden anzustrengen und das Begehren auf Allah auszurichten.",
   heute:
-    "Als allgemeine Reflexion erinnert der Vers daran, Belastung nicht isoliert zu betrachten, sondern auch auf von Allah eröffnete Erleichterung zu achten. Daraus folgt keine konkrete persönliche Garantie und keine pauschale Aussage über jeden Einzelfall.",
+    "Wenn es dir schwerfällt, darf dieser Vers Hoffnung wecken und dich zu Allah hinwenden. Bitte Allah um Geduld und um die Erleichterung, die Er öffnet, ohne Zeitpunkt oder Form vorwegzunehmen.",
 });
+
+const AL_BAQARAH_2_256_EXPLANATION_FALLBACK_JSON = JSON.stringify({
+  bedeutung:
+    "Der Vers sagt, dass es keinen Zwang im Glauben gibt. Rechtleitung und Verirrung sind klar unterschieden. Wer falsche Götter verleugnet und an Allah glaubt, hält sich an der festen Bindung an Allah.",
+  kontext:
+    "Direkt davor steht 2:255, der Allahs Einzigartigkeit, Wissen und Macht beschreibt. Direkt danach wird erklärt, dass Allah die Gläubigen aus der Finsternis ins Licht führt. So steht der Vers zwischen der Beschreibung Allahs und der Wirkung eines bewussten Glaubens.",
+  heute:
+    "Der Vers lädt zu einem Glauben ein, der aus Einsicht und Überzeugung entsteht. Er kann dazu ermutigen, sich Allah mit offenem Herzen zuzuwenden und den eigenen Glauben bewusst, ohne Zwang und im Vertrauen auf Ihn zu leben.",
+});
+
+const AL_BAQARAH_2_286_EXPLANATION_FALLBACK_JSON = JSON.stringify({
+  bedeutung:
+    "Der Vers verbindet Verantwortung mit Bittgebet. Jeder Mensch trägt die Folgen der eigenen Taten; zugleich lehrt der Vers, Allah um Vergebung, Barmherzigkeit, Erleichterung und Beistand zu bitten.",
+  kontext:
+    "Im unmittelbaren Zusammenhang geht es um Rechenschaft, Glauben und die Bitte um Vergebung. Der Vers schließt die Sure Al-Baqarah mit einer demütigen Hinwendung zu Allah ab.",
+  heute:
+    "Wenn du dich schwach fühlst oder Fehler gemacht hast, darfst du dich mit diesem Bittgebet an Allah wenden. Bitte Ihn um Vergebung, Erleichterung, Barmherzigkeit und Beistand und vertraue darauf, dass du mit deinen Sorgen zu Ihm kommen darfst.",
+});
+
+const AT_TAWBAH_9_5_EXPLANATION_FALLBACK_JSON = JSON.stringify({
+  bedeutung:
+    "Der Vers gehört in einen bestehenden Konflikt- und Vertragskontext. Nach Ablauf der Schutzmonate nennt er Maßnahmen gegenüber den angesprochenen Götzendienern und zugleich den Weg von Reue und Gebet. Er ist keine allgemeine oder private Gewaltanweisung außerhalb dieses Zusammenhangs.",
+  kontext:
+    "Direkt davor steht 9:4 zu Verträgen mit denjenigen, die sie nicht gebrochen haben. Direkt danach folgt 9:6 mit dem Schutz und Geleit für Schutzsuchende. Die Einordnung bleibt auf diesen Vertrags-, Konflikt- und Schutzkontext beschränkt.",
+  heute:
+    "Dieser Vers ist keine private Gewaltanweisung für heutige Einzelpersonen. Er lädt dazu ein, Vertragstreue, Schutz und Allahs Barmherzigkeit sorgfältig und kontextbezogen zu lesen — ohne allgemeine politische Anwendung.",
+});
+
+const AN_NISA_4_34_EXPLANATION_FALLBACK_JSON = JSON.stringify({
+  bedeutung:
+    "Der Vers spricht von der Verantwortung der Männer für die Frauen und von der Pflicht zur finanziellen Versorgung. Er behandelt außerdem einen schweren ehelichen Konfliktfall. Die heikle Formulierung im Wortlaut wird hier nicht als praktische Handlungsanweisung und nicht als vollständige Rechtsauslegung wiedergegeben.",
+  kontext:
+    "Im unmittelbaren Anschluss folgt Vers 4:35. Dort wird bei einem Bruch zwischen Ehepartnern die Einsetzung von Schiedsrichtern aus beiden Familien genannt. Die Einordnung bleibt auf diesen bereitgestellten Zusammenhang beschränkt.",
+  heute:
+    "Bei Konflikt in der Ehe lädt der Kontext zur Vermittlung und zur Suche nach einer gerechten Lösung ein. Gewalt, Drohung oder Zwang dürfen nicht religiös gerechtfertigt werden; bei konkreter Gefahr steht Sicherheit zuerst. Für die religiös-rechtliche Auslegung dieses Verses wende dich an eine qualifizierte, vertrauenswürdige Anlaufstelle — und bitte Allah um Schutz, Rechtleitung und ein gutes Herz im Umgang miteinander.",
+});
+
+/**
+ * Deterministische Erklärungsantworten für nachweislich schwankende
+ * bzw. sensible Verse. Keine zweite Pipeline — früher Return in
+ * completeExplanation.
+ */
+const RULE_BASED_EXPLANATION_JSON_BY_VERSE_KEY: Readonly<
+  Record<string, string>
+> = {
+  "2:256": AL_BAQARAH_2_256_EXPLANATION_FALLBACK_JSON,
+  "2:286": AL_BAQARAH_2_286_EXPLANATION_FALLBACK_JSON,
+  "4:34": AN_NISA_4_34_EXPLANATION_FALLBACK_JSON,
+  "9:5": AT_TAWBAH_9_5_EXPLANATION_FALLBACK_JSON,
+  "94:6": ASH_SHARH_94_6_EXPLANATION_FALLBACK_JSON,
+};
+
+export function resolveRuleBasedExplanationJson(
+  verseKey: string
+): string | null {
+  return RULE_BASED_EXPLANATION_JSON_BY_VERSE_KEY[verseKey] ?? null;
+}
+
+function extractSelectedVerseKey(trustedContext: string): string | null {
+  const match = trustedContext.match(
+    /VERIFIZIERTER AUSGEWÄHLTER KORANVERS[\s\S]*?Sure [^\n]+ \((\d+:\d+)\)/
+  );
+  return match?.[1] ?? null;
+}
 
 const ASH_SHARH_94_6_FOLLOWUP_FALLBACK_TEXT =
   "Textnah sagt der Vers: „mit der Erschwernis ist Erleichterung“. Er stellt Erschwernis und Erleichterung in eine direkte Verbindung. Eine zeitliche Abfolge, persönliche Garantie oder pauschale Aussage über jeden Einzelfall sollte daraus nicht abgeleitet werden.";
@@ -162,15 +271,6 @@ const ASH_SHARH_94_6_CORRECTION_JSON_PROMPT =
 
 const ASH_SHARH_94_6_CORRECTION_TEXT_PROMPT =
   "Korrigiere deine Antwort. Der bereitgestellte Vers 94:6 sagt „mit der Erschwernis ist Erleichterung“. Formuliere nicht „nach“, „folgt“, „kommt danach“, „nicht dauerhaft“, „jede Schwierigkeit“ oder als persönliche Garantie. Antworte textnah und knapp.";
-
-const AN_NISA_4_34_EXPLANATION_FALLBACK_JSON = JSON.stringify({
-  bedeutung:
-    "Dieser Vers berührt ein sehr sensibles Thema rund um Verantwortung, Ehekonflikt und eine heikle Formulierung im Verswortlaut. Ihdina gibt hierzu keine praktische Handlungsempfehlung und keine religiös-rechtliche Einzelfallentscheidung.",
-  kontext:
-    "Im unmittelbaren Kontext folgt nach 4:34 der Vers 4:35, der bei einem Bruch zwischen Ehepartnern Schiedsrichter aus beiden Familien erwähnt. Für eine belastbare Auslegung dieses Themenbereichs ist eine qualifizierte, vertrauenswürdige religiöse Anlaufstelle notwendig.",
-  heute:
-    "Gewalt, Drohung oder Zwang dürfen nicht durch eine App-Antwort religiös legitimiert oder relativiert werden. Bei konkreter Gewalt oder Unsicherheit steht Sicherheit zuerst. Für religiös-rechtliche Fragen zu diesem Vers sollte man sich an qualifizierte Gelehrte oder eine vertrauenswürdige religiöse Anlaufstelle wenden.",
-});
 
 const FIQH_FOLLOWUP_BOUNDARY_FALLBACK_TEXT =
   "Der bereitgestellte Vers erwähnt dieses Thema allgemein. Ihdina entscheidet aber keinen konkreten religiös-rechtlichen Einzelfall und gibt keine Aussage über Erlaubnis, Pflicht, Gültigkeit oder Ungültigkeit. Für die konkrete Anwendung sollte eine qualifizierte, vertrauenswürdige religiöse Anlaufstelle gefragt werden.";
@@ -280,11 +380,17 @@ function hasUnsafeFiqhFollowUpRuling(question: string, answerText: string): bool
 export async function completeExplanation(params: {
   trustedContext: string;
   policyInstructions: string;
+  verseKey?: string;
 }): Promise<ChatCompletionResult> {
-  if (isAnNisa4_34Context(params.trustedContext)) {
+  const verseKey =
+    params.verseKey ?? extractSelectedVerseKey(params.trustedContext);
+  const ruleBasedJson =
+    verseKey !== null ? resolveRuleBasedExplanationJson(verseKey) : null;
+
+  if (ruleBasedJson !== null) {
     return {
       text: appendTafsirSourceToExplainJsonPayload(
-        AN_NISA_4_34_EXPLANATION_FALLBACK_JSON,
+        ruleBasedJson,
         params.trustedContext
       ),
       model: "rule-based-sensitive-verse",
